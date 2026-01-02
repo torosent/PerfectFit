@@ -82,7 +82,7 @@ function DraggablePieceComponent({
       whileHover={!disabled && !isDragging ? 'hover' : undefined}
       whileTap={!disabled ? 'tap' : undefined}
       className={`
-        p-3 rounded-lg
+        p-4 sm:p-3 rounded-lg min-w-[60px] min-h-[60px]
         ${!disabled ? 'cursor-grab active:cursor-grabbing' : 'cursor-not-allowed'}
         ${isSelected ? 'ring-2 ring-teal-500' : ''}
         focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2
@@ -93,6 +93,8 @@ function DraggablePieceComponent({
       aria-label={`Drag ${piece.type} piece to place on board`}
       aria-pressed={isSelected}
       aria-disabled={disabled}
+      data-min-touch-target="true"
+      data-mobile-padding="true"
     >
       <PieceDisplay
         piece={piece}

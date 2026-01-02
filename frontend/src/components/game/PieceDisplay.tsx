@@ -8,6 +8,8 @@ export interface PieceDisplayProps {
   piece: Piece;
   /** Size of each cell in pixels */
   cellSize?: number;
+  /** Size of each cell on mobile devices (for touch-friendly targets) */
+  mobileCellSize?: number;
   /** Whether this piece is currently selected */
   isSelected?: boolean;
   /** Whether this piece is disabled (already used) */
@@ -23,6 +25,7 @@ export interface PieceDisplayProps {
 function PieceDisplayComponent({
   piece,
   cellSize = 24,
+  mobileCellSize,
   isSelected = false,
   isDisabled = false,
   className = '',
@@ -31,9 +34,13 @@ function PieceDisplayComponent({
   const rows = shape.length;
   const cols = shape[0]?.length ?? 0;
 
-  // Calculate grid dimensions
-  const gridWidth = cols * cellSize + (cols - 1) * 2; // cells + gaps
-  const gridHeight = rows * cellSize + (rows - 1) * 2;
+  // Use mobileCellSize if provided, otherwise fall back to cellSize
+  // This allows components to specify larger touch-friendly sizes for mobile
+  const effectiveCellSize = mobileCellSize ?? cellSize;
+  
+  // Calculate grid dimensions using effective cell size
+  const gridWidth = cols * effectiveCellSize + (cols - 1) * 2; // cells + gaps
+  const gridHeight = rows * effectiveCellSize + (rows - 1) * 2;
 
   const baseClasses = 'relative flex items-center justify-center';
   
@@ -49,12 +56,14 @@ function PieceDisplayComponent({
       style={{ minWidth: gridWidth, minHeight: gridHeight }}
       role="img"
       aria-label={`${type} piece`}
+      data-mobile-optimized="true"
+      {...(mobileCellSize !== undefined && { 'data-mobile-cell-size': String(mobileCellSize) })}
     >
       <div
         className="grid gap-0.5"
         style={{
-          gridTemplateColumns: `repeat(${cols}, ${cellSize}px)`,
-          gridTemplateRows: `repeat(${rows}, ${cellSize}px)`,
+          gridTemplateColumns: `repeat(${cols}, ${effectiveCellSize}px)`,
+          gridTemplateRows: `repeat(${rows}, ${effectiveCellSize}px)`,
         }}
       >
         {shape.flatMap((row, rowIndex) =>
@@ -65,8 +74,8 @@ function PieceDisplayComponent({
                 cell === 1 ? 'border border-white/20' : ''
               }`}
               style={{
-                width: cellSize,
-                height: cellSize,
+                width: effectiveCellSize,
+                height: effectiveCellSize,
                 backgroundColor: cell === 1 ? color : 'transparent',
               }}
             />

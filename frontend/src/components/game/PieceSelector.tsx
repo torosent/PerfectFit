@@ -50,7 +50,7 @@ function PieceSelectorComponent({
   const piecesRemaining = pieces.length;
 
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3" data-touch-optimized="true">
       <div className="flex items-center justify-between">
         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">
           Available Pieces
@@ -59,7 +59,11 @@ function PieceSelectorComponent({
           {piecesPlaced}/3 placed this turn
         </span>
       </div>
-      <div className="flex gap-4 justify-center items-center flex-wrap">
+      <div 
+        className="flex gap-4 sm:gap-6 justify-center items-center flex-wrap"
+        data-touch-spacing="true"
+        data-min-touch-target="true"
+      >
         {/* Show used slots first */}
         {Array.from({ length: usedCount }).map((_, index) => (
           <div

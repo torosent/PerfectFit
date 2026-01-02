@@ -215,19 +215,25 @@ function DroppableBoardComponent({
   }, [lastPlacedCells]);
 
   return (
-    <motion.div
-      ref={setNodeRef}
-      className={`
-        relative p-2 sm:p-3 rounded-xl shadow-2xl
-        transition-all duration-150
-        ${isOver ? 'ring-2 ring-teal-500 ring-opacity-50' : ''}
-      `}
-      style={{ backgroundColor: '#0a1929', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.3)' }}
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.3 }}
-      role="grid"
-      aria-label="Game board - drop pieces here"
+    <div
+      className="overflow-x-auto overflow-y-hidden"
+      data-scroll-container="true"
+    >
+      <motion.div
+        ref={setNodeRef}
+        className={`
+          relative p-2 sm:p-3 rounded-xl shadow-2xl
+          transition-all duration-150
+          ${isOver ? 'ring-2 ring-teal-500 ring-opacity-50' : ''}
+        `}
+        style={{ backgroundColor: '#0a1929', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.3)' }}
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.3 }}
+        role="grid"
+        aria-label="Game board - drop pieces here"
+        data-mobile-optimized="true"
+        data-min-cell-size="44"
     >
       {/* Line clearing shockwave effects */}
       <AnimatePresence>
@@ -252,9 +258,10 @@ function DroppableBoardComponent({
       <div
         className="grid grid-cols-10 gap-0.5 sm:gap-1 relative z-10"
         style={{
-          // Ensure consistent sizing across devices
-          width: 'min(90vw, 400px)',
-          height: 'min(90vw, 400px)',
+          // Mobile-first: use 44px cells for touch targets, max out at 400px on larger screens
+          // 10 cells × 44px = 440px minimum for touch-friendly mobile
+          width: 'max(440px, min(90vw, 400px))',
+          height: 'max(440px, min(90vw, 400px))',
         }}
       >
         {grid.map((row, rowIndex) =>
@@ -314,7 +321,8 @@ function DroppableBoardComponent({
           })
         )}
       </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }
 

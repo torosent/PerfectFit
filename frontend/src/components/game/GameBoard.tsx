@@ -48,19 +48,26 @@ function GameBoardComponent({
 
   return (
     <div
-      className="p-2 sm:p-3 rounded-xl shadow-2xl touch-none select-none"
-      style={{ backgroundColor: '#0a1929', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.3)' }}
-      role="grid"
-      aria-label="Game board"
+      className="overflow-x-auto overflow-y-hidden"
+      data-scroll-container="true"
     >
       <div
-        className="grid grid-cols-10 gap-0.5 sm:gap-1"
-        style={{
-          // Ensure consistent sizing across devices
-          width: 'min(90vw, 400px)',
-          height: 'min(90vw, 400px)',
-        }}
+        className="p-2 sm:p-3 rounded-xl shadow-2xl touch-none select-none"
+        style={{ backgroundColor: '#0a1929', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.3)' }}
+        role="grid"
+        aria-label="Game board"
+        data-mobile-optimized="true"
+        data-min-cell-size="44"
       >
+        <div
+          className="grid grid-cols-10 gap-0.5 sm:gap-1"
+          style={{
+            // Mobile-first: use 44px cells for touch targets (10 × 44px = 440px minimum)
+            // On larger screens: scale up to fit viewport (max 600px for comfortable play)
+            width: 'max(440px, min(90vw, 600px))',
+            height: 'max(440px, min(90vw, 600px))',
+          }}
+        >
         {grid.map((row, rowIndex) =>
           row.map((cellValue, colIndex) => {
             const key = `${rowIndex}-${colIndex}`;
@@ -80,6 +87,7 @@ function GameBoardComponent({
             );
           })
         )}
+        </div>
       </div>
     </div>
   );
