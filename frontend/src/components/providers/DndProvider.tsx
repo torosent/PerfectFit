@@ -1,0 +1,205 @@
+'use client';
+
+import React, { useCallback, useState, useRef, useEffect } from 'react';
+import {
+  DndContext,
+  DragOverlay,
+  useSensor,
+  useSensors,
+  PointerSensor,
+  TouchSensor,
+  type DragStartEvent,
+  type DragEndEvent,
+} from '@dnd-kit/core';
+import type { Piece } from '@/types';
+import { useGameStore } from '@/lib/stores/game-store';
+import { canPlacePiece } from '@/lib/game-logic/pieces';
+import { PieceDisplay } from '@/components/game/PieceDisplay';
+
+interface DragData {
+  piece: Piece;
+  pieceIndex: number;
+}
+
+export interface DndProviderProps {
+  children: React.ReactNode;
+}
+
+/**
+ * DnD provider that wraps the game components
+ * Handles drag start, move, and end events
+ */
+export function DndProvider({ children }: DndProviderProps) {
+  const [draggedPiece, setDraggedPiece] = useState<Piece | null>(null);
+  const [draggedPieceIndex, setDraggedPieceIndexState] = useState<number | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  
+  const { 
+    gameState, 
+    placePiece, 
+    setHoverPosition, 
+    setDraggedPieceIndex,
+  } = useGameStore();
+
+  // Track pointer position for grid calculations
+  const pointerPositionRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Configure sensors for both mouse and touch
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5, // Start drag after 5px movement
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 150, // Small delay for touch to distinguish from scroll
+        tolerance: 5,
+      },
+    })
+  );
+
+  // Track pointer position during drag via native events
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handlePointerMove = (e: PointerEvent) => {
+      pointerPositionRef.current = { x: e.clientX, y: e.clientY };
+      
+      // Find the game board element
+      const boardElement = document.querySelector('[aria-label="Game board - drop pieces here"]');
+      if (!boardElement) return;
+
+      const boardRect = boardElement.getBoundingClientRect();
+      const cellWidth = boardRect.width / 10;
+      const cellHeight = boardRect.height / 10;
+
+      // Calculate grid position
+      const col = Math.floor((e.clientX - boardRect.left) / cellWidth);
+      const row = Math.floor((e.clientY - boardRect.top) / cellHeight);
+
+      // Only update if within bounds
+      if (row >= 0 && row < 10 && col >= 0 && col < 10) {
+        setHoverPosition({ row, col });
+      } else {
+        setHoverPosition(null);
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 0) {
+        const touch = e.touches[0];
+        pointerPositionRef.current = { x: touch.clientX, y: touch.clientY };
+        
+        // Find the game board element
+        const boardElement = document.querySelector('[aria-label="Game board - drop pieces here"]');
+        if (!boardElement) return;
+
+        const boardRect = boardElement.getBoundingClientRect();
+        const cellWidth = boardRect.width / 10;
+        const cellHeight = boardRect.height / 10;
+
+        // Calculate grid position
+        const col = Math.floor((touch.clientX - boardRect.left) / cellWidth);
+        const row = Math.floor((touch.clientY - boardRect.top) / cellHeight);
+
+        // Only update if within bounds
+        if (row >= 0 && row < 10 && col >= 0 && col < 10) {
+          setHoverPosition({ row, col });
+        } else {
+          setHoverPosition(null);
+        }
+      }
+    };
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('touchmove', handleTouchMove);
+
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [isDragging, setHoverPosition]);
+
+  const handleDragStart = useCallback((event: DragStartEvent) => {
+    const data = event.active.data.current as DragData | undefined;
+    
+    if (data?.piece) {
+      setDraggedPiece(data.piece);
+      setDraggedPieceIndexState(data.pieceIndex);
+      setDraggedPieceIndex(data.pieceIndex);
+      setIsDragging(true);
+    }
+  }, [setDraggedPieceIndex]);
+
+  const handleDragMove = useCallback(() => {
+    // Position tracking is handled by the native event listeners
+    // This callback is kept for potential future use
+  }, []);
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { over } = event;
+    
+    // Get the final hover position from store
+    const { hoverPosition } = useGameStore.getState();
+    
+    // Attempt to place piece if dropped over board with valid position
+    if (
+      over?.id === 'game-board' && 
+      draggedPieceIndex !== null && 
+      hoverPosition &&
+      gameState &&
+      draggedPiece
+    ) {
+      // Check if placement is valid
+      if (canPlacePiece(gameState.grid, draggedPiece, hoverPosition.row, hoverPosition.col)) {
+        await placePiece(draggedPieceIndex, hoverPosition.row, hoverPosition.col);
+      }
+    }
+    
+    // Reset drag state
+    setDraggedPiece(null);
+    setDraggedPieceIndexState(null);
+    setDraggedPieceIndex(null);
+    setHoverPosition(null);
+    setIsDragging(false);
+    pointerPositionRef.current = null;
+  }, [draggedPieceIndex, draggedPiece, gameState, placePiece, setDraggedPieceIndex, setHoverPosition]);
+
+  const handleDragCancel = useCallback(() => {
+    setDraggedPiece(null);
+    setDraggedPieceIndexState(null);
+    setDraggedPieceIndex(null);
+    setHoverPosition(null);
+    setIsDragging(false);
+    pointerPositionRef.current = null;
+  }, [setDraggedPieceIndex, setHoverPosition]);
+
+  return (
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragMove={handleDragMove}
+      onDragEnd={handleDragEnd}
+      onDragCancel={handleDragCancel}
+    >
+      {children}
+      
+      {/* Drag overlay shows the piece being dragged */}
+      <DragOverlay dropAnimation={null}>
+        {draggedPiece && (
+          <div className="opacity-80 scale-110 pointer-events-none">
+            <PieceDisplay
+              piece={draggedPiece}
+              cellSize={20}
+              isSelected={false}
+              isDisabled={false}
+            />
+          </div>
+        )}
+      </DragOverlay>
+    </DndContext>
+  );
+}
+
+export default DndProvider;
