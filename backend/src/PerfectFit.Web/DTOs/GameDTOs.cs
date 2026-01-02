@@ -82,17 +82,6 @@ public record PlacePieceResponseDto(
 );
 
 /// <summary>
-/// Represents an entry on the leaderboard
-/// </summary>
-public record LeaderboardEntryDto(
-    int Rank,
-    string UserId,
-    string DisplayName,
-    int Score,
-    string AchievedAt
-);
-
-/// <summary>
 /// Represents a user's profile
 /// </summary>
 public record UserProfileDto(

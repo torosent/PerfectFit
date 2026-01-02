@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useCallback, useState, useMemo } from 'react';
-import { useGameStore } from '@/lib/stores/game-store';
+import { useGameStore, useLastSubmitResult, useIsSubmittingScore } from '@/lib/stores/game-store';
+import { useIsAuthenticated } from '@/lib/stores/auth-store';
 import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
 import { DroppableBoard, type HighlightedCell } from '@/components/game/DroppableBoard';
 import { PieceSelector } from '@/components/game/PieceSelector';
@@ -27,7 +28,13 @@ export default function PlayPage() {
     selectPiece,
     clearError,
     setHoverPosition,
+    submitScoreToLeaderboard,
+    clearSubmitResult,
   } = useGameStore();
+
+  const isAuthenticated = useIsAuthenticated();
+  const lastSubmitResult = useLastSubmitResult();
+  const isSubmittingScore = useIsSubmittingScore();
 
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
 
@@ -87,8 +94,9 @@ export default function PlayPage() {
 
   // Handle play again
   const handlePlayAgain = useCallback(() => {
+    clearSubmitResult();
     startNewGame();
-  }, [startNewGame]);
+  }, [clearSubmitResult, startNewGame]);
 
   // Clear error after display
   useEffect(() => {
@@ -99,6 +107,13 @@ export default function PlayPage() {
   }, [error, clearError]);
 
   const isGameOver = gameState?.status === 'ended';
+
+  // Submit score when game ends and user is authenticated
+  useEffect(() => {
+    if (isGameOver && isAuthenticated && !lastSubmitResult && !isSubmittingScore) {
+      submitScoreToLeaderboard();
+    }
+  }, [isGameOver, isAuthenticated, lastSubmitResult, isSubmittingScore, submitScoreToLeaderboard]);
 
   // Get the dragged piece for preview
   const draggedPiece = useMemo(() => {
@@ -192,6 +207,8 @@ export default function PlayPage() {
             isOpen={isGameOver}
             score={gameState?.score ?? 0}
             linesCleared={gameState?.linesCleared ?? 0}
+            leaderboardResult={lastSubmitResult}
+            isSubmitting={isSubmittingScore}
             onPlayAgain={handlePlayAgain}
           />
         </div>

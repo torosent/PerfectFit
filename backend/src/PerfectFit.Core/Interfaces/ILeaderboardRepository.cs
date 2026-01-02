@@ -8,4 +8,14 @@ public interface ILeaderboardRepository
     Task<LeaderboardEntry?> GetUserBestScoreAsync(int userId, CancellationToken cancellationToken = default);
     Task<int> GetUserRankAsync(int userId, CancellationToken cancellationToken = default);
     Task<LeaderboardEntry> AddAsync(LeaderboardEntry entry, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Checks if a leaderboard entry already exists for a game session.
+    /// </summary>
+    Task<bool> ExistsByGameSessionIdAsync(Guid gameSessionId, CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Gets the count of leaderboard entries for a user.
+    /// </summary>
+    Task<int> GetUserEntryCountAsync(int userId, CancellationToken cancellationToken = default);
 }

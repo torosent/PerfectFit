@@ -20,3 +20,13 @@ export {
   AuthError,
   type OAuthProvider,
 } from './auth-client';
+
+export {
+  getTopScores,
+  getUserStats,
+  submitScore,
+  LeaderboardError,
+  type LeaderboardEntry,
+  type UserStats,
+  type SubmitScoreResult,
+} from './leaderboard-client';

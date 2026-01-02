@@ -73,8 +73,7 @@ export default function GameLayout({
               >
                 Play
               </Link>
-              {/* Future: Leaderboard link */}
-              {/* <Link
+              <Link
                 href="/leaderboard"
                 className={`text-sm font-medium transition-colors ${
                   pathname === '/leaderboard'
@@ -82,8 +81,8 @@ export default function GameLayout({
                     : 'text-gray-400 hover:text-white'
                 }`}
               >
-                Leaderboard
-              </Link> */}
+                🏆 Leaderboard
+              </Link>
             </nav>
 
             {/* Auth Controls */}

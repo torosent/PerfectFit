@@ -2,9 +2,11 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using PerfectFit.Core.Interfaces;
+using PerfectFit.Core.Services;
 using PerfectFit.Infrastructure.Data;
 using PerfectFit.Infrastructure.Data.Repositories;
 using PerfectFit.Infrastructure.Identity;
+using PerfectFit.Infrastructure.Services;
 
 namespace PerfectFit.Infrastructure;
 
@@ -25,6 +27,9 @@ public static class DependencyInjection
 
         // Configure OAuth settings
         services.Configure<OAuthSettings>(configuration.GetSection(OAuthSettings.SectionName));
+
+        // Register domain services
+        services.AddScoped<IScoreValidationService, ScoreValidationService>();
 
         return services;
     }

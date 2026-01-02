@@ -58,4 +58,16 @@ public class LeaderboardRepository : ILeaderboardRepository
         await _context.SaveChangesAsync(cancellationToken);
         return entry;
     }
+
+    public async Task<bool> ExistsByGameSessionIdAsync(Guid gameSessionId, CancellationToken cancellationToken = default)
+    {
+        return await _context.LeaderboardEntries
+            .AnyAsync(le => le.GameSessionId == gameSessionId, cancellationToken);
+    }
+
+    public async Task<int> GetUserEntryCountAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        return await _context.LeaderboardEntries
+            .CountAsync(le => le.UserId == userId, cancellationToken);
+    }
 }

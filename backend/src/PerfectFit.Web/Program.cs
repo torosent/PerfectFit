@@ -157,6 +157,9 @@ app.MapGameEndpoints();
 // Map auth endpoints
 app.MapAuthEndpoints();
 
+// Map leaderboard endpoints
+app.MapLeaderboardEndpoints();
+
 app.Run();
 
 // Make the implicit Program class public so test projects can access it

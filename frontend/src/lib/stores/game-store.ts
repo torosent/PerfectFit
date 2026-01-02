@@ -1,7 +1,18 @@
 import { create } from 'zustand';
 import type { GameState, Position } from '@/types';
 import * as gameClient from '@/lib/api/game-client';
+import * as leaderboardClient from '@/lib/api/leaderboard-client';
 import { useAuthStore } from './auth-store';
+
+/**
+ * Result from score submission to leaderboard
+ */
+export interface SubmitScoreResult {
+  success: boolean;
+  entry?: leaderboardClient.LeaderboardEntry;
+  isNewHighScore: boolean;
+  newRank?: number;
+}
 
 /**
  * Animation state for visual feedback
@@ -36,6 +47,10 @@ export interface GameStore {
   // Animation state
   animationState: AnimationState;
   
+  // Leaderboard state
+  lastSubmitResult: SubmitScoreResult | null;
+  isSubmittingScore: boolean;
+  
   // Computed helpers (not reactive, but convenient)
   isGameOver: () => boolean;
   canPlay: () => boolean;
@@ -59,6 +74,10 @@ export interface GameStore {
   setLastPointsEarned: (points: number) => void;
   setLastCombo: (combo: number) => void;
   clearAnimationState: () => void;
+  
+  // Leaderboard actions
+  submitScoreToLeaderboard: () => Promise<void>;
+  clearSubmitResult: () => void;
 }
 
 /**
@@ -83,6 +102,8 @@ const initialState = {
   hoverPosition: null,
   draggedPieceIndex: null,
   animationState: initialAnimationState,
+  lastSubmitResult: null,
+  isSubmittingScore: false,
 };
 
 /**
@@ -272,6 +293,40 @@ export const useGameStore = create<GameStore>((set, get) => ({
       },
     }));
   },
+
+  // Leaderboard actions
+  submitScoreToLeaderboard: async () => {
+    const { gameState } = get();
+    const { token, isAuthenticated } = useAuthStore.getState();
+    
+    // Can only submit if authenticated and game is over
+    if (!gameState || gameState.status !== 'ended' || !isAuthenticated || !token) {
+      return;
+    }
+
+    set({ isSubmittingScore: true });
+
+    try {
+      const result = await leaderboardClient.submitScore(gameState.id, token);
+      set({ 
+        lastSubmitResult: result,
+        isSubmittingScore: false,
+      });
+    } catch (err) {
+      console.error('Failed to submit score:', err);
+      set({ 
+        isSubmittingScore: false,
+        lastSubmitResult: {
+          success: false,
+          isNewHighScore: false,
+        },
+      });
+    }
+  },
+
+  clearSubmitResult: () => {
+    set({ lastSubmitResult: null });
+  },
 }));
 
 /**
@@ -297,3 +352,7 @@ export const useLastPlacedCells = () => useGameStore((state) => state.animationS
 export const useLastPointsEarned = () => useGameStore((state) => state.animationState.lastPointsEarned);
 export const useLastCombo = () => useGameStore((state) => state.animationState.lastCombo);
 export const useAnimationKey = () => useGameStore((state) => state.animationState.animationKey);
+
+// Leaderboard state selectors
+export const useLastSubmitResult = () => useGameStore((state) => state.lastSubmitResult);
+export const useIsSubmittingScore = () => useGameStore((state) => state.isSubmittingScore);
