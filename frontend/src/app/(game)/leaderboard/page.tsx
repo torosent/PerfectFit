@@ -97,7 +97,8 @@ export default function LeaderboardPage() {
             </div>
             <Link
               href="/play"
-              className="inline-flex items-center justify-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
+              className="inline-flex items-center justify-center gap-2 py-2 px-4 text-white font-medium rounded-lg transition-all hover:scale-105"
+              style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)', boxShadow: '0 4px 15px rgba(20, 184, 166, 0.3)' }}
             >
               <svg
                 className="w-5 h-5"
@@ -134,14 +135,15 @@ export default function LeaderboardPage() {
           {isAuthenticated && isLoadingStats && (
             <motion.div
               variants={staggerItemVariants}
-              className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6"
+              className="backdrop-blur-sm rounded-xl p-6"
+              style={{ background: 'rgba(13, 36, 61, 0.85)', border: '1px solid rgba(56, 97, 140, 0.4)' }}
             >
-              <div className="h-6 bg-gray-700 rounded w-32 mb-4 animate-pulse" />
+              <div className="h-6 rounded w-32 mb-4 animate-pulse" style={{ backgroundColor: 'rgba(20, 184, 166, 0.2)' }} />
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 {Array.from({ length: 4 }).map((_, i) => (
                   <div key={i} className="text-center">
-                    <div className="h-4 bg-gray-700 rounded w-16 mx-auto mb-2 animate-pulse" />
-                    <div className="h-8 bg-gray-700 rounded w-20 mx-auto animate-pulse" />
+                    <div className="h-4 rounded w-16 mx-auto mb-2 animate-pulse" style={{ backgroundColor: 'rgba(20, 184, 166, 0.15)' }} />
+                    <div className="h-8 rounded w-20 mx-auto animate-pulse" style={{ backgroundColor: 'rgba(20, 184, 166, 0.2)' }} />
                   </div>
                 ))}
               </div>
@@ -152,11 +154,13 @@ export default function LeaderboardPage() {
           {!isAuthenticated && (
             <motion.div
               variants={staggerItemVariants}
-              className="bg-gradient-to-r from-blue-900/30 to-purple-900/30 border border-blue-700/50 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4"
+              className="rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4"
+              style={{ background: 'linear-gradient(to right, rgba(20, 184, 166, 0.15), rgba(14, 165, 233, 0.15))', border: '1px solid rgba(20, 184, 166, 0.3)' }}
             >
               <div className="flex items-center gap-3">
                 <svg
-                  className="w-6 h-6 text-blue-400"
+                  className="w-6 h-6"
+                  style={{ color: '#2dd4bf' }}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -175,7 +179,8 @@ export default function LeaderboardPage() {
               </div>
               <Link
                 href="/login"
-                className="whitespace-nowrap py-2 px-4 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors"
+                className="whitespace-nowrap py-2 px-4 text-white font-medium rounded-lg transition-all hover:scale-105"
+                style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}
               >
                 Sign In
               </Link>
@@ -219,7 +224,8 @@ export default function LeaderboardPage() {
                 if (isAuthenticated) fetchUserStats();
               }}
               disabled={isLoadingEntries}
-              className="flex items-center gap-2 py-2 px-4 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 font-medium rounded-lg transition-colors"
+              className="flex items-center gap-2 py-2 px-4 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 font-medium rounded-lg transition-colors"
+              style={{ backgroundColor: 'rgba(13, 36, 61, 0.8)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.3)' }}
             >
               <svg
                 className={`w-4 h-4 ${isLoadingEntries ? 'animate-spin' : ''}`}

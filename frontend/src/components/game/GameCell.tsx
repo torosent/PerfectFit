@@ -48,7 +48,7 @@ function GameCellComponent({
   const baseClasses = 'aspect-square rounded-sm transition-all duration-150 border';
   
   const stateClasses = isEmpty
-    ? 'bg-gray-800/50 border-gray-700/50'
+    ? 'border-gray-700/50'
     : 'border-white/20';
 
   const highlightClasses = isHighlighted
@@ -58,13 +58,13 @@ function GameCellComponent({
     : '';
 
   const interactiveClasses = isClickable
-    ? 'cursor-pointer hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-blue-500'
+    ? 'cursor-pointer hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-teal-500'
     : '';
 
   const className = `${baseClasses} ${stateClasses} ${highlightClasses} ${interactiveClasses}`;
 
   // Style with background color if filled
-  const style = !isEmpty ? { backgroundColor: value } : undefined;
+  const style = !isEmpty ? { backgroundColor: value } : { backgroundColor: 'rgba(10, 25, 41, 0.5)' };
 
   return (
     <div

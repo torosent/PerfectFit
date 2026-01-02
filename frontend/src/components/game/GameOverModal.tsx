@@ -155,18 +155,19 @@ function GameOverModalComponent({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="relative bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-8 max-w-sm w-full overflow-hidden"
+            className="relative rounded-2xl shadow-2xl p-8 max-w-sm w-full overflow-hidden"
+            style={{ backgroundColor: '#0d243d', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.3)' }}
           >
             {/* Animated background gradient */}
             <motion.div
               className="absolute inset-0 opacity-20"
               animate={{
                 background: [
-                  'radial-gradient(circle at 20% 20%, #3b82f6 0%, transparent 50%)',
-                  'radial-gradient(circle at 80% 80%, #8b5cf6 0%, transparent 50%)',
-                  'radial-gradient(circle at 20% 80%, #3b82f6 0%, transparent 50%)',
-                  'radial-gradient(circle at 80% 20%, #8b5cf6 0%, transparent 50%)',
-                  'radial-gradient(circle at 20% 20%, #3b82f6 0%, transparent 50%)',
+                  'radial-gradient(circle at 20% 20%, #14b8a6 0%, transparent 50%)',
+                  'radial-gradient(circle at 80% 80%, #0ea5e9 0%, transparent 50%)',
+                  'radial-gradient(circle at 20% 80%, #22d3ee 0%, transparent 50%)',
+                  'radial-gradient(circle at 80% 20%, #14b8a6 0%, transparent 50%)',
+                  'radial-gradient(circle at 20% 20%, #14b8a6 0%, transparent 50%)',
                 ],
               }}
               transition={{
@@ -239,8 +240,8 @@ function GameOverModalComponent({
                     variants={staggerItemVariants}
                     className="text-center"
                   >
-                    <div className="flex items-center justify-center gap-2 text-blue-400">
-                      <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
+                    <div className="flex items-center justify-center gap-2" style={{ color: '#2dd4bf' }}>
+                      <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: '#2dd4bf', borderTopColor: 'transparent' }} />
                       <span className="text-sm">Submitting score...</span>
                     </div>
                   </motion.div>
@@ -275,7 +276,8 @@ function GameOverModalComponent({
                     
                     {leaderboardResult.newRank && (
                       <motion.p
-                        className="text-purple-400 font-semibold"
+                        className="font-semibold"
+                        style={{ color: '#2dd4bf' }}
                         initial={{ y: 10, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
                         transition={{ delay: 0.2 }}
@@ -308,7 +310,8 @@ function GameOverModalComponent({
                   whileHover="hover"
                   whileTap="tap"
                   onClick={onPlayAgain}
-                  className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                  className="w-full py-3 px-6 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                  style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}
                 >
                   Play Again
                 </motion.button>
@@ -322,7 +325,8 @@ function GameOverModalComponent({
                     initial="idle"
                     whileHover="hover"
                     whileTap="tap"
-                    className="flex items-center justify-center gap-2 w-full py-3 px-6 bg-purple-600 hover:bg-purple-500 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                    className="flex items-center justify-center gap-2 w-full py-3 px-6 text-white font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    style={{ background: 'linear-gradient(135deg, #0ea5e9, #22d3ee)' }}
                   >
                     <span>🏆</span>
                     View Leaderboard
@@ -336,7 +340,8 @@ function GameOverModalComponent({
                     whileHover="hover"
                     whileTap="tap"
                     onClick={onClose}
-                    className="w-full py-3 px-6 bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                    className="w-full py-3 px-6 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                    style={{ backgroundColor: 'rgba(13, 36, 61, 0.8)', color: '#94a3b8' }}
                   >
                     Close
                   </motion.button>

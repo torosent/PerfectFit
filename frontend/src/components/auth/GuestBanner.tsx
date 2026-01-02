@@ -63,18 +63,24 @@ export function GuestBanner({
   return (
     <div
       className={`
-        bg-gradient-to-r from-blue-600/20 to-purple-600/20
-        border border-blue-500/30 rounded-lg
+        rounded-lg
         p-4 flex items-center justify-between gap-4
         animate-in fade-in slide-in-from-top-2 duration-300
         ${className}
       `}
+      style={{
+        background: 'linear-gradient(135deg, rgba(20, 184, 166, 0.2), rgba(14, 165, 233, 0.2))',
+        borderWidth: 1,
+        borderStyle: 'solid',
+        borderColor: 'rgba(20, 184, 166, 0.3)'
+      }}
       role="alert"
     >
       <div className="flex items-center gap-3">
         <div className="flex-shrink-0">
           <svg
-            className="w-5 h-5 text-blue-400"
+            className="w-5 h-5"
+            style={{ color: '#2dd4bf' }}
             fill="none"
             stroke="currentColor"
             viewBox="0 0 24 24"
@@ -99,11 +105,8 @@ export function GuestBanner({
       <div className="flex items-center gap-2 flex-shrink-0">
         <button
           onClick={handleSignIn}
-          className={`
-            px-3 py-1.5 text-sm font-medium
-            bg-blue-600 hover:bg-blue-500 text-white
-            rounded-md transition-colors
-          `}
+          className="px-3 py-1.5 text-sm font-medium text-white rounded-md transition-colors"
+          style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}
         >
           Sign In
         </button>

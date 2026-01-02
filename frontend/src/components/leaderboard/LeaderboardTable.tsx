@@ -52,16 +52,16 @@ function TableSkeleton() {
       {Array.from({ length: 10 }).map((_, i) => (
         <tr key={i} className="border-b border-gray-800">
           <td className="py-3 px-2 sm:px-4">
-            <div className="w-8 h-8 bg-gray-700 rounded-full animate-pulse" />
+            <div className="w-8 h-8 rounded-full animate-pulse" style={{ backgroundColor: 'rgba(20, 184, 166, 0.2)' }} />
           </td>
-          <td className="py-3 px-2 sm:px-4">
-            <div className="h-5 bg-gray-700 rounded w-24 animate-pulse" />
+          <td className="py-3 px-4">
+            <div className="h-5 rounded w-24 animate-pulse" style={{ backgroundColor: 'rgba(20, 184, 166, 0.15)' }} />
           </td>
-          <td className="py-3 px-2 sm:px-4 text-right">
-            <div className="h-5 bg-gray-700 rounded w-16 ml-auto animate-pulse" />
+          <td className="py-3 px-4 text-right">
+            <div className="h-5 rounded w-16 ml-auto animate-pulse" style={{ backgroundColor: 'rgba(20, 184, 166, 0.2)' }} />
           </td>
-          <td className="py-3 px-2 sm:px-4 text-right hidden sm:table-cell">
-            <div className="h-5 bg-gray-700 rounded w-12 ml-auto animate-pulse" />
+          <td className="py-3 px-4 text-right hidden sm:table-cell">
+            <div className="h-5 rounded w-12 ml-auto animate-pulse" style={{ backgroundColor: 'rgba(20, 184, 166, 0.15)' }} />
           </td>
         </tr>
       ))}
@@ -105,10 +105,10 @@ function LeaderboardTableComponent({
   }, [entries, currentUserId]);
 
   return (
-    <div className="overflow-x-auto rounded-xl border border-gray-700 bg-gray-800/30 backdrop-blur-sm">
+    <div className="overflow-x-auto rounded-xl backdrop-blur-sm" style={{ background: 'rgba(13, 36, 61, 0.85)', border: '1px solid rgba(56, 97, 140, 0.4)' }}>
       <table className="w-full min-w-[400px]">
         <thead>
-          <tr className="border-b border-gray-700 bg-gray-800/50">
+          <tr className="border-b" style={{ borderColor: 'rgba(56, 97, 140, 0.4)', background: 'rgba(10, 37, 64, 0.6)' }}>
             <th className="py-3 px-2 sm:px-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider w-16">
               Rank
             </th>
@@ -140,15 +140,15 @@ function LeaderboardTableComponent({
                 variants={rowVariants}
                 initial="hidden"
                 animate="visible"
-                className={`
-                  border-b border-gray-800 transition-colors
-                  ${index % 2 === 0 ? 'bg-gray-800/20' : 'bg-transparent'}
-                  ${
-                    entry.isCurrentUser
-                      ? 'bg-blue-900/30 border-blue-700 hover:bg-blue-900/40'
-                      : 'hover:bg-gray-700/30'
-                  }
-                `}
+                className="transition-colors"
+                style={{
+                  borderBottom: '1px solid rgba(56, 97, 140, 0.3)',
+                  background: entry.isCurrentUser 
+                    ? 'rgba(20, 184, 166, 0.15)' 
+                    : index % 2 === 0 
+                      ? 'rgba(10, 37, 64, 0.3)' 
+                      : 'transparent',
+                }}
               >
                 {/* Rank */}
                 <td className="py-3 px-2 sm:px-4">
@@ -159,15 +159,13 @@ function LeaderboardTableComponent({
                 <td className="py-3 px-2 sm:px-4">
                   <div className="flex items-center gap-2">
                     <span
-                      className={`
-                        font-medium truncate max-w-[150px] sm:max-w-[200px]
-                        ${entry.isCurrentUser ? 'text-blue-300' : 'text-white'}
-                      `}
+                      className="font-medium truncate max-w-[150px] sm:max-w-[200px]"
+                      style={{ color: entry.isCurrentUser ? '#2dd4bf' : '#ffffff' }}
                     >
                       {entry.displayName}
                     </span>
                     {entry.isCurrentUser && (
-                      <span className="text-xs bg-blue-600 text-white px-2 py-0.5 rounded-full">
+                      <span className="text-xs text-white px-2 py-0.5 rounded-full" style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}>
                         You
                       </span>
                     )}
@@ -181,14 +179,18 @@ function LeaderboardTableComponent({
                 {/* Score */}
                 <td className="py-3 px-2 sm:px-4 text-right">
                   <span
-                    className={`
-                      font-bold tabular-nums
-                      ${entry.rank === 1 ? 'text-yellow-400' : ''}
-                      ${entry.rank === 2 ? 'text-gray-300' : ''}
-                      ${entry.rank === 3 ? 'text-orange-400' : ''}
-                      ${entry.rank > 3 ? 'text-white' : ''}
-                      ${entry.isCurrentUser ? 'text-blue-300' : ''}
-                    `}
+                    className="font-bold tabular-nums"
+                    style={{
+                      color: entry.isCurrentUser 
+                        ? '#2dd4bf' 
+                        : entry.rank === 1 
+                          ? '#fbbf24' 
+                          : entry.rank === 2 
+                            ? '#d1d5db' 
+                            : entry.rank === 3 
+                              ? '#fb923c' 
+                              : '#ffffff'
+                    }}
                   >
                     {entry.formattedScore}
                   </span>

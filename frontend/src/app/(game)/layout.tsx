@@ -40,7 +40,7 @@ export default function GameLayout({
               href="/play"
               className="flex items-center gap-2 hover:opacity-80 transition-opacity"
             >
-              <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}>
                 <svg
                   className="w-5 h-5 text-white"
                   fill="none"
@@ -57,7 +57,7 @@ export default function GameLayout({
                 </svg>
               </div>
               <span className="text-xl font-bold text-white">
-                Perfect<span className="text-blue-400">Fit</span>
+                Perfect<span style={{ color: '#2dd4bf' }}>Fit</span>
               </span>
             </Link>
 
@@ -94,11 +94,8 @@ export default function GameLayout({
                   ) : (
                     <Link
                       href="/login"
-                      className={`
-                        py-2 px-4 text-sm font-medium
-                        bg-blue-600 hover:bg-blue-500 text-white
-                        rounded-lg transition-colors
-                      `}
+                      className="py-2 px-4 text-sm font-medium text-white rounded-lg transition-colors"
+                      style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}
                     >
                       Sign In
                     </Link>

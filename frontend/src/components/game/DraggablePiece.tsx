@@ -76,11 +76,16 @@ function DraggablePieceComponent({
       className={`
         p-3 rounded-lg
         ${!disabled ? 'cursor-grab active:cursor-grabbing' : 'cursor-not-allowed'}
-        ${isSelected ? 'bg-gray-700/70 ring-2 ring-blue-500' : 'bg-gray-800/50'}
-        border border-gray-700
-        focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900
+        ${isSelected ? 'ring-2 ring-teal-500' : ''}
+        focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2
         touch-none select-none
       `}
+      style={{
+        backgroundColor: isSelected ? 'rgba(20, 184, 166, 0.15)' : 'rgba(10, 25, 41, 0.5)',
+        borderWidth: 1,
+        borderStyle: 'solid',
+        borderColor: isSelected ? 'rgba(20, 184, 166, 0.5)' : 'rgba(20, 184, 166, 0.2)'
+      }}
       role="button"
       tabIndex={disabled ? -1 : 0}
       aria-label={`Drag ${piece.type} piece to place on board`}

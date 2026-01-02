@@ -19,14 +19,14 @@ function getInitials(displayName: string): string {
  */
 function getAvatarColor(userId: string): string {
   const colors = [
-    'bg-blue-500',
-    'bg-green-500',
-    'bg-purple-500',
-    'bg-pink-500',
-    'bg-indigo-500',
-    'bg-cyan-500',
-    'bg-orange-500',
     'bg-teal-500',
+    'bg-cyan-500',
+    'bg-sky-500',
+    'bg-emerald-500',
+    'bg-indigo-500',
+    'bg-blue-500',
+    'bg-amber-500',
+    'bg-rose-500',
   ];
   
   // Simple hash based on user id
@@ -92,7 +92,7 @@ export function UserMenu() {
         className={`
           flex items-center gap-2 p-1 rounded-full
           hover:bg-white/10 transition-colors
-          focus:outline-none focus:ring-2 focus:ring-blue-500/50
+          focus:outline-none focus:ring-2 focus:ring-teal-500/50
         `}
         aria-expanded={isOpen}
         aria-haspopup="true"
@@ -123,29 +123,29 @@ export function UserMenu() {
         <div
           className={`
             absolute right-0 mt-2 w-64
-            bg-gray-800 rounded-lg shadow-xl
-            border border-gray-700
+            rounded-lg shadow-xl
             py-2 z-50
             animate-in fade-in slide-in-from-top-2 duration-200
           `}
+          style={{ backgroundColor: '#0d243d', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.3)' }}
           role="menu"
           aria-orientation="vertical"
         >
           {/* User Info */}
-          <div className="px-4 py-3 border-b border-gray-700">
+          <div className="px-4 py-3" style={{ borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'rgba(20, 184, 166, 0.2)' }}>
             <p className="font-semibold text-white truncate">{user.displayName}</p>
             {user.email && (
               <p className="text-sm text-gray-400 truncate">{user.email}</p>
             )}
             {isGuest && (
-              <span className="inline-block mt-1 px-2 py-0.5 text-xs bg-yellow-600/20 text-yellow-500 rounded">
+              <span className="inline-block mt-1 px-2 py-0.5 text-xs rounded" style={{ backgroundColor: 'rgba(251, 191, 36, 0.2)', color: '#fbbf24' }}>
                 Guest
               </span>
             )}
           </div>
 
           {/* Stats */}
-          <div className="px-4 py-3 border-b border-gray-700">
+          <div className="px-4 py-3" style={{ borderBottomWidth: 1, borderBottomStyle: 'solid', borderBottomColor: 'rgba(20, 184, 166, 0.2)' }}>
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">High Score</span>
               <span className="text-white font-medium">

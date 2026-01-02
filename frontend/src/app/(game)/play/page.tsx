@@ -199,7 +199,7 @@ export default function PlayPage() {
           {/* Loading State */}
           {isLoading && !gameState && (
             <div className="flex items-center justify-center py-20">
-              <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent" />
+              <div className="animate-spin rounded-full h-12 w-12 border-4" style={{ borderColor: '#14b8a6', borderTopColor: 'transparent' }} />
               <span className="ml-4 text-lg">Starting game...</span>
             </div>
           )}
@@ -264,7 +264,8 @@ export default function PlayPage() {
                 <button
                   onClick={handlePlayAgain}
                   disabled={isLoading}
-                  className="mt-4 py-2 px-6 bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 font-medium rounded-lg transition-colors"
+                  className="mt-4 py-2 px-6 disabled:opacity-50 disabled:cursor-not-allowed text-gray-300 font-medium rounded-lg transition-colors"
+                  style={{ backgroundColor: 'rgba(13, 36, 61, 0.8)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.3)' }}
                 >
                   Restart Game
                 </button>

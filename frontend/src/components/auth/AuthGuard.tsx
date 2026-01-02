@@ -27,9 +27,9 @@ interface AuthGuardProps {
  */
 function LoadingSkeleton() {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black">
+    <div className="min-h-screen flex items-center justify-center game-background">
       <div className="flex flex-col items-center gap-4">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent" />
+        <div className="animate-spin rounded-full h-12 w-12 border-4" style={{ borderColor: '#14b8a6', borderTopColor: 'transparent' }} />
         <p className="text-gray-400 text-sm">Loading...</p>
       </div>
     </div>
@@ -45,7 +45,7 @@ interface LoginPromptProps {
 
 function LoginPrompt({ onLogin }: LoginPromptProps) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black p-4">
+    <div className="min-h-screen flex items-center justify-center game-background p-4">
       <div className="text-center max-w-md">
         <h2 className="text-2xl font-bold text-white mb-4">Sign In Required</h2>
         <p className="text-gray-400 mb-6">
@@ -53,11 +53,8 @@ function LoginPrompt({ onLogin }: LoginPromptProps) {
         </p>
         <button
           onClick={onLogin}
-          className={`
-            py-3 px-8 bg-blue-600 hover:bg-blue-500
-            text-white font-medium rounded-lg
-            transition-colors
-          `}
+          className="py-3 px-8 text-white font-medium rounded-lg transition-colors"
+          style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}
         >
           Sign In
         </button>

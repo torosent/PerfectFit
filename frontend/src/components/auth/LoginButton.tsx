@@ -144,13 +144,18 @@ export function GuestButton({
       className={`
         flex items-center justify-center gap-3
         w-full py-3 px-4
-        bg-gray-700 hover:bg-gray-600 text-white
+        text-white
         font-medium rounded-lg
         transition-all duration-200
         disabled:opacity-50 disabled:cursor-not-allowed
-        border border-gray-600 hover:border-gray-500
         ${className}
       `}
+      style={{
+        backgroundColor: 'rgba(13, 36, 61, 0.8)',
+        borderWidth: 1,
+        borderStyle: 'solid',
+        borderColor: 'rgba(20, 184, 166, 0.3)'
+      }}
       type="button"
     >
       {isLoading ? (

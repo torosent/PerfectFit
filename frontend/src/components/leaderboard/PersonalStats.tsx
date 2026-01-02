@@ -52,14 +52,16 @@ function PersonalStatsComponent({ stats }: PersonalStatsProps) {
       variants={staggerContainerVariants}
       initial="hidden"
       animate="visible"
-      className="bg-gray-800/50 backdrop-blur-sm border border-gray-700 rounded-xl p-6"
+      className="backdrop-blur-sm rounded-xl p-6"
+      style={{ background: 'rgba(13, 36, 61, 0.85)', border: '1px solid rgba(56, 97, 140, 0.4)' }}
     >
       <motion.h2
         variants={staggerItemVariants}
         className="text-lg font-semibold text-white mb-4 flex items-center gap-2"
       >
         <svg
-          className="w-5 h-5 text-blue-400"
+          className="w-5 h-5"
+          style={{ color: '#2dd4bf' }}
           fill="none"
           stroke="currentColor"
           viewBox="0 0 24 24"
@@ -127,7 +129,7 @@ function PersonalStatsComponent({ stats }: PersonalStatsProps) {
           <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
             Games Played
           </p>
-          <p className="text-2xl sm:text-3xl font-bold text-blue-400 tabular-nums">
+          <p className="text-2xl sm:text-3xl font-bold tabular-nums" style={{ color: '#2dd4bf' }}>
             {formatNumber(gamesPlayed)}
           </p>
         </motion.div>
@@ -137,7 +139,7 @@ function PersonalStatsComponent({ stats }: PersonalStatsProps) {
           <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-1">
             Best Lines
           </p>
-          <p className="text-2xl sm:text-3xl font-bold text-purple-400 tabular-nums">
+          <p className="text-2xl sm:text-3xl font-bold tabular-nums" style={{ color: '#0ea5e9' }}>
             {bestGame ? formatNumber(bestGame.linesCleared) : '-'}
           </p>
         </motion.div>
@@ -147,11 +149,12 @@ function PersonalStatsComponent({ stats }: PersonalStatsProps) {
       {bestGame && (
         <motion.div
           variants={staggerItemVariants}
-          className="mt-4 pt-4 border-t border-gray-700"
+          className="mt-4 pt-4"
+          style={{ borderTop: '1px solid rgba(56, 97, 140, 0.4)' }}
         >
           <p className="text-xs text-gray-400 text-center">
             Best game achieved {formatRelativeTime(bestGame.achievedAt)} with a{' '}
-            <span className="text-orange-400 font-medium">
+            <span className="font-medium" style={{ color: '#fbbf24' }}>
               {bestGame.maxCombo}x combo
             </span>
           </p>

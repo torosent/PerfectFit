@@ -72,7 +72,7 @@ function CallbackContent() {
       <div className="glass-panel rounded-2xl p-8 max-w-md w-full text-center">
         {status === 'processing' && (
           <>
-            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4" />
+            <div className="animate-spin rounded-full h-12 w-12 border-4 mx-auto mb-4" style={{ borderColor: '#14b8a6', borderTopColor: 'transparent' }} />
             <h2 className="text-xl font-semibold text-white mb-2">
               Completing sign in...
             </h2>
@@ -135,11 +135,8 @@ function CallbackContent() {
             </p>
             <button
               onClick={() => router.push('/login')}
-              className={`
-                py-2 px-6 bg-blue-600 hover:bg-blue-500
-                text-white font-medium rounded-lg
-                transition-colors
-              `}
+              className="py-2 px-6 text-white font-medium rounded-lg transition-colors"
+              style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}
             >
               Try Again
             </button>
@@ -157,7 +154,7 @@ function CallbackLoading() {
   return (
     <div className="min-h-screen game-background flex items-center justify-center p-4">
       <div className="glass-panel rounded-2xl p-8 max-w-md w-full text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent mx-auto mb-4" />
+        <div className="animate-spin rounded-full h-12 w-12 border-4 mx-auto mb-4" style={{ borderColor: '#14b8a6', borderTopColor: 'transparent' }} />
         <h2 className="text-xl font-semibold text-white mb-2">
           Loading...
         </h2>

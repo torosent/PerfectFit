@@ -218,10 +218,11 @@ function DroppableBoardComponent({
     <motion.div
       ref={setNodeRef}
       className={`
-        relative bg-gray-900 p-2 sm:p-3 rounded-xl shadow-2xl border border-gray-700
+        relative p-2 sm:p-3 rounded-xl shadow-2xl
         transition-all duration-150
-        ${isOver ? 'ring-2 ring-blue-500 ring-opacity-50' : ''}
+        ${isOver ? 'ring-2 ring-teal-500 ring-opacity-50' : ''}
       `}
+      style={{ backgroundColor: '#0a1929', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.3)' }}
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ duration: 0.3 }}

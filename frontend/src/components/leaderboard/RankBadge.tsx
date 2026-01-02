@@ -90,9 +90,9 @@ function RankBadgeComponent({ rank, size = 'md' }: RankBadgeProps) {
         ${sizeClass} ${textSizeClass}
         flex items-center justify-center
         font-bold text-gray-400
-        bg-gray-800 rounded-full
-        border border-gray-700
+        rounded-full
       `}
+      style={{ backgroundColor: 'rgba(13, 36, 61, 0.8)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.3)' }}
       initial={{ scale: 0 }}
       animate={{ scale: 1 }}
       transition={{

@@ -64,7 +64,8 @@ function PieceSelectorComponent({
         {Array.from({ length: usedCount }).map((_, index) => (
           <div
             key={`used-${index}`}
-            className="p-3 rounded-lg bg-gray-800/50 border border-gray-700 opacity-30"
+            className="p-3 rounded-lg opacity-30"
+            style={{ backgroundColor: 'rgba(10, 25, 41, 0.5)', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.2)' }}
             aria-label={`Piece ${index + 1} (used)`}
           >
             <div
@@ -93,7 +94,7 @@ function PieceSelectorComponent({
         })}
       </div>
       {selectedIndex !== null && pieces[selectedIndex] && (
-        <p className="text-sm text-center text-blue-400">
+        <p className="text-sm text-center" style={{ color: '#2dd4bf' }}>
           Click on the board or drag the {pieces[selectedIndex]?.type} piece to place it
         </p>
       )}

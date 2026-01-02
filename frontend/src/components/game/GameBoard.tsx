@@ -48,7 +48,8 @@ function GameBoardComponent({
 
   return (
     <div
-      className="bg-gray-900 p-2 sm:p-3 rounded-xl shadow-2xl border border-gray-700"
+      className="p-2 sm:p-3 rounded-xl shadow-2xl"
+      style={{ backgroundColor: '#0a1929', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.3)' }}
       role="grid"
       aria-label="Game board"
     >

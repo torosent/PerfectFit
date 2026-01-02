@@ -4,14 +4,21 @@
   --background: #ffffff;
   --foreground: #171717;
   
-  /* Game colors */
-  --game-bg-start: #0f172a;
-  --game-bg-end: #1e1b4b;
-  --cell-empty: rgba(31, 41, 55, 0.5);
-  --cell-border: rgba(75, 85, 99, 0.5);
-  --glow-blue: rgba(59, 130, 246, 0.5);
-  --glow-yellow: rgba(251, 191, 36, 0.5);
-  --glow-green: rgba(34, 197, 94, 0.5);
+  /* Game colors - Ocean Blue Theme */
+  --game-bg-start: #0c1929;
+  --game-bg-mid: #0a2540;
+  --game-bg-end: #0c1929;
+  --cell-empty: rgba(30, 58, 95, 0.6);
+  --cell-border: rgba(56, 97, 140, 0.4);
+  --glow-teal: rgba(20, 184, 166, 0.5);
+  --glow-blue: rgba(14, 165, 233, 0.5);
+  --glow-cyan: rgba(34, 211, 238, 0.5);
+  --glow-gold: rgba(251, 191, 36, 0.5);
+  
+  /* Primary accent */
+  --accent-teal: #14b8a6;
+  --accent-cyan: #22d3ee;
+  --accent-gold: #fbbf24;
 }
 
 /* ============================================
@@ -129,10 +136,10 @@
 /* Glow pulse for CTA buttons */
 @keyframes glow-pulse-cta {
   0%, 100% {
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3), 0 0 40px rgba(59, 130, 246, 0.2);
+    box-shadow: 0 0 20px rgba(20, 184, 166, 0.3), 0 0 40px rgba(14, 165, 233, 0.2);
   }
   50% {
-    box-shadow: 0 0 30px rgba(139, 92, 246, 0.5), 0 0 60px rgba(59, 130, 246, 0.3);
+    box-shadow: 0 0 30px rgba(20, 184, 166, 0.5), 0 0 60px rgba(14, 165, 233, 0.3);
   }
 }
 
@@ -179,13 +186,13 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Game background gradient */
+/* Game background gradient - Ocean Blue Theme */
 .game-background {
-  background: linear-gradient(135deg, var(--game-bg-start) 0%, var(--game-bg-end) 100%);
+  background: linear-gradient(135deg, var(--game-bg-start) 0%, var(--game-bg-mid) 50%, var(--game-bg-end) 100%);
   min-height: 100vh;
 }
 
-/* Animated background pattern */
+/* Animated background pattern - Ocean Blue Theme */
 .game-background::before {
   content: '';
   position: fixed;
@@ -194,9 +201,9 @@ body {
   right: 0;
   bottom: 0;
   background-image: 
-    radial-gradient(circle at 20% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
-    radial-gradient(circle at 40% 40%, rgba(34, 197, 94, 0.05) 0%, transparent 30%);
+    radial-gradient(circle at 20% 80%, rgba(20, 184, 166, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(34, 211, 238, 0.08) 0%, transparent 30%);
   pointer-events: none;
   z-index: 0;
 }
@@ -229,39 +236,39 @@ body {
 
 .piece-hover-glow:hover {
   box-shadow: 
-    0 0 15px var(--glow-blue),
-    0 0 30px var(--glow-blue);
+    0 0 15px var(--glow-teal),
+    0 0 30px var(--glow-teal);
 }
 
 /* Selected piece glow */
 .piece-selected-glow {
   box-shadow: 
-    0 0 10px var(--glow-blue),
-    0 0 20px var(--glow-blue),
-    0 0 30px var(--glow-blue);
+    0 0 10px var(--glow-teal),
+    0 0 20px var(--glow-teal),
+    0 0 30px var(--glow-teal);
   animation: selected-pulse 2s ease-in-out infinite;
 }
 
 @keyframes selected-pulse {
   0%, 100% {
     box-shadow: 
-      0 0 10px var(--glow-blue),
-      0 0 20px var(--glow-blue);
+      0 0 10px var(--glow-teal),
+      0 0 20px var(--glow-teal);
   }
   50% {
     box-shadow: 
-      0 0 15px var(--glow-blue),
-      0 0 30px var(--glow-blue),
-      0 0 40px var(--glow-blue);
+      0 0 15px var(--glow-teal),
+      0 0 30px var(--glow-teal),
+      0 0 40px var(--glow-teal);
   }
 }
 
 /* Combo text glow */
 .combo-glow {
   text-shadow: 
-    0 0 10px var(--glow-yellow),
-    0 0 20px var(--glow-yellow),
-    0 0 30px var(--glow-yellow);
+    0 0 10px var(--glow-gold),
+    0 0 20px var(--glow-gold),
+    0 0 30px var(--glow-gold);
 }
 
 /* Score update flash */
@@ -338,11 +345,11 @@ body {
   }
 }
 
-/* Glass effect for UI panels */
+/* Glass effect for UI panels - Ocean Blue Theme */
 .glass-panel {
-  background: rgba(31, 41, 55, 0.8);
+  background: rgba(13, 36, 61, 0.85);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(75, 85, 99, 0.5);
+  border: 1px solid rgba(56, 97, 140, 0.4);
 }
 
 /* Clearing cell animation helper */

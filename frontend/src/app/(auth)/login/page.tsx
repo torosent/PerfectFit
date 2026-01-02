@@ -47,9 +47,9 @@ export default function LoginPage() {
     <div className="min-h-screen game-background flex items-center justify-center p-4">
       {/* Animated background elements */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 w-48 h-48 bg-green-500/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+        <div className="absolute top-1/4 left-1/4 w-64 h-64 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgba(20, 184, 166, 0.1)' }} />
+        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgba(14, 165, 233, 0.1)', animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 w-48 h-48 rounded-full blur-3xl animate-pulse" style={{ backgroundColor: 'rgba(34, 211, 238, 0.05)', animationDelay: '2s' }} />
       </div>
 
       {/* Login card */}
@@ -58,7 +58,7 @@ export default function LoginPage() {
           {/* Logo/Title */}
           <div className="text-center mb-8">
             <h1 className="text-4xl font-bold text-white mb-2">
-              Perfect<span className="text-blue-400">Fit</span>
+              Perfect<span style={{ color: '#2dd4bf' }}>Fit</span>
             </h1>
             <p className="text-gray-400">
               A block puzzle game
@@ -112,7 +112,7 @@ export default function LoginPage() {
               <div className="w-full border-t border-gray-600" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-gray-800 text-gray-400">or</span>
+              <span className="px-3 text-gray-400" style={{ backgroundColor: '#0d243d' }}>or</span>
             </div>
           </div>
 
