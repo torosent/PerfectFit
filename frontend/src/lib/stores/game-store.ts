@@ -1,13 +1,21 @@
 import { create } from 'zustand';
-import type { GameState } from '@/types';
+import type { GameState, Position } from '@/types';
 import * as gameClient from '@/lib/api/game-client';
 
 /**
- * Position type for hover tracking
+ * Animation state for visual feedback
  */
-export interface Position {
-  row: number;
-  col: number;
+export interface AnimationState {
+  /** Cells currently being cleared (for clearing animation) */
+  clearingCells: Position[];
+  /** Recently placed cells (for placement animation) */
+  lastPlacedCells: Position[];
+  /** Points earned from last action (for popup) */
+  lastPointsEarned: number;
+  /** Combo from last action (for popup) */
+  lastCombo: number;
+  /** Key to trigger animation re-renders */
+  animationKey: number;
 }
 
 /**
@@ -23,6 +31,9 @@ export interface GameStore {
   // Drag-and-drop state
   hoverPosition: Position | null;
   draggedPieceIndex: number | null;
+  
+  // Animation state
+  animationState: AnimationState;
   
   // Computed helpers (not reactive, but convenient)
   isGameOver: () => boolean;
@@ -40,7 +51,25 @@ export interface GameStore {
   // Drag-and-drop actions
   setHoverPosition: (pos: Position | null) => void;
   setDraggedPieceIndex: (index: number | null) => void;
+  
+  // Animation actions
+  setClearingCells: (cells: Position[]) => void;
+  setLastPlacedCells: (cells: Position[]) => void;
+  setLastPointsEarned: (points: number) => void;
+  setLastCombo: (combo: number) => void;
+  clearAnimationState: () => void;
 }
+
+/**
+ * Initial animation state
+ */
+const initialAnimationState: AnimationState = {
+  clearingCells: [],
+  lastPlacedCells: [],
+  lastPointsEarned: 0,
+  lastCombo: 0,
+  animationKey: 0,
+};
 
 /**
  * Initial state for the game store
@@ -52,6 +81,7 @@ const initialState = {
   selectedPieceIndex: null,
   hoverPosition: null,
   draggedPieceIndex: null,
+  animationState: initialAnimationState,
 };
 
 /**
@@ -183,6 +213,56 @@ export const useGameStore = create<GameStore>((set, get) => ({
   setDraggedPieceIndex: (index: number | null) => {
     set({ draggedPieceIndex: index });
   },
+
+  // Animation actions
+  setClearingCells: (cells: Position[]) => {
+    set((state) => ({
+      animationState: {
+        ...state.animationState,
+        clearingCells: cells,
+        animationKey: state.animationState.animationKey + 1,
+      },
+    }));
+  },
+
+  setLastPlacedCells: (cells: Position[]) => {
+    set((state) => ({
+      animationState: {
+        ...state.animationState,
+        lastPlacedCells: cells,
+        animationKey: state.animationState.animationKey + 1,
+      },
+    }));
+  },
+
+  setLastPointsEarned: (points: number) => {
+    set((state) => ({
+      animationState: {
+        ...state.animationState,
+        lastPointsEarned: points,
+        animationKey: state.animationState.animationKey + 1,
+      },
+    }));
+  },
+
+  setLastCombo: (combo: number) => {
+    set((state) => ({
+      animationState: {
+        ...state.animationState,
+        lastCombo: combo,
+        animationKey: state.animationState.animationKey + 1,
+      },
+    }));
+  },
+
+  clearAnimationState: () => {
+    set((state) => ({
+      animationState: {
+        ...initialAnimationState,
+        animationKey: state.animationState.animationKey,
+      },
+    }));
+  },
 }));
 
 /**
@@ -200,3 +280,11 @@ export const useIsLoading = () => useGameStore((state) => state.isLoading);
 export const useGameError = () => useGameStore((state) => state.error);
 export const useHoverPosition = () => useGameStore((state) => state.hoverPosition);
 export const useDraggedPieceIndex = () => useGameStore((state) => state.draggedPieceIndex);
+
+// Animation state selectors
+export const useAnimationState = () => useGameStore((state) => state.animationState);
+export const useClearingCells = () => useGameStore((state) => state.animationState.clearingCells);
+export const useLastPlacedCells = () => useGameStore((state) => state.animationState.lastPlacedCells);
+export const useLastPointsEarned = () => useGameStore((state) => state.animationState.lastPointsEarned);
+export const useLastCombo = () => useGameStore((state) => state.animationState.lastCombo);
+export const useAnimationKey = () => useGameStore((state) => state.animationState.animationKey);

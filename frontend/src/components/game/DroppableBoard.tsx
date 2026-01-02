@@ -2,8 +2,9 @@
 
 import { memo, useMemo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import type { Grid, Piece } from '@/types';
-import { GameCell } from './GameCell';
+import { motion } from 'motion/react';
+import type { Grid, Piece, Position } from '@/types';
+import { AnimatedCell } from './AnimatedCell';
 import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
 
 export interface HighlightedCell {
@@ -21,6 +22,10 @@ export interface DroppableBoardProps {
   draggedPiece: Piece | null;
   /** Additional highlighted cells (from click-to-place flow) */
   highlightedCells?: HighlightedCell[];
+  /** Cells currently being cleared (for animation) */
+  clearingCells?: Position[];
+  /** Recently placed cells (for animation) */
+  lastPlacedCells?: Position[];
   /** Callback when a cell is clicked */
   onCellClick?: (row: number, col: number) => void;
   /** Whether the board is disabled (non-interactive) */
@@ -30,12 +35,15 @@ export interface DroppableBoardProps {
 /**
  * Droppable game board that accepts piece drops
  * Shows preview of piece at hover position with validity indication
+ * Includes animations for cell states
  */
 function DroppableBoardComponent({
   grid,
   hoverPosition,
   draggedPiece,
   highlightedCells = [],
+  clearingCells = [],
+  lastPlacedCells = [],
   onCellClick,
   disabled = false,
 }: DroppableBoardProps) {
@@ -67,9 +75,7 @@ function DroppableBoardComponent({
       }));
   }, [grid, hoverPosition, draggedPiece]);
 
-
-
-  // Create a map for quick highlight lookup
+  // Create maps for quick lookup
   const highlightMap = useMemo(() => {
     const map = new Map<string, { isValid: boolean; isPreview: boolean }>();
     
@@ -84,14 +90,33 @@ function DroppableBoardComponent({
     return map;
   }, [highlightedCells, dragPreviewCells]);
 
+  const clearingMap = useMemo(() => {
+    const set = new Set<string>();
+    clearingCells.forEach(({ row, col }) => {
+      set.add(`${row}-${col}`);
+    });
+    return set;
+  }, [clearingCells]);
+
+  const placedMap = useMemo(() => {
+    const map = new Map<string, number>();
+    lastPlacedCells.forEach(({ row, col }, index) => {
+      map.set(`${row}-${col}`, index);
+    });
+    return map;
+  }, [lastPlacedCells]);
+
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       className={`
         bg-gray-900 p-2 sm:p-3 rounded-xl shadow-2xl border border-gray-700
         transition-all duration-150
         ${isOver ? 'ring-2 ring-blue-500 ring-opacity-50' : ''}
       `}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.3 }}
       role="grid"
       aria-label="Game board - drop pieces here"
     >
@@ -109,6 +134,9 @@ function DroppableBoardComponent({
             const highlight = highlightMap.get(key);
             const isHighlighted = highlight !== undefined;
             const isPreview = highlight?.isPreview ?? false;
+            const isClearing = clearingMap.has(key);
+            const placedIndex = placedMap.get(key);
+            const isRecentlyPlaced = placedIndex !== undefined;
 
             return (
               <div
@@ -116,25 +144,31 @@ function DroppableBoardComponent({
                 className={`
                   relative
                   ${isPreview && draggedPiece ? 'z-10' : ''}
+                  ${isClearing ? 'z-20' : ''}
                 `}
               >
-                <GameCell
+                <AnimatedCell
                   value={cellValue}
                   row={rowIndex}
                   col={colIndex}
                   isHighlighted={isHighlighted}
                   isValidPlacement={highlight?.isValid ?? true}
+                  isClearing={isClearing}
+                  isRecentlyPlaced={isRecentlyPlaced}
+                  placedIndex={placedIndex ?? 0}
                   onClick={!disabled ? onCellClick : undefined}
                 />
                 
                 {/* Ghost preview for dragged piece */}
                 {isPreview && draggedPiece && (
-                  <div
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
                     className={`
                       absolute inset-0 rounded-sm pointer-events-none
                       ${highlight?.isValid 
-                        ? 'bg-opacity-40 border-2 border-green-400' 
-                        : 'bg-opacity-40 border-2 border-red-400'
+                        ? 'border-2 border-green-400' 
+                        : 'border-2 border-red-400'
                       }
                     `}
                     style={{
@@ -149,7 +183,7 @@ function DroppableBoardComponent({
           })
         )}
       </div>
-    </div>
+    </motion.div>
   );
 }
 

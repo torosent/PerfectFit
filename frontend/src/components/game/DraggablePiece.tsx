@@ -3,8 +3,10 @@
 import { memo } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
+import { motion } from 'motion/react';
 import type { Piece } from '@/types';
 import { PieceDisplay } from './PieceDisplay';
+import { pieceVariants } from '@/lib/animations';
 
 export interface DraggablePieceProps {
   /** The piece to display and drag */
@@ -21,7 +23,7 @@ export interface DraggablePieceProps {
 
 /**
  * Wrapper component that makes a piece draggable
- * Uses @dnd-kit's useDraggable hook
+ * Uses @dnd-kit's useDraggable hook with motion animations
  */
 function DraggablePieceComponent({
   piece,
@@ -52,18 +54,29 @@ function DraggablePieceComponent({
       }
     : undefined;
 
+  // Determine animation state
+  const getAnimationState = () => {
+    if (isDragging) return 'dragging';
+    if (isSelected) return 'selected';
+    return 'idle';
+  };
+
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       style={style}
       {...listeners}
       {...attributes}
       onClick={onClick}
+      variants={pieceVariants}
+      initial="idle"
+      animate={getAnimationState()}
+      whileHover={!disabled && !isDragging ? 'hover' : undefined}
+      whileTap={!disabled ? 'tap' : undefined}
       className={`
-        p-3 rounded-lg transition-all duration-150
-        ${!disabled ? 'hover:bg-gray-700/50 cursor-grab active:cursor-grabbing' : 'cursor-not-allowed'}
-        ${isSelected ? 'bg-gray-700/70' : 'bg-gray-800/50'}
-        ${isDragging ? 'opacity-50 scale-95' : ''}
+        p-3 rounded-lg
+        ${!disabled ? 'cursor-grab active:cursor-grabbing' : 'cursor-not-allowed'}
+        ${isSelected ? 'bg-gray-700/70 ring-2 ring-blue-500' : 'bg-gray-800/50'}
         border border-gray-700
         focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900
         touch-none select-none
@@ -80,7 +93,7 @@ function DraggablePieceComponent({
         isSelected={isSelected}
         isDisabled={disabled}
       />
-    </div>
+    </motion.div>
   );
 }
 

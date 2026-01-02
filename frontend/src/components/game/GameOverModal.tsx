@@ -1,6 +1,8 @@
 'use client';
 
-import { memo, useEffect, useRef } from 'react';
+import { memo, useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence, useMotionValue, animate } from 'motion/react';
+import { modalVariants, backdropVariants, buttonVariants, staggerContainerVariants, staggerItemVariants } from '@/lib/animations';
 
 export interface GameOverModalProps {
   /** Whether the modal is open */
@@ -16,8 +18,47 @@ export interface GameOverModalProps {
 }
 
 /**
+ * Animated counter for score reveal
+ */
+function useCountUp(target: number, isActive: boolean, duration: number = 1.5) {
+  const motionValue = useMotionValue(0);
+  const [value, setValue] = useState(0);
+  const [prevTarget, setPrevTarget] = useState(target);
+  const [prevActive, setPrevActive] = useState(isActive);
+
+  // Reset when becoming inactive
+  if (!isActive && prevActive) {
+    motionValue.set(0);
+    setValue(0);
+    setPrevActive(isActive);
+  } else if (isActive !== prevActive) {
+    setPrevActive(isActive);
+  }
+
+  if (target !== prevTarget) {
+    setPrevTarget(target);
+  }
+
+  useEffect(() => {
+    if (!isActive) {
+      return;
+    }
+
+    const controls = animate(motionValue, target, {
+      duration,
+      ease: 'easeOut',
+      onUpdate: (latest) => setValue(Math.round(latest)),
+    });
+
+    return () => controls.stop();
+  }, [target, isActive, duration, motionValue]);
+
+  return value;
+}
+
+/**
  * Modal displayed when the game ends
- * Shows final score and option to play again
+ * Shows final score and option to play again with animations
  */
 function GameOverModalComponent({
   isOpen,
@@ -28,13 +69,18 @@ function GameOverModalComponent({
 }: GameOverModalProps) {
   const modalRef = useRef<HTMLDivElement>(null);
   const playAgainRef = useRef<HTMLButtonElement>(null);
+  
+  const animatedScore = useCountUp(score, isOpen, 1.5);
+  const animatedLines = useCountUp(linesCleared, isOpen, 1);
 
   // Focus trap and escape key handling
   useEffect(() => {
     if (!isOpen) return;
 
     // Focus the play again button when modal opens
-    playAgainRef.current?.focus();
+    const timer = setTimeout(() => {
+      playAgainRef.current?.focus();
+    }, 300);
 
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && onClose) {
@@ -63,82 +109,153 @@ function GameOverModalComponent({
     };
 
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="game-over-title"
-    >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/70 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-
-      {/* Modal Content */}
-      <div
-        ref={modalRef}
-        className="relative bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-8 max-w-sm w-full animate-in fade-in zoom-in-95 duration-200"
-      >
-        {/* Game Over Title */}
-        <h2
-          id="game-over-title"
-          className="text-3xl font-bold text-center text-white mb-6"
+    <AnimatePresence>
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="game-over-title"
         >
-          Game Over!
-        </h2>
+          {/* Backdrop */}
+          <motion.div
+            variants={backdropVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+            onClick={onClose}
+            aria-hidden="true"
+          />
 
-        {/* Stats */}
-        <div className="space-y-4 mb-8">
-          {/* Final Score */}
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">
-              Final Score
-            </p>
-            <p className="text-5xl font-bold text-yellow-400 tabular-nums">
-              {score.toLocaleString()}
-            </p>
-          </div>
-
-          {/* Lines Cleared */}
-          <div className="text-center">
-            <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">
-              Lines Cleared
-            </p>
-            <p className="text-2xl font-semibold text-gray-300 tabular-nums">
-              {linesCleared}
-            </p>
-          </div>
-        </div>
-
-        {/* Actions */}
-        <div className="flex flex-col gap-3">
-          <button
-            ref={playAgainRef}
-            onClick={onPlayAgain}
-            className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+          {/* Modal Content */}
+          <motion.div
+            ref={modalRef}
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            className="relative bg-gray-800 rounded-2xl shadow-2xl border border-gray-700 p-8 max-w-sm w-full overflow-hidden"
           >
-            Play Again
-          </button>
+            {/* Animated background gradient */}
+            <motion.div
+              className="absolute inset-0 opacity-20"
+              animate={{
+                background: [
+                  'radial-gradient(circle at 20% 20%, #3b82f6 0%, transparent 50%)',
+                  'radial-gradient(circle at 80% 80%, #8b5cf6 0%, transparent 50%)',
+                  'radial-gradient(circle at 20% 80%, #3b82f6 0%, transparent 50%)',
+                  'radial-gradient(circle at 80% 20%, #8b5cf6 0%, transparent 50%)',
+                  'radial-gradient(circle at 20% 20%, #3b82f6 0%, transparent 50%)',
+                ],
+              }}
+              transition={{
+                duration: 8,
+                repeat: Infinity,
+                ease: 'linear',
+              }}
+            />
 
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="w-full py-3 px-6 bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+            <motion.div
+              variants={staggerContainerVariants}
+              initial="hidden"
+              animate="visible"
+              className="relative z-10"
             >
-              Close
-            </button>
-          )}
+              {/* Game Over Title */}
+              <motion.h2
+                variants={staggerItemVariants}
+                id="game-over-title"
+                className="text-3xl font-bold text-center text-white mb-6"
+              >
+                Game Over!
+              </motion.h2>
+
+              {/* Stats */}
+              <div className="space-y-4 mb-8">
+                {/* Final Score */}
+                <motion.div 
+                  variants={staggerItemVariants}
+                  className="text-center"
+                >
+                  <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">
+                    Final Score
+                  </p>
+                  <motion.p
+                    className="text-5xl font-bold text-yellow-400 tabular-nums"
+                    animate={{
+                      textShadow: [
+                        '0 0 10px rgba(251, 191, 36, 0.3)',
+                        '0 0 20px rgba(251, 191, 36, 0.6)',
+                        '0 0 10px rgba(251, 191, 36, 0.3)',
+                      ],
+                    }}
+                    transition={{
+                      duration: 2,
+                      repeat: Infinity,
+                      ease: 'easeInOut',
+                    }}
+                  >
+                    {animatedScore.toLocaleString()}
+                  </motion.p>
+                </motion.div>
+
+                {/* Lines Cleared */}
+                <motion.div 
+                  variants={staggerItemVariants}
+                  className="text-center"
+                >
+                  <p className="text-sm font-medium text-gray-400 uppercase tracking-wider">
+                    Lines Cleared
+                  </p>
+                  <p className="text-2xl font-semibold text-gray-300 tabular-nums">
+                    {animatedLines}
+                  </p>
+                </motion.div>
+              </div>
+
+              {/* Actions */}
+              <motion.div 
+                variants={staggerItemVariants}
+                className="flex flex-col gap-3"
+              >
+                <motion.button
+                  ref={playAgainRef}
+                  variants={buttonVariants}
+                  initial="idle"
+                  whileHover="hover"
+                  whileTap="tap"
+                  onClick={onPlayAgain}
+                  className="w-full py-3 px-6 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                >
+                  Play Again
+                </motion.button>
+
+                {onClose && (
+                  <motion.button
+                    variants={buttonVariants}
+                    initial="idle"
+                    whileHover="hover"
+                    whileTap="tap"
+                    onClick={onClose}
+                    className="w-full py-3 px-6 bg-gray-700 hover:bg-gray-600 text-gray-300 font-medium rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:ring-offset-gray-800"
+                  >
+                    Close
+                  </motion.button>
+                )}
+              </motion.div>
+            </motion.div>
+          </motion.div>
         </div>
-      </div>
-    </div>
+      )}
+    </AnimatePresence>
   );
 }
 
