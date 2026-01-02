@@ -16,23 +16,37 @@ export class ApiError extends Error {
 }
 
 /**
+ * Options for API requests
+ */
+interface ApiFetchOptions extends RequestInit {
+  /** JWT token for authenticated requests */
+  token?: string | null;
+}
+
+/**
  * Generic fetch wrapper with error handling
  */
 async function apiFetch<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: ApiFetchOptions = {}
 ): Promise<T> {
+  const { token, ...fetchOptions } = options;
   const url = `${API_BASE_URL}${endpoint}`;
   
   const defaultHeaders: HeadersInit = {
     'Content-Type': 'application/json',
   };
 
+  // Add authorization header if token provided
+  if (token) {
+    defaultHeaders['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(url, {
-    ...options,
+    ...fetchOptions,
     headers: {
       ...defaultHeaders,
-      ...options.headers,
+      ...fetchOptions.headers,
     },
   });
 
@@ -61,47 +75,55 @@ async function apiFetch<T>(
 
 /**
  * Create a new game session
+ * @param token - Optional JWT token for authenticated users
  * @returns The initial game state
  */
-export async function createGame(): Promise<GameState> {
+export async function createGame(token?: string | null): Promise<GameState> {
   return apiFetch<GameState>('/api/games', {
     method: 'POST',
+    token,
   });
 }
 
 /**
  * Get an existing game by ID
  * @param id - The game session ID
+ * @param token - Optional JWT token for authenticated users
  * @returns The current game state
  */
-export async function getGame(id: string): Promise<GameState> {
-  return apiFetch<GameState>(`/api/games/${id}`);
+export async function getGame(id: string, token?: string | null): Promise<GameState> {
+  return apiFetch<GameState>(`/api/games/${id}`, { token });
 }
 
 /**
  * Place a piece on the game board
  * @param gameId - The game session ID
  * @param request - The piece placement request
+ * @param token - Optional JWT token for authenticated users
  * @returns The result of the placement including updated game state
  */
 export async function placePiece(
   gameId: string,
-  request: PlacePieceRequest
+  request: PlacePieceRequest,
+  token?: string | null
 ): Promise<PlacePieceResponse> {
   return apiFetch<PlacePieceResponse>(`/api/games/${gameId}/place`, {
     method: 'POST',
     body: JSON.stringify(request),
+    token,
   });
 }
 
 /**
  * End the current game
  * @param gameId - The game session ID
+ * @param token - Optional JWT token for authenticated users
  * @returns The final game state
  */
-export async function endGame(gameId: string): Promise<GameState> {
+export async function endGame(gameId: string, token?: string | null): Promise<GameState> {
   return apiFetch<GameState>(`/api/games/${gameId}/end`, {
     method: 'POST',
+    token,
   });
 }
 

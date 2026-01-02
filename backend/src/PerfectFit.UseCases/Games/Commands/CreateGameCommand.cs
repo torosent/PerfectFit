@@ -34,7 +34,7 @@ public class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, GameS
 
         // Create game session entity
         var session = GameSession.Create(request.UserId);
-        
+
         // Serialize and update game state
         var boardState = SerializeBoardState(state.BoardGrid);
         var piecesJson = SerializePieces(state.CurrentPieceTypes);
@@ -52,7 +52,7 @@ public class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, GameS
         var rows = grid.GetLength(0);
         var cols = grid.GetLength(1);
         var gridArray = new string?[rows][];
-        
+
         for (int i = 0; i < rows; i++)
         {
             gridArray[i] = new string?[cols];
@@ -74,15 +74,15 @@ public class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, GameS
     private static GameStateDto MapToDto(GameSession session, GameEngine engine)
     {
         var state = engine.GetState();
-        
+
         return new GameStateDto(
             Id: session.Id.ToString(),
             Grid: ConvertGrid(state.BoardGrid),
             CurrentPieces: state.CurrentPieceTypes.Select(MapPieceToDto).ToArray(),
             Score: session.Score,
             Combo: session.Combo,
-            Status: session.Status == Core.Enums.GameStatus.Playing 
-                ? GameStatusDto.Playing 
+            Status: session.Status == Core.Enums.GameStatus.Playing
+                ? GameStatusDto.Playing
                 : GameStatusDto.Ended,
             LinesCleared: session.LinesCleared
         );
@@ -93,7 +93,7 @@ public class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, GameS
         var rows = grid.GetLength(0);
         var cols = grid.GetLength(1);
         var result = new string?[rows][];
-        
+
         for (int i = 0; i < rows; i++)
         {
             result[i] = new string?[cols];
@@ -102,7 +102,7 @@ public class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, GameS
                 result[i][j] = grid[i, j];
             }
         }
-        
+
         return result;
     }
 
@@ -110,7 +110,7 @@ public class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, GameS
     {
         var piece = Piece.Create(pieceType);
         var shape = ConvertShapeToArray(piece.Shape);
-        
+
         return new PieceDto(
             Type: MapPieceType(pieceType),
             Shape: shape,
@@ -123,7 +123,7 @@ public class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, GameS
         var rows = shape.GetLength(0);
         var cols = shape.GetLength(1);
         var result = new int[rows][];
-        
+
         for (int i = 0; i < rows; i++)
         {
             result[i] = new int[cols];
@@ -132,7 +132,7 @@ public class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, GameS
                 result[i][j] = shape[i, j] ? 1 : 0;
             }
         }
-        
+
         return result;
     }
 

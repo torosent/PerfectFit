@@ -8,6 +8,7 @@ import { PieceSelector } from '@/components/game/PieceSelector';
 import { ScoreDisplay } from '@/components/game/ScoreDisplay';
 import { GameOverModal } from '@/components/game/GameOverModal';
 import { DndProvider } from '@/components/providers/DndProvider';
+import { GuestBanner } from '@/components/auth/GuestBanner';
 
 /**
  * Main game play page
@@ -107,13 +108,10 @@ export default function PlayPage() {
 
   return (
     <DndProvider>
-      <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white p-4 sm:p-8">
+      <main className="min-h-screen text-white p-4 sm:p-8">
         <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <header className="text-center mb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold mb-2">PerfectFit</h1>
-            <p className="text-gray-400">Fill lines to clear them and score points!</p>
-          </header>
+          {/* Guest Banner */}
+          <GuestBanner className="mb-6" />
 
           {/* Loading State */}
           {isLoading && !gameState && (

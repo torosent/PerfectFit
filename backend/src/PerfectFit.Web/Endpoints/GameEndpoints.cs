@@ -50,7 +50,7 @@ public static class GameEndpoints
         // TODO: Extract userId from JWT when authentication is implemented
         var command = new CreateGameCommand(UserId: null);
         var result = await mediator.Send(command, cancellationToken);
-        
+
         return Results.Created($"/api/games/{result.Id}", result);
     }
 
@@ -61,9 +61,9 @@ public static class GameEndpoints
     {
         var query = new GetGameQuery(id);
         var result = await mediator.Send(query, cancellationToken);
-        
-        return result is null 
-            ? Results.NotFound() 
+
+        return result is null
+            ? Results.NotFound()
             : Results.Ok(result);
     }
 
@@ -79,7 +79,7 @@ public static class GameEndpoints
             Row: request.Position.Row,
             Col: request.Position.Col
         );
-        
+
         var result = await mediator.Send(command, cancellationToken);
 
         if (!result.Found)
@@ -107,9 +107,9 @@ public static class GameEndpoints
     {
         var command = new EndGameCommand(id);
         var result = await mediator.Send(command, cancellationToken);
-        
-        return !result.Found 
-            ? Results.NotFound() 
+
+        return !result.Found
+            ? Results.NotFound()
             : Results.Ok(result.GameState);
     }
 }

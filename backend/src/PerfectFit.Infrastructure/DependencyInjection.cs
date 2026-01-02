@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using PerfectFit.Core.Interfaces;
 using PerfectFit.Infrastructure.Data;
 using PerfectFit.Infrastructure.Data.Repositories;
+using PerfectFit.Infrastructure.Identity;
 
 namespace PerfectFit.Infrastructure;
 
@@ -17,6 +18,13 @@ public static class DependencyInjection
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IGameSessionRepository, GameSessionRepository>();
         services.AddScoped<ILeaderboardRepository, LeaderboardRepository>();
+
+        // Configure JWT settings and service
+        services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
+        services.AddScoped<IJwtService, JwtService>();
+
+        // Configure OAuth settings
+        services.Configure<OAuthSettings>(configuration.GetSection(OAuthSettings.SectionName));
 
         return services;
     }

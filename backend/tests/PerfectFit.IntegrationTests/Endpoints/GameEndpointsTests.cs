@@ -26,7 +26,7 @@ public class GameEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Created);
-        
+
         var gameState = await response.Content.ReadFromJsonAsync<GameStateDto>();
         gameState.Should().NotBeNull();
         gameState!.Id.Should().NotBeNullOrEmpty();
@@ -50,7 +50,7 @@ public class GameEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var gameState = await response.Content.ReadFromJsonAsync<GameStateDto>();
         gameState.Should().NotBeNull();
         gameState!.Id.Should().Be(createdGame.Id);
@@ -83,12 +83,12 @@ public class GameEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         // Act
         var response = await _client.PostAsJsonAsync(
-            $"/api/games/{createdGame!.Id}/place", 
+            $"/api/games/{createdGame!.Id}/place",
             request);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var result = await response.Content.ReadFromJsonAsync<PlacePieceResponseDto>();
         result.Should().NotBeNull();
         result!.Success.Should().BeTrue();
@@ -111,7 +111,7 @@ public class GameEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         // Act
         var response = await _client.PostAsJsonAsync(
-            $"/api/games/{createdGame!.Id}/place", 
+            $"/api/games/{createdGame!.Id}/place",
             request);
 
         // Assert
@@ -130,7 +130,7 @@ public class GameEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         // Act
         var response = await _client.PostAsJsonAsync(
-            $"/api/games/{nonExistentId}/place", 
+            $"/api/games/{nonExistentId}/place",
             request);
 
         // Assert
@@ -146,12 +146,12 @@ public class GameEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         // Act
         var response = await _client.PostAsync(
-            $"/api/games/{createdGame!.Id}/end", 
+            $"/api/games/{createdGame!.Id}/end",
             null);
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var gameState = await response.Content.ReadFromJsonAsync<GameStateDto>();
         gameState.Should().NotBeNull();
         gameState!.Status.Should().Be(GameStatusDto.Ended);
@@ -165,7 +165,7 @@ public class GameEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         // Act
         var response = await _client.PostAsync(
-            $"/api/games/{nonExistentId}/end", 
+            $"/api/games/{nonExistentId}/end",
             null);
 
         // Assert
@@ -187,7 +187,7 @@ public class GameEndpointsTests : IClassFixture<CustomWebApplicationFactory>
 
         // Act
         var response = await _client.PostAsJsonAsync(
-            $"/api/games/{createdGame.Id}/place", 
+            $"/api/games/{createdGame.Id}/place",
             request);
 
         // Assert

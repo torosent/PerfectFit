@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { GameState, Position } from '@/types';
 import * as gameClient from '@/lib/api/game-client';
+import { useAuthStore } from './auth-store';
 
 /**
  * Animation state for visual feedback
@@ -107,7 +108,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ isLoading: true, error: null, selectedPieceIndex: null });
     
     try {
-      const gameState = await gameClient.createGame();
+      // Get auth token if available
+      const token = useAuthStore.getState().token;
+      const gameState = await gameClient.createGame(token);
       set({ gameState, isLoading: false });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to start new game';
@@ -119,7 +122,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ isLoading: true, error: null, selectedPieceIndex: null });
     
     try {
-      const gameState = await gameClient.getGame(id);
+      // Get auth token if available
+      const token = useAuthStore.getState().token;
+      const gameState = await gameClient.getGame(id, token);
       set({ gameState, isLoading: false });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load game';
@@ -138,10 +143,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
+      // Get auth token if available
+      const token = useAuthStore.getState().token;
       const response = await gameClient.placePiece(gameState.id, {
         pieceIndex,
         position: { row, col },
-      });
+      }, token);
 
       if (response.success) {
         set({ 
@@ -193,7 +200,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ isLoading: true, error: null });
 
     try {
-      const finalState = await gameClient.endGame(gameState.id);
+      // Get auth token if available
+      const token = useAuthStore.getState().token;
+      const finalState = await gameClient.endGame(gameState.id, token);
       set({ gameState: finalState, isLoading: false, selectedPieceIndex: null });
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to end game';

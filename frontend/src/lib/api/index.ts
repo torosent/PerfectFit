@@ -9,3 +9,14 @@ export {
   fetchGameState,
   ApiError,
 } from './game-client';
+
+export {
+  getOAuthUrl,
+  getCurrentUser,
+  refreshToken,
+  createGuestSession,
+  logout,
+  getAuthHeaders,
+  AuthError,
+  type OAuthProvider,
+} from './auth-client';
