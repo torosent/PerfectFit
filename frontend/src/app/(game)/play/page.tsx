@@ -10,21 +10,22 @@ import { ScoreDisplay } from '@/components/game/ScoreDisplay';
 import { GameOverModal } from '@/components/game/GameOverModal';
 import { DndProvider } from '@/components/providers/DndProvider';
 import { GuestBanner } from '@/components/auth/GuestBanner';
-import type { Grid, Position } from '@/types';
+import type { Grid, ClearingCell } from '@/types';
 
 /**
  * Find cells that were cleared by comparing two grids
- * Returns positions where old grid had content but new grid is empty
+ * Returns positions with their original colors for animation
  */
-function findClearedCells(oldGrid: Grid | null, newGrid: Grid): Position[] {
+function findClearedCells(oldGrid: Grid | null, newGrid: Grid): ClearingCell[] {
   if (!oldGrid) return [];
   
-  const clearedCells: Position[] = [];
+  const clearedCells: ClearingCell[] = [];
   for (let row = 0; row < 10; row++) {
     for (let col = 0; col < 10; col++) {
+      const oldValue = oldGrid[row][col];
       // Cell was filled before but is now empty = cleared
-      if (oldGrid[row][col] !== null && newGrid[row][col] === null) {
-        clearedCells.push({ row, col });
+      if (oldValue !== null && newGrid[row][col] === null) {
+        clearedCells.push({ row, col, color: oldValue });
       }
     }
   }

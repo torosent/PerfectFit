@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { GameState, Position } from '@/types';
+import type { GameState, Position, ClearingCell } from '@/types';
 import * as gameClient from '@/lib/api/game-client';
 import * as leaderboardClient from '@/lib/api/leaderboard-client';
 import { useAuthStore } from './auth-store';
@@ -18,8 +18,8 @@ export interface SubmitScoreResult {
  * Animation state for visual feedback
  */
 export interface AnimationState {
-  /** Cells currently being cleared (for clearing animation) */
-  clearingCells: Position[];
+  /** Cells currently being cleared (for clearing animation) - includes original color */
+  clearingCells: ClearingCell[];
   /** Recently placed cells (for placement animation) */
   lastPlacedCells: Position[];
   /** Points earned from last action (for popup) */
@@ -69,7 +69,7 @@ export interface GameStore {
   setDraggedPieceIndex: (index: number | null) => void;
   
   // Animation actions
-  setClearingCells: (cells: Position[]) => void;
+  setClearingCells: (cells: ClearingCell[]) => void;
   setLastPlacedCells: (cells: Position[]) => void;
   setLastPointsEarned: (points: number) => void;
   setLastCombo: (combo: number) => void;
@@ -245,7 +245,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
   },
 
   // Animation actions
-  setClearingCells: (cells: Position[]) => {
+  setClearingCells: (cells: ClearingCell[]) => {
     set((state) => ({
       animationState: {
         ...state.animationState,

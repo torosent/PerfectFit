@@ -25,6 +25,12 @@ export interface Position {
   col: number;
 }
 
+export interface ClearingCell {
+  row: number;
+  col: number;
+  color: string;
+}
+
 export interface GameState {
   id: string;
   grid: Grid;

@@ -6,21 +6,21 @@ import type { Variants, Transition } from 'motion/react';
 export const cellVariants: Variants = {
   empty: { 
     scale: 1, 
-    opacity: 0.3,
+    opacity: 1,
   },
   filled: { 
     scale: 1, 
     opacity: 1,
   },
   clearing: {
-    scale: [1, 1.3, 1.1, 0],
-    opacity: [1, 1, 1, 0],
+    scale: [1, 1.3, 1.1, 1],
+    opacity: [1, 1, 0.5, 1],
     rotate: [0, 0, 180, 360],
     filter: [
       'brightness(1) hue-rotate(0deg)',
       'brightness(2) hue-rotate(90deg)',
       'brightness(2.5) hue-rotate(180deg)',
-      'brightness(0) hue-rotate(360deg)',
+      'brightness(1) hue-rotate(360deg)',
     ],
     boxShadow: [
       '0 0 0px rgba(255,255,255,0)',

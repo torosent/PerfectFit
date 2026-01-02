@@ -3,7 +3,7 @@
 import { memo, useMemo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { motion, AnimatePresence } from 'motion/react';
-import type { Grid, Piece, Position } from '@/types';
+import type { Grid, Piece, Position, ClearingCell } from '@/types';
 import { AnimatedCell } from './AnimatedCell';
 import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
 
@@ -22,8 +22,8 @@ export interface DroppableBoardProps {
   draggedPiece: Piece | null;
   /** Additional highlighted cells (from click-to-place flow) */
   highlightedCells?: HighlightedCell[];
-  /** Cells currently being cleared (for animation) */
-  clearingCells?: Position[];
+  /** Cells currently being cleared (for animation) - includes original colors */
+  clearingCells?: ClearingCell[];
   /** Recently placed cells (for animation) */
   lastPlacedCells?: Position[];
   /** Callback when a cell is clicked */
@@ -197,12 +197,13 @@ function DroppableBoardComponent({
     return map;
   }, [highlightedCells, dragPreviewCells]);
 
+  // Map for clearing cells - includes the original color for animation
   const clearingMap = useMemo(() => {
-    const set = new Set<string>();
-    clearingCells.forEach(({ row, col }) => {
-      set.add(`${row}-${col}`);
+    const map = new Map<string, string>();
+    clearingCells.forEach(({ row, col, color }) => {
+      map.set(`${row}-${col}`, color);
     });
-    return set;
+    return map;
   }, [clearingCells]);
 
   const placedMap = useMemo(() => {
@@ -261,7 +262,8 @@ function DroppableBoardComponent({
             const highlight = highlightMap.get(key);
             const isHighlighted = highlight !== undefined;
             const isPreview = highlight?.isPreview ?? false;
-            const isClearing = clearingMap.has(key);
+            const clearingColor = clearingMap.get(key);
+            const isClearing = clearingColor !== undefined;
             const placedIndex = placedMap.get(key);
             const isRecentlyPlaced = placedIndex !== undefined;
 
@@ -281,6 +283,7 @@ function DroppableBoardComponent({
                   isHighlighted={isHighlighted}
                   isValidPlacement={highlight?.isValid ?? true}
                   isClearing={isClearing}
+                  clearingColor={clearingColor}
                   isRecentlyPlaced={isRecentlyPlaced}
                   placedIndex={placedIndex ?? 0}
                   onClick={!disabled ? onCellClick : undefined}

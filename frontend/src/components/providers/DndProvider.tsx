@@ -11,7 +11,7 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import type { Piece, Grid } from '@/types';
+import type { Piece, Grid, ClearingCell } from '@/types';
 import { useGameStore } from '@/lib/stores/game-store';
 import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
 import { PieceDisplay } from '@/components/game/PieceDisplay';
@@ -27,15 +27,17 @@ export interface DndProviderProps {
 
 /**
  * Find cells that were cleared by comparing two grids
+ * Returns positions with their original colors for animation
  */
-function findClearedCells(oldGrid: Grid | null, newGrid: Grid): { row: number; col: number }[] {
+function findClearedCells(oldGrid: Grid | null, newGrid: Grid): ClearingCell[] {
   if (!oldGrid) return [];
   
-  const clearedCells: { row: number; col: number }[] = [];
+  const clearedCells: ClearingCell[] = [];
   for (let row = 0; row < 10; row++) {
     for (let col = 0; col < 10; col++) {
-      if (oldGrid[row][col] !== null && newGrid[row][col] === null) {
-        clearedCells.push({ row, col });
+      const oldValue = oldGrid[row][col];
+      if (oldValue !== null && newGrid[row][col] === null) {
+        clearedCells.push({ row, col, color: oldValue });
       }
     }
   }

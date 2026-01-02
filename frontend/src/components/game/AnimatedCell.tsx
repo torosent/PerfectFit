@@ -18,6 +18,8 @@ export interface AnimatedCellProps {
   isValidPlacement?: boolean;
   /** Whether this cell is currently being cleared */
   isClearing?: boolean;
+  /** The original color of the cell being cleared (for animation) */
+  clearingColor?: string;
   /** Whether this cell was recently placed */
   isRecentlyPlaced?: boolean;
   /** Index within the placed piece (for stagger animation) */
@@ -81,11 +83,14 @@ function AnimatedCellComponent({
   isHighlighted = false,
   isValidPlacement = true,
   isClearing = false,
+  clearingColor,
   isRecentlyPlaced = false,
   placedIndex = 0,
   onClick,
 }: AnimatedCellProps) {
-  const isEmpty = value === null;
+  // Use the clearing color during animation, otherwise use the current value
+  const displayColor = isClearing ? clearingColor : value;
+  const isEmpty = displayColor === null || displayColor === undefined;
   const isClickable = onClick !== undefined;
 
   const handleClick = () => {
@@ -103,7 +108,7 @@ function AnimatedCellComponent({
   // Build class names
   const baseClasses = 'aspect-square rounded-sm border relative overflow-visible';
   
-  const stateClasses = isEmpty
+  const stateClasses = isEmpty && !isClearing
     ? 'bg-gray-800/50 border-gray-700/50'
     : 'border-white/20';
 
@@ -137,12 +142,12 @@ function AnimatedCellComponent({
       }}
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
-      aria-label={`Cell ${row + 1}, ${col + 1}${isEmpty ? ' (empty)' : ' (filled)'}`}
+      aria-label={`Cell ${row + 1}, ${col + 1}${isEmpty && !isClearing ? ' (empty)' : ' (filled)'}`}
       className={className}
       style={{
-        backgroundColor: !isEmpty && !isClearing ? value : undefined,
+        backgroundColor: !isEmpty ? displayColor : undefined,
         // CSS custom property for clearing animation
-        '--cell-color': value || 'transparent',
+        '--cell-color': displayColor || 'transparent',
       } as React.CSSProperties}
       onClick={isClickable ? handleClick : undefined}
       onKeyDown={isClickable ? (e) => {
@@ -162,7 +167,7 @@ function AnimatedCellComponent({
             <motion.div
               className="absolute inset-0 rounded-sm pointer-events-none"
               style={{
-                backgroundColor: value || 'white',
+                backgroundColor: displayColor || 'white',
               }}
               initial={{ scale: 1, opacity: 1 }}
               animate={{
@@ -183,7 +188,7 @@ function AnimatedCellComponent({
               animate={{
                 opacity: [0, 1, 0],
                 background: [
-                  `radial-gradient(circle, white 0%, ${value || 'white'} 100%)`,
+                  `radial-gradient(circle, white 0%, ${displayColor || 'white'} 100%)`,
                   `radial-gradient(circle, white 0%, transparent 100%)`,
                   'transparent',
                 ],
@@ -196,7 +201,7 @@ function AnimatedCellComponent({
             />
             
             {/* Sparkle particles */}
-            <ClearingSparkles delay={clearingDelay} color={value || 'white'} />
+            <ClearingSparkles delay={clearingDelay} color={displayColor || 'white'} />
           </>
         )}
       </AnimatePresence>
