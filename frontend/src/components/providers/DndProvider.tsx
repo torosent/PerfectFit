@@ -236,29 +236,31 @@ export function DndProvider({ children }: DndProviderProps) {
   }, [setDraggedPieceIndex, setHoverPosition]);
 
   return (
-    <DndContext
-      sensors={sensors}
-      onDragStart={handleDragStart}
-      onDragMove={handleDragMove}
-      onDragEnd={handleDragEnd}
-      onDragCancel={handleDragCancel}
-    >
-      {children}
+    <div className="touch-none select-none">
+      <DndContext
+        sensors={sensors}
+        onDragStart={handleDragStart}
+        onDragMove={handleDragMove}
+        onDragEnd={handleDragEnd}
+        onDragCancel={handleDragCancel}
+      >
+        {children}
       
-      {/* Drag overlay shows the piece being dragged */}
-      <DragOverlay dropAnimation={null}>
-        {draggedPiece && (
-          <div className="opacity-80 scale-110 pointer-events-none">
-            <PieceDisplay
-              piece={draggedPiece}
-              cellSize={20}
-              isSelected={false}
-              isDisabled={false}
-            />
-          </div>
-        )}
-      </DragOverlay>
-    </DndContext>
+        {/* Drag overlay shows the piece being dragged */}
+        <DragOverlay dropAnimation={null}>
+          {draggedPiece && (
+            <div className="opacity-80 scale-110 pointer-events-none">
+              <PieceDisplay
+                piece={draggedPiece}
+                cellSize={20}
+                isSelected={false}
+                isDisabled={false}
+              />
+            </div>
+          )}
+        </DragOverlay>
+      </DndContext>
+    </div>
   );
 }
 

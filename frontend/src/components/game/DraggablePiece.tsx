@@ -47,12 +47,20 @@ function DraggablePieceComponent({
     disabled,
   });
 
-  // Apply transform during drag
+  // Apply transform during drag merged with base styles
+  const baseStyles = {
+    backgroundColor: isSelected ? 'rgba(20, 184, 166, 0.15)' : 'rgba(10, 25, 41, 0.5)',
+    borderWidth: 1,
+    borderStyle: 'solid' as const,
+    borderColor: isSelected ? 'rgba(20, 184, 166, 0.5)' : 'rgba(20, 184, 166, 0.2)',
+  };
+
   const style = transform
     ? {
+        ...baseStyles,
         transform: CSS.Translate.toString(transform),
       }
-    : undefined;
+    : baseStyles;
 
   // Determine animation state
   const getAnimationState = () => {
@@ -80,12 +88,6 @@ function DraggablePieceComponent({
         focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2
         touch-none select-none
       `}
-      style={{
-        backgroundColor: isSelected ? 'rgba(20, 184, 166, 0.15)' : 'rgba(10, 25, 41, 0.5)',
-        borderWidth: 1,
-        borderStyle: 'solid',
-        borderColor: isSelected ? 'rgba(20, 184, 166, 0.5)' : 'rgba(20, 184, 166, 0.2)'
-      }}
       role="button"
       tabIndex={disabled ? -1 : 0}
       aria-label={`Drag ${piece.type} piece to place on board`}
