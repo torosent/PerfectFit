@@ -1,0 +1,6 @@
+@PerfectFit.Web_HostAddress = http://localhost:5056
+
+GET {{PerfectFit.Web_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
