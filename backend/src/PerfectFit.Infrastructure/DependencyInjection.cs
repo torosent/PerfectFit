@@ -14,8 +14,21 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
+        var databaseProvider = configuration.GetValue<string>("DatabaseProvider") ?? "PostgreSQL";
+        
         services.AddDbContext<AppDbContext>(options =>
-            options.UseNpgsql(configuration.GetConnectionString("DefaultConnection")));
+        {
+            if (databaseProvider.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
+            {
+                var sqliteConnection = configuration.GetConnectionString("SqliteConnection") 
+                    ?? "Data Source=perfectfit.db";
+                options.UseSqlite(sqliteConnection);
+            }
+            else
+            {
+                options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"));
+            }
+        });
 
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IGameSessionRepository, GameSessionRepository>();

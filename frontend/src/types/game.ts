@@ -31,7 +31,7 @@ export interface GameState {
   currentPieces: Piece[];
   score: number;
   combo: number;
-  status: 'playing' | 'ended';
+  status: 'Playing' | 'Ended';
   linesCleared: number;
 }
 
@@ -46,6 +46,8 @@ export interface PlacePieceResponse {
   linesCleared: number;
   pointsEarned: number;
   isGameOver: boolean;
+  piecesRemainingInTurn: number;
+  newTurnStarted: boolean;
 }
 
 export interface LeaderboardEntry {

@@ -116,12 +116,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // Computed helpers
   isGameOver: () => {
     const state = get().gameState;
-    return state?.status === 'ended';
+    return state?.status === 'Ended';
   },
 
   canPlay: () => {
     const { gameState, isLoading } = get();
-    return gameState !== null && gameState.status === 'playing' && !isLoading;
+    return gameState !== null && gameState.status === 'Playing' && !isLoading;
   },
 
   // Actions
@@ -300,7 +300,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
     const { token, isAuthenticated } = useAuthStore.getState();
     
     // Can only submit if authenticated and game is over
-    if (!gameState || gameState.status !== 'ended' || !isAuthenticated || !token) {
+    if (!gameState || gameState.status !== 'Ended' || !isAuthenticated || !token) {
       return;
     }
 
@@ -344,6 +344,7 @@ export const useIsLoading = () => useGameStore((state) => state.isLoading);
 export const useGameError = () => useGameStore((state) => state.error);
 export const useHoverPosition = () => useGameStore((state) => state.hoverPosition);
 export const useDraggedPieceIndex = () => useGameStore((state) => state.draggedPieceIndex);
+export const usePiecesRemainingInTurn = () => useGameStore((state) => state.gameState?.currentPieces.length ?? 0);
 
 // Animation state selectors
 export const useAnimationState = () => useGameStore((state) => state.animationState);

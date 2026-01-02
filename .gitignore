@@ -51,6 +51,7 @@ obj/
 
 # Database
 *.db
+*.db-*
 *.sqlite
 
 # Secrets

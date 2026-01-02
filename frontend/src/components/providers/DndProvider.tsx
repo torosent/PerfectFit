@@ -11,9 +11,9 @@ import {
   type DragStartEvent,
   type DragEndEvent,
 } from '@dnd-kit/core';
-import type { Piece } from '@/types';
+import type { Piece, Grid } from '@/types';
 import { useGameStore } from '@/lib/stores/game-store';
-import { canPlacePiece } from '@/lib/game-logic/pieces';
+import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
 import { PieceDisplay } from '@/components/game/PieceDisplay';
 
 interface DragData {
@@ -23,6 +23,23 @@ interface DragData {
 
 export interface DndProviderProps {
   children: React.ReactNode;
+}
+
+/**
+ * Find cells that were cleared by comparing two grids
+ */
+function findClearedCells(oldGrid: Grid | null, newGrid: Grid): { row: number; col: number }[] {
+  if (!oldGrid) return [];
+  
+  const clearedCells: { row: number; col: number }[] = [];
+  for (let row = 0; row < 10; row++) {
+    for (let col = 0; col < 10; col++) {
+      if (oldGrid[row][col] !== null && newGrid[row][col] === null) {
+        clearedCells.push({ row, col });
+      }
+    }
+  }
+  return clearedCells;
 }
 
 /**
@@ -39,10 +56,15 @@ export function DndProvider({ children }: DndProviderProps) {
     placePiece, 
     setHoverPosition, 
     setDraggedPieceIndex,
+    setClearingCells,
+    setLastPlacedCells,
+    clearAnimationState,
   } = useGameStore();
 
   // Track pointer position for grid calculations
   const pointerPositionRef = useRef<{ x: number; y: number } | null>(null);
+  // Track grid before placement for animation detection
+  const prevGridRef = useRef<Grid | null>(null);
 
   // Configure sensors for both mouse and touch
   const sensors = useSensors(
@@ -141,19 +163,55 @@ export function DndProvider({ children }: DndProviderProps) {
     const { over } = event;
     
     // Get the final hover position from store
-    const { hoverPosition } = useGameStore.getState();
+    const { hoverPosition, gameState: currentGameState } = useGameStore.getState();
     
     // Attempt to place piece if dropped over board with valid position
     if (
       over?.id === 'game-board' && 
       draggedPieceIndex !== null && 
       hoverPosition &&
-      gameState &&
+      currentGameState &&
       draggedPiece
     ) {
       // Check if placement is valid
-      if (canPlacePiece(gameState.grid, draggedPiece, hoverPosition.row, hoverPosition.col)) {
-        await placePiece(draggedPieceIndex, hoverPosition.row, hoverPosition.col);
+      if (canPlacePiece(currentGameState.grid, draggedPiece, hoverPosition.row, hoverPosition.col)) {
+        // Store grid before placement for animation comparison
+        prevGridRef.current = currentGameState.grid.map(r => [...r]);
+        
+        // Get the cells that will be placed (for animation)
+        const placedCells = getPieceCells(draggedPiece, hoverPosition.row, hoverPosition.col);
+        
+        // Place the piece
+        const success = await placePiece(draggedPieceIndex, hoverPosition.row, hoverPosition.col);
+        
+        if (success) {
+          // Trigger placed animation
+          setLastPlacedCells(placedCells);
+          
+          // Check for cleared cells after a small delay to let state update
+          setTimeout(() => {
+            const { gameState: newGameState } = useGameStore.getState();
+            if (newGameState && prevGridRef.current) {
+              const clearedCells = findClearedCells(prevGridRef.current, newGameState.grid);
+              
+              if (clearedCells.length > 0) {
+                setClearingCells(clearedCells);
+                
+                // Clear animation state after animation completes
+                setTimeout(() => {
+                  clearAnimationState();
+                }, 700);
+              } else {
+                // Clear placed animation after it completes
+                setTimeout(() => {
+                  clearAnimationState();
+                }, 400);
+              }
+              
+              prevGridRef.current = null;
+            }
+          }, 50);
+        }
       }
     }
     
@@ -164,7 +222,7 @@ export function DndProvider({ children }: DndProviderProps) {
     setHoverPosition(null);
     setIsDragging(false);
     pointerPositionRef.current = null;
-  }, [draggedPieceIndex, draggedPiece, gameState, placePiece, setDraggedPieceIndex, setHoverPosition]);
+  }, [draggedPieceIndex, draggedPiece, placePiece, setDraggedPieceIndex, setHoverPosition, setLastPlacedCells, setClearingCells, clearAnimationState]);
 
   const handleDragCancel = useCallback(() => {
     setDraggedPiece(null);

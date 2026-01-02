@@ -9,6 +9,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace PerfectFit.IntegrationTests;
 
@@ -21,6 +23,15 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     
     // Use the same JWT secret as in appsettings.json
     private const string JwtSecret = "your-256-bit-secret-key-here-minimum-32-characters-long-for-security";
+
+    /// <summary>
+    /// JSON serializer options that match the server configuration.
+    /// </summary>
+    public static JsonSerializerOptions JsonOptions { get; } = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter() }
+    };
 
     public CustomWebApplicationFactory()
     {

@@ -2,7 +2,7 @@
 
 import { memo, useMemo } from 'react';
 import { useDroppable } from '@dnd-kit/core';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import type { Grid, Piece, Position } from '@/types';
 import { AnimatedCell } from './AnimatedCell';
 import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
@@ -30,6 +30,90 @@ export interface DroppableBoardProps {
   onCellClick?: (row: number, col: number) => void;
   /** Whether the board is disabled (non-interactive) */
   disabled?: boolean;
+}
+
+/**
+ * Shockwave effect component for cleared lines
+ */
+function LineShockwave({ 
+  type, 
+  index, 
+  delay 
+}: { 
+  type: 'row' | 'column'; 
+  index: number; 
+  delay: number;
+}) {
+  const isRow = type === 'row';
+  
+  return (
+    <motion.div
+      className="absolute pointer-events-none z-30"
+      style={{
+        ...(isRow ? {
+          left: 0,
+          right: 0,
+          top: `${index * 10}%`,
+          height: '10%',
+        } : {
+          top: 0,
+          bottom: 0,
+          left: `${index * 10}%`,
+          width: '10%',
+        }),
+      }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: [0, 1, 0] }}
+      transition={{ duration: 0.5, delay }}
+    >
+      {/* Sweeping light effect */}
+      <motion.div
+        className="absolute inset-0"
+        style={{
+          background: isRow 
+            ? 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.9) 45%, white 50%, rgba(255,255,255,0.9) 55%, transparent 100%)'
+            : 'linear-gradient(180deg, transparent 0%, rgba(255,255,255,0.9) 45%, white 50%, rgba(255,255,255,0.9) 55%, transparent 100%)',
+        }}
+        initial={{ 
+          [isRow ? 'x' : 'y']: '-100%',
+          opacity: 0,
+        }}
+        animate={{ 
+          [isRow ? 'x' : 'y']: '200%',
+          opacity: [0, 1, 1, 0],
+        }}
+        transition={{ 
+          duration: 0.4, 
+          delay,
+          ease: 'easeOut',
+        }}
+      />
+      
+      {/* Glow trail */}
+      <motion.div
+        className="absolute inset-0"
+        style={{
+          background: isRow
+            ? 'linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.5), rgba(236, 72, 153, 0.5), transparent)'
+            : 'linear-gradient(180deg, transparent, rgba(59, 130, 246, 0.5), rgba(139, 92, 246, 0.5), rgba(236, 72, 153, 0.5), transparent)',
+          filter: 'blur(4px)',
+        }}
+        initial={{ 
+          [isRow ? 'x' : 'y']: '-100%',
+          opacity: 0,
+        }}
+        animate={{ 
+          [isRow ? 'x' : 'y']: '200%',
+          opacity: [0, 0.8, 0.8, 0],
+        }}
+        transition={{ 
+          duration: 0.5, 
+          delay,
+          ease: 'easeOut',
+        }}
+      />
+    </motion.div>
+  );
 }
 
 /**
@@ -75,6 +159,29 @@ function DroppableBoardComponent({
       }));
   }, [grid, hoverPosition, draggedPiece]);
 
+  // Calculate which rows and columns are being cleared for shockwave effect
+  const clearingLines = useMemo(() => {
+    if (clearingCells.length === 0) return { rows: [], columns: [] };
+    
+    const rowCounts = new Map<number, number>();
+    const colCounts = new Map<number, number>();
+    
+    clearingCells.forEach(({ row, col }) => {
+      rowCounts.set(row, (rowCounts.get(row) || 0) + 1);
+      colCounts.set(col, (colCounts.get(col) || 0) + 1);
+    });
+    
+    // A complete row/column has 10 cells
+    const rows = Array.from(rowCounts.entries())
+      .filter(([, count]) => count >= 10)
+      .map(([row]) => row);
+    const columns = Array.from(colCounts.entries())
+      .filter(([, count]) => count >= 10)
+      .map(([col]) => col);
+    
+    return { rows, columns };
+  }, [clearingCells]);
+
   // Create maps for quick lookup
   const highlightMap = useMemo(() => {
     const map = new Map<string, { isValid: boolean; isPreview: boolean }>();
@@ -110,7 +217,7 @@ function DroppableBoardComponent({
     <motion.div
       ref={setNodeRef}
       className={`
-        bg-gray-900 p-2 sm:p-3 rounded-xl shadow-2xl border border-gray-700
+        relative bg-gray-900 p-2 sm:p-3 rounded-xl shadow-2xl border border-gray-700
         transition-all duration-150
         ${isOver ? 'ring-2 ring-blue-500 ring-opacity-50' : ''}
       `}
@@ -120,8 +227,28 @@ function DroppableBoardComponent({
       role="grid"
       aria-label="Game board - drop pieces here"
     >
+      {/* Line clearing shockwave effects */}
+      <AnimatePresence>
+        {clearingLines.rows.map((row, i) => (
+          <LineShockwave 
+            key={`row-${row}`} 
+            type="row" 
+            index={row} 
+            delay={i * 0.1}
+          />
+        ))}
+        {clearingLines.columns.map((col, i) => (
+          <LineShockwave 
+            key={`col-${col}`} 
+            type="column" 
+            index={col} 
+            delay={clearingLines.rows.length * 0.1 + i * 0.1}
+          />
+        ))}
+      </AnimatePresence>
+
       <div
-        className="grid grid-cols-10 gap-0.5 sm:gap-1"
+        className="grid grid-cols-10 gap-0.5 sm:gap-1 relative z-10"
         style={{
           // Ensure consistent sizing across devices
           width: 'min(90vw, 400px)',

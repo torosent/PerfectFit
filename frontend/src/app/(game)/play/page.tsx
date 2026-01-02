@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useCallback, useState, useMemo } from 'react';
-import { useGameStore, useLastSubmitResult, useIsSubmittingScore } from '@/lib/stores/game-store';
+import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
+import { useGameStore, useLastSubmitResult, useIsSubmittingScore, useClearingCells, useLastPlacedCells } from '@/lib/stores/game-store';
 import { useIsAuthenticated } from '@/lib/stores/auth-store';
 import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
 import { DroppableBoard, type HighlightedCell } from '@/components/game/DroppableBoard';
@@ -10,6 +10,26 @@ import { ScoreDisplay } from '@/components/game/ScoreDisplay';
 import { GameOverModal } from '@/components/game/GameOverModal';
 import { DndProvider } from '@/components/providers/DndProvider';
 import { GuestBanner } from '@/components/auth/GuestBanner';
+import type { Grid, Position } from '@/types';
+
+/**
+ * Find cells that were cleared by comparing two grids
+ * Returns positions where old grid had content but new grid is empty
+ */
+function findClearedCells(oldGrid: Grid | null, newGrid: Grid): Position[] {
+  if (!oldGrid) return [];
+  
+  const clearedCells: Position[] = [];
+  for (let row = 0; row < 10; row++) {
+    for (let col = 0; col < 10; col++) {
+      // Cell was filled before but is now empty = cleared
+      if (oldGrid[row][col] !== null && newGrid[row][col] === null) {
+        clearedCells.push({ row, col });
+      }
+    }
+  }
+  return clearedCells;
+}
 
 /**
  * Main game play page
@@ -30,13 +50,21 @@ export default function PlayPage() {
     setHoverPosition,
     submitScoreToLeaderboard,
     clearSubmitResult,
+    setClearingCells,
+    setLastPlacedCells,
+    clearAnimationState,
   } = useGameStore();
 
   const isAuthenticated = useIsAuthenticated();
   const lastSubmitResult = useLastSubmitResult();
   const isSubmittingScore = useIsSubmittingScore();
+  const clearingCells = useClearingCells();
+  const lastPlacedCells = useLastPlacedCells();
 
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
+  
+  // Track previous grid for detecting cleared cells
+  const prevGridRef = useRef<Grid | null>(null);
 
   // Start a new game on mount
   useEffect(() => {
@@ -85,18 +113,57 @@ export default function PlayPage() {
 
       // Check if placement is valid before attempting
       if (canPlacePiece(gameState.grid, piece, row, col)) {
-        await placePiece(selectedPieceIndex, row, col);
-        setHoveredCell(null);
+        // Store grid before placement for animation comparison
+        prevGridRef.current = gameState.grid.map(r => [...r]);
+        
+        // Get the cells that will be placed (for animation)
+        const placedCells = getPieceCells(piece, row, col);
+        
+        // Place the piece
+        const success = await placePiece(selectedPieceIndex, row, col);
+        
+        if (success) {
+          // Trigger placed animation
+          setLastPlacedCells(placedCells);
+          setHoveredCell(null);
+        }
       }
     },
-    [gameState, selectedPieceIndex, placePiece]
+    [gameState, selectedPieceIndex, placePiece, setLastPlacedCells]
   );
+
+  // Detect cleared cells when grid changes
+  useEffect(() => {
+    if (gameState?.grid && prevGridRef.current) {
+      const clearedCells = findClearedCells(prevGridRef.current, gameState.grid);
+      
+      if (clearedCells.length > 0) {
+        // Trigger clearing animation
+        setClearingCells(clearedCells);
+        
+        // Clear animation state after animation completes
+        const animationDuration = 700; // Match animation duration
+        setTimeout(() => {
+          clearAnimationState();
+        }, animationDuration);
+      } else {
+        // Clear placed animation after it completes
+        setTimeout(() => {
+          clearAnimationState();
+        }, 400);
+      }
+      
+      // Reset ref after processing
+      prevGridRef.current = null;
+    }
+  }, [gameState?.grid, setClearingCells, clearAnimationState]);
 
   // Handle play again
   const handlePlayAgain = useCallback(() => {
     clearSubmitResult();
+    clearAnimationState();
     startNewGame();
-  }, [clearSubmitResult, startNewGame]);
+  }, [clearSubmitResult, clearAnimationState, startNewGame]);
 
   // Clear error after display
   useEffect(() => {
@@ -106,7 +173,7 @@ export default function PlayPage() {
     }
   }, [error, clearError]);
 
-  const isGameOver = gameState?.status === 'ended';
+  const isGameOver = gameState?.status === 'Ended';
 
   // Submit score when game ends and user is authenticated
   useEffect(() => {
@@ -176,6 +243,8 @@ export default function PlayPage() {
                   hoverPosition={hoverPosition}
                   draggedPiece={draggedPiece}
                   highlightedCells={highlightedCells}
+                  clearingCells={clearingCells}
+                  lastPlacedCells={lastPlacedCells}
                   onCellClick={handleCellClick}
                   disabled={isGameOver || isLoading}
                 />

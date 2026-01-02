@@ -1,7 +1,7 @@
 'use client';
 
-import { memo } from 'react';
-import { motion } from 'motion/react';
+import { memo, useMemo } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import type { CellValue } from '@/types';
 import { cellVariants, getClearingDelay, getPlacedDelay } from '@/lib/animations';
 
@@ -24,6 +24,50 @@ export interface AnimatedCellProps {
   placedIndex?: number;
   /** Click handler for the cell */
   onClick?: (row: number, col: number) => void;
+}
+
+/**
+ * Generate sparkle particles for clearing animation
+ */
+function ClearingSparkles({ delay, color }: { delay: number; color: string }) {
+  const sparkles = useMemo(() => {
+    return Array.from({ length: 5 }, (_, i) => ({
+      id: i,
+      x: (Math.random() - 0.5) * 30,
+      y: -Math.random() * 40 - 10,
+      scale: 0.5 + Math.random() * 0.5,
+      delay: delay + i * 0.05,
+    }));
+  }, [delay]);
+
+  return (
+    <>
+      {sparkles.map((sparkle) => (
+        <motion.div
+          key={sparkle.id}
+          className="absolute w-1 h-1 rounded-full pointer-events-none"
+          style={{
+            backgroundColor: color || 'white',
+            left: '50%',
+            top: '50%',
+            boxShadow: `0 0 4px ${color || 'white'}, 0 0 8px ${color || 'white'}`,
+          }}
+          initial={{ scale: 0, x: 0, y: 0, opacity: 0 }}
+          animate={{
+            scale: [0, sparkle.scale * 2, 0],
+            x: sparkle.x,
+            y: sparkle.y,
+            opacity: [0, 1, 0],
+          }}
+          transition={{
+            duration: 0.6,
+            delay: sparkle.delay,
+            ease: 'easeOut',
+          }}
+        />
+      ))}
+    </>
+  );
 }
 
 /**
@@ -57,7 +101,7 @@ function AnimatedCellComponent({
   };
 
   // Build class names
-  const baseClasses = 'aspect-square rounded-sm border';
+  const baseClasses = 'aspect-square rounded-sm border relative overflow-visible';
   
   const stateClasses = isEmpty
     ? 'bg-gray-800/50 border-gray-700/50'
@@ -79,7 +123,7 @@ function AnimatedCellComponent({
 
   const className = `${baseClasses} ${stateClasses} ${highlightClasses} ${interactiveClasses} ${clearingClasses}`;
 
-  // Animation delay for staggered effects
+  // Animation delay for staggered effects - wave sweeps across the line
   const clearingDelay = isClearing ? getClearingDelay(row, col) : 0;
   const placedDelay = isRecentlyPlaced ? getPlacedDelay(placedIndex) : 0;
 
@@ -109,7 +153,54 @@ function AnimatedCellComponent({
       } : undefined}
       whileHover={isClickable ? { scale: 1.05 } : undefined}
       whileTap={isClickable ? { scale: 0.95 } : undefined}
-    />
+    >
+      {/* Clearing animation effects */}
+      <AnimatePresence>
+        {isClearing && (
+          <>
+            {/* Glow ring effect */}
+            <motion.div
+              className="absolute inset-0 rounded-sm pointer-events-none"
+              style={{
+                backgroundColor: value || 'white',
+              }}
+              initial={{ scale: 1, opacity: 1 }}
+              animate={{
+                scale: [1, 1.5, 2],
+                opacity: [0.8, 0.4, 0],
+              }}
+              transition={{
+                duration: 0.5,
+                delay: clearingDelay,
+                ease: 'easeOut',
+              }}
+            />
+            
+            {/* Inner flash */}
+            <motion.div
+              className="absolute inset-0 rounded-sm pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{
+                opacity: [0, 1, 0],
+                background: [
+                  `radial-gradient(circle, white 0%, ${value || 'white'} 100%)`,
+                  `radial-gradient(circle, white 0%, transparent 100%)`,
+                  'transparent',
+                ],
+              }}
+              transition={{
+                duration: 0.4,
+                delay: clearingDelay + 0.1,
+                ease: 'easeOut',
+              }}
+            />
+            
+            {/* Sparkle particles */}
+            <ClearingSparkles delay={clearingDelay} color={value || 'white'} />
+          </>
+        )}
+      </AnimatePresence>
+    </motion.div>
   );
 }
 

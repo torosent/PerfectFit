@@ -12,13 +12,17 @@ namespace PerfectFit.Core.GameLogic;
 /// <param name="NewCombo">The new combo count after this placement.</param>
 /// <param name="IsGameOver">Whether the game is over after this placement.</param>
 /// <param name="ClearResult">Details about which lines were cleared, if any.</param>
+/// <param name="PiecesRemainingInTurn">Number of pieces left to place in current turn.</param>
+/// <param name="NewTurnStarted">Whether a new turn started (all 3 pieces placed).</param>
 public record PlacementResult(
     bool Success,
     int PointsEarned,
     int LinesCleared,
     int NewCombo,
     bool IsGameOver,
-    ClearResult? ClearResult);
+    ClearResult? ClearResult,
+    int PiecesRemainingInTurn = 3,
+    bool NewTurnStarted = false);
 
 /// <summary>
 /// Represents the complete state of a game for persistence.

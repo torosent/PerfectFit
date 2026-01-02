@@ -164,8 +164,13 @@ public sealed class GameEngine
             Combo = 0;
         }
 
-        // Draw new piece to replace the one used
-        DrawPieces(1);
+        // Only draw new pieces when all 3 pieces have been placed (turn complete)
+        bool newTurnStarted = false;
+        if (_currentPieces.Count == 0)
+        {
+            DrawPieces(PieceHandSize);
+            newTurnStarted = true;
+        }
 
         // Check if game is over
         IsGameOver = CheckGameOver();
@@ -176,7 +181,9 @@ public sealed class GameEngine
             LinesCleared: linesCleared,
             NewCombo: Combo,
             IsGameOver: IsGameOver,
-            ClearResult: linesCleared > 0 ? clearResult : null);
+            ClearResult: linesCleared > 0 ? clearResult : null,
+            PiecesRemainingInTurn: _currentPieces.Count,
+            NewTurnStarted: newTurnStarted);
     }
 
     /// <summary>

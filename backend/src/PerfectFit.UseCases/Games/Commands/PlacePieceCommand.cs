@@ -70,7 +70,9 @@ public class PlacePieceCommandHandler : IRequestHandler<PlacePieceCommand, Place
                     GameState: MapToDto(session, engine),
                     LinesCleared: 0,
                     PointsEarned: 0,
-                    IsGameOver: engine.IsGameOver
+                    IsGameOver: engine.IsGameOver,
+                    PiecesRemainingInTurn: engine.CurrentPieces.Count,
+                    NewTurnStarted: false
                 )
             );
         }
@@ -99,7 +101,9 @@ public class PlacePieceCommandHandler : IRequestHandler<PlacePieceCommand, Place
                 GameState: MapToDto(session, engine),
                 LinesCleared: placementResult.LinesCleared,
                 PointsEarned: placementResult.PointsEarned,
-                IsGameOver: placementResult.IsGameOver
+                IsGameOver: placementResult.IsGameOver,
+                PiecesRemainingInTurn: placementResult.PiecesRemainingInTurn,
+                NewTurnStarted: placementResult.NewTurnStarted
             )
         );
     }

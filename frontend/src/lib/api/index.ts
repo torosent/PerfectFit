@@ -1,5 +1,5 @@
 // API client utilities
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5050';
 
 export {
   createGame,

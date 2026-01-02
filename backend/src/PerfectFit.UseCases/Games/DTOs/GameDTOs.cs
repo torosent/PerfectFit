@@ -67,5 +67,7 @@ public record PlacePieceResponseDto(
     GameStateDto GameState,
     int LinesCleared,
     int PointsEarned,
-    bool IsGameOver
+    bool IsGameOver,
+    int PiecesRemainingInTurn,
+    bool NewTurnStarted
 );

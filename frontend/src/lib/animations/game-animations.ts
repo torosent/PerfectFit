@@ -13,12 +13,25 @@ export const cellVariants: Variants = {
     opacity: 1,
   },
   clearing: {
-    scale: [1, 1.2, 0],
-    opacity: [1, 1, 0],
-    backgroundColor: ['var(--cell-color)', '#ffffff', 'transparent'],
+    scale: [1, 1.3, 1.1, 0],
+    opacity: [1, 1, 1, 0],
+    rotate: [0, 0, 180, 360],
+    filter: [
+      'brightness(1) hue-rotate(0deg)',
+      'brightness(2) hue-rotate(90deg)',
+      'brightness(2.5) hue-rotate(180deg)',
+      'brightness(0) hue-rotate(360deg)',
+    ],
+    boxShadow: [
+      '0 0 0px rgba(255,255,255,0)',
+      '0 0 30px rgba(255,255,255,1), 0 0 60px currentColor',
+      '0 0 50px rgba(255,255,255,1), 0 0 100px currentColor',
+      '0 0 0px rgba(255,255,255,0)',
+    ],
     transition: { 
-      duration: 0.4,
-      ease: 'easeOut',
+      duration: 0.6,
+      ease: [0.4, 0, 0.2, 1],
+      times: [0, 0.3, 0.6, 1],
     },
   },
   placed: {
@@ -249,11 +262,50 @@ export const quickTransition: Transition = {
 };
 
 /**
+ * Animation variants for the clearing shockwave overlay
+ */
+export const clearingShockwaveVariants: Variants = {
+  initial: {
+    scaleX: 0,
+    opacity: 0,
+  },
+  animate: {
+    scaleX: [0, 1.2, 1],
+    opacity: [0, 1, 0],
+    transition: {
+      duration: 0.5,
+      ease: 'easeOut',
+      times: [0, 0.4, 1],
+    },
+  },
+};
+
+/**
+ * Animation variants for the clearing sparkle particles
+ */
+export const clearingSparkleVariants: Variants = {
+  initial: {
+    scale: 0,
+    opacity: 0,
+  },
+  animate: {
+    scale: [0, 1.5, 0],
+    opacity: [0, 1, 0],
+    y: [0, -20, -40],
+    transition: {
+      duration: 0.8,
+      ease: 'easeOut',
+    },
+  },
+};
+
+/**
  * Get stagger delay for clearing animation based on cell position
- * Creates a wave effect from top-left to bottom-right
+ * Creates a wave effect sweeping across the line
  */
 export function getClearingDelay(row: number, col: number): number {
-  return (row + col) * 0.03;
+  // Wave sweeps from left to right for rows, top to bottom for columns
+  return col * 0.04;
 }
 
 /**
