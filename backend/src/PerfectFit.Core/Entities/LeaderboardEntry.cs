@@ -23,7 +23,7 @@ public class LeaderboardEntry
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(score, nameof(score));
         ArgumentOutOfRangeException.ThrowIfNegative(linesCleared, nameof(linesCleared));
         ArgumentOutOfRangeException.ThrowIfNegative(maxCombo, nameof(maxCombo));
-        
+
         if (gameSessionId == Guid.Empty)
         {
             throw new ArgumentException("Game session ID cannot be empty.", nameof(gameSessionId));

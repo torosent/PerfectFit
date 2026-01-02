@@ -25,7 +25,7 @@ public class UserRepositoryTests : RepositoryTestBase
 
         // Assert
         result.Id.Should().BeGreaterThan(0);
-        
+
         var savedUser = await DbContext.Users.FindAsync(result.Id);
         savedUser.Should().NotBeNull();
         savedUser!.ExternalId.Should().Be("google-123");
@@ -105,7 +105,7 @@ public class UserRepositoryTests : RepositoryTestBase
         // Arrange
         var user = User.Create("update-test", "test@example.com", "Original Name", AuthProvider.Google);
         await _repository.AddAsync(user);
-        
+
         user.UpdateHighScore(500);
         user.IncrementGamesPlayed();
 

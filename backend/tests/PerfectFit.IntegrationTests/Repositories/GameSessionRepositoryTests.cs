@@ -25,7 +25,7 @@ public class GameSessionRepositoryTests : RepositoryTestBase
 
         // Assert
         result.Id.Should().NotBeEmpty();
-        
+
         var savedSession = await DbContext.GameSessions.FindAsync(result.Id);
         savedSession.Should().NotBeNull();
         savedSession!.Status.Should().Be(GameStatus.Playing);
@@ -47,7 +47,7 @@ public class GameSessionRepositoryTests : RepositoryTestBase
 
         // Assert
         result.UserId.Should().Be(user.Id);
-        
+
         var savedSession = await DbContext.GameSessions.FindAsync(result.Id);
         savedSession!.UserId.Should().Be(user.Id);
     }
@@ -83,7 +83,7 @@ public class GameSessionRepositoryTests : RepositoryTestBase
         // Arrange
         var session = GameSession.Create(null);
         await _repository.AddAsync(session);
-        
+
         session.AddScore(100, 2);
         session.UpdateCombo(3);
 
@@ -149,11 +149,11 @@ public class GameSessionRepositoryTests : RepositoryTestBase
         // Arrange
         var session = GameSession.Create(null);
         await _repository.AddAsync(session);
-        
+
         var newBoardState = """{"grid":[[1,1,0,0,0,0,0,0,0,0]]}""";
         var newPieces = """[{"type":"T","rotation":0}]""";
         var newBag = """{"index":7,"pieces":["I","O","T"]}""";
-        
+
         session.UpdateBoard(newBoardState, newPieces, newBag);
 
         // Act

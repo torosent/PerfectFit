@@ -39,7 +39,7 @@ public class LeaderboardRepositoryTests : RepositoryTestBase
 
         // Assert
         result.Id.Should().BeGreaterThan(0);
-        
+
         var savedEntry = await DbContext.LeaderboardEntries.FindAsync(result.Id);
         savedEntry.Should().NotBeNull();
         savedEntry!.Score.Should().Be(1000);
@@ -185,7 +185,7 @@ public class LeaderboardRepositoryTests : RepositoryTestBase
         // User1 has two entries: 500 and 1000 (best is 1000)
         await _repository.AddAsync(LeaderboardEntry.Create(user1.Id, 500, 20, 3, session1a.Id));
         await _repository.AddAsync(LeaderboardEntry.Create(user1.Id, 1000, 40, 5, session1b.Id));
-        
+
         // User2 has one entry: 750
         await _repository.AddAsync(LeaderboardEntry.Create(user2.Id, 750, 30, 4, session2.Id));
 

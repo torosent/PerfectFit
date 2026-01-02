@@ -1,9 +1,15 @@
 using PerfectFit.Infrastructure;
+using PerfectFit.UseCases.Games.Commands;
+using PerfectFit.Web.Endpoints;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add infrastructure services (DbContext, Repositories)
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// Add MediatR for CQRS
+builder.Services.AddMediatR(cfg => 
+    cfg.RegisterServicesFromAssembly(typeof(CreateGameCommand).Assembly));
 
 // Add services to the container
 builder.Services.AddEndpointsApiExplorer();
@@ -52,14 +58,17 @@ app.UseCors();
 app.MapHealthChecks("/health");
 
 // API status endpoint
-app.MapGet("/api/status", () => Results.Ok(new 
-{ 
+app.MapGet("/api/status", () => Results.Ok(new
+{
     Status = "Healthy",
     Service = "PerfectFit API",
     Version = "1.0.0",
     Timestamp = DateTime.UtcNow
 }))
 .WithName("GetStatus");
+
+// Map game endpoints
+app.MapGameEndpoints();
 
 app.Run();
 
