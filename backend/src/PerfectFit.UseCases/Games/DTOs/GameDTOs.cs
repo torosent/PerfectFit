@@ -56,7 +56,8 @@ public record GameStateDto(
 /// </summary>
 public record PlacePieceRequestDto(
     int PieceIndex,
-    PositionDto Position
+    PositionDto Position,
+    long? ClientTimestamp = null
 );
 
 /// <summary>

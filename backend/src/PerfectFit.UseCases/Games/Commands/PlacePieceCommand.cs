@@ -15,7 +15,14 @@ namespace PerfectFit.UseCases.Games.Commands;
 /// <param name="PieceIndex">Index of the piece to place (0-2).</param>
 /// <param name="Row">Row position on the board.</param>
 /// <param name="Col">Column position on the board.</param>
-public record PlacePieceCommand(Guid GameId, int PieceIndex, int Row, int Col) : IRequest<PlacePieceResult>;
+/// <param name="ClientTimestamp">Optional client timestamp for timing validation.</param>
+public record PlacePieceCommand(
+    Guid GameId, 
+    int PieceIndex, 
+    int Row, 
+    int Col,
+    long? ClientTimestamp = null
+) : IRequest<PlacePieceResult>;
 
 /// <summary>
 /// Result of the place piece operation.
@@ -23,7 +30,8 @@ public record PlacePieceCommand(Guid GameId, int PieceIndex, int Row, int Col) :
 public record PlacePieceResult(
     bool Found,
     bool GameActive,
-    PlacePieceResponseDto? Response
+    PlacePieceResponseDto? Response,
+    string? RejectionReason = null
 );
 
 /// <summary>
@@ -32,6 +40,11 @@ public record PlacePieceResult(
 public class PlacePieceCommandHandler : IRequestHandler<PlacePieceCommand, PlacePieceResult>
 {
     private readonly IGameSessionRepository _gameSessionRepository;
+
+    // Anti-cheat constants
+    private const int MinTimeBetweenMovesMs = 50;    // Minimum 50ms between moves (human reaction time)
+    private const int MaxMovesPerGame = 500;          // Maximum moves per game (prevents infinite games)
+    private const int MaxGameDurationHours = 24;      // Maximum game duration
 
     public PlacePieceCommandHandler(IGameSessionRepository gameSessionRepository)
     {
@@ -50,6 +63,60 @@ public class PlacePieceCommandHandler : IRequestHandler<PlacePieceCommand, Place
         if (session.Status != GameStatus.Playing)
         {
             return new PlacePieceResult(Found: true, GameActive: false, Response: null);
+        }
+
+        // Anti-cheat: Check game duration
+        var gameDuration = session.GetGameDuration();
+        if (gameDuration > MaxGameDurationHours * 3600)
+        {
+            session.EndGame();
+            await _gameSessionRepository.UpdateAsync(session, cancellationToken);
+            return new PlacePieceResult(
+                Found: true, 
+                GameActive: false, 
+                Response: null,
+                RejectionReason: "Game exceeded maximum duration");
+        }
+
+        // Anti-cheat: Check move count
+        if (session.MoveCount >= MaxMovesPerGame)
+        {
+            return new PlacePieceResult(
+                Found: true, 
+                GameActive: true, 
+                Response: null,
+                RejectionReason: "Maximum moves reached");
+        }
+
+        // Anti-cheat: Rate limiting - check time since last move
+        var timeSinceLastMove = session.GetTimeSinceLastMove();
+        if (timeSinceLastMove.HasValue && timeSinceLastMove.Value < MinTimeBetweenMovesMs)
+        {
+            return new PlacePieceResult(
+                Found: true, 
+                GameActive: true, 
+                Response: null,
+                RejectionReason: "Move rate limit exceeded");
+        }
+
+        // Validate piece index bounds before game logic
+        if (request.PieceIndex < 0 || request.PieceIndex > 2)
+        {
+            return new PlacePieceResult(
+                Found: true, 
+                GameActive: true, 
+                Response: null,
+                RejectionReason: "Invalid piece index");
+        }
+
+        // Validate board position bounds
+        if (request.Row < 0 || request.Row > 9 || request.Col < 0 || request.Col > 9)
+        {
+            return new PlacePieceResult(
+                Found: true, 
+                GameActive: true, 
+                Response: null,
+                RejectionReason: "Invalid board position");
         }
 
         // Reconstruct game engine from saved state
@@ -76,6 +143,14 @@ public class PlacePieceCommandHandler : IRequestHandler<PlacePieceCommand, Place
                 )
             );
         }
+
+        // Record the move for anti-cheat tracking
+        session.RecordMove(
+            request.PieceIndex, 
+            request.Row, 
+            request.Col, 
+            placementResult.PointsEarned, 
+            placementResult.LinesCleared);
 
         // Update session with new state
         var newState = engine.GetState();

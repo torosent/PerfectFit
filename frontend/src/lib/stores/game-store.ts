@@ -3,6 +3,7 @@ import type { GameState, Position, ClearingCell } from '@/types';
 import * as gameClient from '@/lib/api/game-client';
 import * as leaderboardClient from '@/lib/api/leaderboard-client';
 import { useAuthStore } from './auth-store';
+import * as antiCheat from '@/lib/anti-cheat';
 
 /**
  * Result from score submission to leaderboard
@@ -129,6 +130,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ isLoading: true, error: null, selectedPieceIndex: null });
     
     try {
+      // Initialize anti-cheat session tracking
+      antiCheat.startNewSession();
+      
       // Get auth token if available
       const token = useAuthStore.getState().token;
       const gameState = await gameClient.createGame(token);
@@ -143,6 +147,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
     set({ isLoading: true, error: null, selectedPieceIndex: null });
     
     try {
+      // Initialize anti-cheat session tracking when loading a game
+      antiCheat.startNewSession();
+      
       // Get auth token if available
       const token = useAuthStore.getState().token;
       const gameState = await gameClient.getGame(id, token);
@@ -161,6 +168,25 @@ export const useGameStore = create<GameStore>((set, get) => ({
       return false;
     }
 
+    // Client-side anti-cheat validation
+    const moveValidation = antiCheat.validateMoveAttempt();
+    if (!moveValidation.isValid) {
+      set({ error: moveValidation.reason || 'Invalid move' });
+      return false;
+    }
+
+    // Validate piece index
+    if (!antiCheat.validatePieceIndex(pieceIndex, gameState.currentPieces.length)) {
+      set({ error: 'Invalid piece selection' });
+      return false;
+    }
+
+    // Validate board position
+    if (!antiCheat.validatePlacementBounds(row, col)) {
+      set({ error: 'Invalid board position' });
+      return false;
+    }
+
     set({ isLoading: true, error: null });
 
     try {
@@ -169,6 +195,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const response = await gameClient.placePiece(gameState.id, {
         pieceIndex,
         position: { row, col },
+        clientTimestamp: moveValidation.clientTimestamp,
       }, token);
 
       if (response.success) {
@@ -187,6 +214,17 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to place piece';
+      
+      // Log suspicious activity if there's a rate limit error
+      if (message.includes('rate limit') || message.includes('Too fast')) {
+        antiCheat.logSuspiciousActivity('Rate limit hit', {
+          pieceIndex,
+          row,
+          col,
+          stats: antiCheat.getSessionStats(),
+        });
+      }
+      
       set({ error: message, isLoading: false });
       return false;
     }

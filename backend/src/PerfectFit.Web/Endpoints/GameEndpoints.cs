@@ -77,7 +77,8 @@ public static class GameEndpoints
             GameId: id,
             PieceIndex: request.PieceIndex,
             Row: request.Position.Row,
-            Col: request.Position.Col
+            Col: request.Position.Col,
+            ClientTimestamp: request.ClientTimestamp
         );
 
         var result = await mediator.Send(command, cancellationToken);
@@ -89,7 +90,13 @@ public static class GameEndpoints
 
         if (!result.GameActive)
         {
-            return Results.BadRequest(new { error = "Game is not active" });
+            return Results.BadRequest(new { error = result.RejectionReason ?? "Game is not active" });
+        }
+
+        // Anti-cheat rejection
+        if (result.RejectionReason is not null)
+        {
+            return Results.BadRequest(new { error = result.RejectionReason });
         }
 
         if (result.Response is not null && !result.Response.Success)

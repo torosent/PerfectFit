@@ -59,6 +59,11 @@
 │  │  │EF Core   │  │   JWT    │  │  OAuth   │  │Repository│ │   │
 │  │  │DbContext │  │ Service  │  │ Handlers │  │  Impls   │ │   │
 │  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │   │
+│  │  ┌──────────────────────────────────────────────────┐   │   │
+│  │  │           Score Validation Service                │   │   │
+│  │  │  • Anti-cheat validation  • Score plausibility   │   │   │
+│  │  │  • Rate limiting          • Move history check   │   │   │
+│  │  └──────────────────────────────────────────────────┘   │   │
 │  └─────────────────────────────────────────────────────────┘   │
 └─────────────────────────────────────────────────────────────────┘
                               │
@@ -322,4 +327,75 @@ GetUserStatsQuery → GetUserStatsHandler → UserStatsDto
 │ MaxCombo             │
 │ AchievedAt           │
 └──────────────────────┘
+```
+
+## Anti-Cheat System
+
+The game implements a multi-layer anti-cheat system to ensure fair play and score integrity:
+
+### Defense Layers
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Client-Side Deterrence                       │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              lib/anti-cheat.ts                           │   │
+│  │  • Session tracking           • Input validation         │   │
+│  │  • Client-side rate limiting  • Suspicious behavior log  │   │
+│  │  • Client fingerprinting      • Move attempt validation  │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              │ All validation is server-authoritative
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     Server-Side Enforcement                      │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              PlacePieceCommand Handler                    │   │
+│  │  • Rate limiting (50ms min between moves)                │   │
+│  │  • Max moves per game (500)                              │   │
+│  │  • Max game duration (24 hours)                          │   │
+│  │  • Input bounds validation                               │   │
+│  │  • Move history recording                                │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │              ScoreValidationService                       │   │
+│  │  • Game duration validation (min 5 seconds)              │   │
+│  │  • Move count requirements for high scores               │   │
+│  │  • Score plausibility checks                             │   │
+│  │  • Mathematical relationship validation                  │   │
+│  │    - Max score per move: 500 points                      │   │
+│  │    - Max average score per second: 50 points             │   │
+│  │    - Max lines per move: 2                               │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Move History Tracking
+
+Each game session tracks all moves for post-game analysis:
+
+```json
+{
+  "moves": [
+    {
+      "pieceIndex": 0,
+      "row": 3,
+      "col": 4,
+      "pointsEarned": 150,
+      "linesCleared": 1,
+      "timestamp": "2024-01-15T10:30:45.123Z"
+    }
+  ]
+}
+```
+
+### Validation Flow
+
+```
+Client Move Request → Rate Limit Check → Input Validation → 
+    → Game Logic Processing → Move Recording → Response
+    
+Score Submit → Duration Check → Move Count Check → 
+    → Score Plausibility → Leaderboard Entry
 ```

@@ -146,7 +146,8 @@ POST /api/games/{id}/place
   "position": {
     "row": 5,
     "col": 3
-  }
+  },
+  "clientTimestamp": 1704207600000
 }
 ```
 
@@ -155,6 +156,7 @@ POST /api/games/{id}/place
 | pieceIndex | number | Index of piece (0-2) |
 | position.row | number | Target row (0-9) |
 | position.col | number | Target column (0-9) |
+| clientTimestamp | number? | Client timestamp in ms (optional, for anti-cheat) |
 
 **Response**: `200 OK`
 ```json
@@ -178,8 +180,16 @@ POST /api/games/{id}/place
 ```
 
 **Errors**:
-- `400 Bad Request` - Invalid placement or game not active
+- `400 Bad Request` - Invalid placement, game not active, or anti-cheat rejection
 - `404 Not Found` - Game not found
+
+**Anti-Cheat Rejections**:
+The server may reject requests with `400 Bad Request` for:
+- `Move rate limit exceeded` - Too many moves in quick succession (min 50ms between moves)
+- `Maximum moves reached` - Game exceeded 500 moves
+- `Game exceeded maximum duration` - Game lasted longer than 24 hours
+- `Invalid piece index` - Piece index out of range
+- `Invalid board position` - Row/column out of bounds
 
 ### End Game
 
@@ -443,9 +453,22 @@ Authorization: Bearer <token>
 ```
 
 **Errors**:
-- `400 Bad Request` - Invalid game session or already submitted
+- `400 Bad Request` - Invalid game session, already submitted, or anti-cheat validation failed
 - `401 Unauthorized` - Not authenticated
 - `403 Forbidden` - Guest users cannot submit scores
+
+**Anti-Cheat Validations**:
+Score submissions are validated against:
+- Game session ownership (must belong to authenticated user)
+- Game completion status (game must be ended)
+- Duplicate submission prevention (unique constraint on game session)
+- Maximum entries per user (100 entries limit)
+- Game age limit (must be submitted within 48 hours)
+- Timestamp validation (rejects future-dated games)
+- Minimum game duration (5 seconds)
+- Score plausibility (mathematically achievable)
+- Score rate limits (max 50 points/second average)
+- Move count requirements for high scores
 
 ---
 

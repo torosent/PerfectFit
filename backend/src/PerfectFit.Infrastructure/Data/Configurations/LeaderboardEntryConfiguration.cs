@@ -65,5 +65,10 @@ public class LeaderboardEntryConfiguration : IEntityTypeConfiguration<Leaderboar
             .WithMany()
             .HasForeignKey(le => le.GameSessionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // UNIQUE constraint on GameSessionId to prevent duplicate submissions (defense in depth)
+        builder.HasIndex(le => le.GameSessionId)
+            .IsUnique()
+            .HasDatabaseName("ix_leaderboard_entries_game_session_id_unique");
     }
 }

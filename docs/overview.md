@@ -28,6 +28,14 @@ PerfectFit is a full-stack grid-based block placement puzzle game inspired by cl
 - **Personal Stats**: Track your progress
 - **Score Validation**: Server-side verification prevents cheating
 
+### Anti-Cheat System
+- **Rate Limiting**: Minimum 50ms between moves to prevent automation
+- **Score Plausibility**: Mathematical validation of score/lines/combo relationships
+- **Move History**: Server records all moves for integrity verification
+- **Game Duration**: Validates minimum playtime before score submission
+- **Input Validation**: Bounds checking on all client inputs
+- **Client Fingerprinting**: Optional client identification for anomaly detection
+
 ## Game Rules
 
 1. **Turns**: Each turn, you receive 3 random pieces
@@ -41,5 +49,5 @@ PerfectFit is a full-stack grid-based block placement puzzle game inspired by cl
 - **Performance**: Sub-100ms API response times
 - **Accessibility**: Keyboard navigation and screen reader support
 - **Scalability**: Stateless backend design for horizontal scaling
-- **Security**: Server-side game state validation
+- **Security**: Server-side game state validation with multi-layer anti-cheat
 - **Cross-Platform**: Web-based, works on desktop and mobile browsers

@@ -192,4 +192,138 @@ public class GameSessionTests
         session.Status.Should().Be(GameStatus.Abandoned);
         session.EndedAt.Should().NotBeNull();
     }
+
+    // Anti-cheat tests
+    [Fact]
+    public void Create_ShouldInitializeAntiCheatFields()
+    {
+        // Arrange & Act
+        var session = GameSession.Create(1, "test-fingerprint");
+
+        // Assert
+        session.MoveCount.Should().Be(0);
+        session.LastMoveAt.Should().BeNull();
+        session.MoveHistory.Should().Be("[]");
+        session.ClientFingerprint.Should().Be("test-fingerprint");
+    }
+
+    [Fact]
+    public void RecordMove_ShouldIncrementMoveCount()
+    {
+        // Arrange
+        var session = GameSession.Create(1);
+
+        // Act
+        session.RecordMove(0, 5, 5, 100, 1);
+        session.RecordMove(1, 3, 3, 50, 0);
+
+        // Assert
+        session.MoveCount.Should().Be(2);
+    }
+
+    [Fact]
+    public void RecordMove_ShouldUpdateLastMoveAt()
+    {
+        // Arrange
+        var session = GameSession.Create(1);
+
+        // Act
+        session.RecordMove(0, 5, 5, 100, 1);
+
+        // Assert
+        session.LastMoveAt.Should().NotBeNull();
+        session.LastMoveAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void RecordMove_ShouldAppendToMoveHistory()
+    {
+        // Arrange
+        var session = GameSession.Create(1);
+
+        // Act
+        session.RecordMove(0, 5, 5, 100, 1);
+        session.RecordMove(1, 3, 3, 50, 0);
+
+        // Assert
+        session.MoveHistory.Should().StartWith("[{");
+        session.MoveHistory.Should().Contain("\"i\":0");
+        session.MoveHistory.Should().Contain("\"i\":1");
+        session.MoveHistory.Should().Contain("\"r\":5");
+        session.MoveHistory.Should().Contain("\"c\":5");
+        session.MoveHistory.Should().Contain("\"p\":100");
+        session.MoveHistory.Should().Contain("\"l\":1");
+    }
+
+    [Fact]
+    public void RecordMove_WhenGameEnded_ShouldThrowInvalidOperationException()
+    {
+        // Arrange
+        var session = GameSession.Create(1);
+        session.EndGame();
+
+        // Act
+        var act = () => session.RecordMove(0, 5, 5, 100, 1);
+
+        // Assert
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*not active*");
+    }
+
+    [Fact]
+    public void GetTimeSinceLastMove_WhenNoMoves_ShouldReturnNull()
+    {
+        // Arrange
+        var session = GameSession.Create(1);
+
+        // Act
+        var result = session.GetTimeSinceLastMove();
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public void GetTimeSinceLastMove_AfterMove_ShouldReturnPositiveValue()
+    {
+        // Arrange
+        var session = GameSession.Create(1);
+        session.RecordMove(0, 5, 5, 100, 1);
+
+        // Act
+        var result = session.GetTimeSinceLastMove();
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Should().BeGreaterThanOrEqualTo(0);
+    }
+
+    [Fact]
+    public void GetGameDuration_ShouldReturnPositiveValue()
+    {
+        // Arrange
+        var session = GameSession.Create(1);
+
+        // Act
+        var result = session.GetGameDuration();
+
+        // Assert
+        result.Should().BeGreaterThanOrEqualTo(0);
+    }
+
+    [Fact]
+    public void GetGameDuration_WhenGameEnded_ShouldUseEndedAt()
+    {
+        // Arrange
+        var session = GameSession.Create(1);
+        session.EndGame();
+
+        // Act
+        var duration1 = session.GetGameDuration();
+        Thread.Sleep(100); // Wait a bit
+        var duration2 = session.GetGameDuration();
+
+        // Assert - duration should not change after game ended
+        duration1.Should().BeApproximately(duration2, 0.1);
+    }
 }

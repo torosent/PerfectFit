@@ -107,9 +107,15 @@ export async function placePiece(
   request: PlacePieceRequest,
   token?: string | null
 ): Promise<PlacePieceResponse> {
+  // Add client timestamp for anti-cheat validation
+  const requestWithTimestamp = {
+    ...request,
+    clientTimestamp: Date.now(),
+  };
+
   return apiFetch<PlacePieceResponse>(`/api/games/${gameId}/place`, {
     method: 'POST',
-    body: JSON.stringify(request),
+    body: JSON.stringify(requestWithTimestamp),
     token,
   });
 }

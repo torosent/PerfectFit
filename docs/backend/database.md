@@ -58,6 +58,10 @@ Stores game session data.
 | `StartedAt` | datetime | Required | Game start timestamp |
 | `EndedAt` | datetime | Nullable | Game end timestamp |
 | `LastActivityAt` | datetime | Required | Last action timestamp |
+| `MoveCount` | int | Default: 0 | Total moves made (anti-cheat) |
+| `LastMoveAt` | datetime | Nullable | Timestamp of last move (anti-cheat) |
+| `MoveHistory` | string (JSON) | Default: "[]" | History of all moves (anti-cheat) |
+| `ClientFingerprint` | string | Default: "" | Client identification (anti-cheat) |
 
 ### LeaderboardEntries Table
 
@@ -67,11 +71,13 @@ Stores leaderboard scores.
 |--------|------|-------------|-------------|
 | `Id` | int | PK, auto-increment | Entry ID |
 | `UserId` | int | FK, Required | User who achieved the score |
-| `GameSessionId` | GUID | FK, Required | Associated game session |
+| `GameSessionId` | GUID | FK, Required, **UNIQUE** | Associated game session (one entry per game) |
 | `Score` | int | Required | Final score |
 | `LinesCleared` | int | Required | Lines cleared |
 | `MaxCombo` | int | Required | Max combo achieved |
 | `AchievedAt` | datetime | Required | Timestamp of achievement |
+
+**Note**: The unique constraint on `GameSessionId` prevents duplicate leaderboard submissions for the same game session.
 
 ## Entity Relationships
 
@@ -126,6 +132,24 @@ Users 1 ←─────→ N GameSessions
   "seed": 12345
 }
 ```
+
+### MoveHistory (Anti-Cheat)
+
+```json
+[
+  {"i": 0, "r": 5, "c": 3, "p": 30, "l": 1, "t": "2026-01-02T12:00:00Z"},
+  {"i": 1, "r": 2, "c": 7, "p": 0, "l": 0, "t": "2026-01-02T12:00:02Z"}
+]
+```
+
+| Field | Description |
+|-------|-------------|
+| `i` | Piece index (0-2) |
+| `r` | Row position |
+| `c` | Column position |
+| `p` | Points earned |
+| `l` | Lines cleared |
+| `t` | Timestamp (ISO 8601) |
 
 ## Database Migrations
 
@@ -271,6 +295,7 @@ CREATE INDEX IX_GameSessions_StartedAt ON "GameSessions" ("StartedAt" DESC);
 CREATE INDEX IX_LeaderboardEntries_Score ON "LeaderboardEntries" ("Score" DESC);
 CREATE INDEX IX_LeaderboardEntries_UserId ON "LeaderboardEntries" ("UserId");
 CREATE INDEX IX_LeaderboardEntries_AchievedAt ON "LeaderboardEntries" ("AchievedAt" DESC);
+CREATE UNIQUE INDEX IX_LeaderboardEntries_GameSessionId ON "LeaderboardEntries" ("GameSessionId"); -- Anti-cheat: prevents duplicate submissions
 ```
 
 ### Query Optimization

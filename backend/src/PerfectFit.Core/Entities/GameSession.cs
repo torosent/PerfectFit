@@ -22,13 +22,19 @@ public class GameSession
     public DateTime? EndedAt { get; private set; }
     public DateTime LastActivityAt { get; private set; }
 
+    // Anti-cheat tracking
+    public int MoveCount { get; private set; }
+    public DateTime? LastMoveAt { get; private set; }
+    public string MoveHistory { get; private set; } = "[]";
+    public string ClientFingerprint { get; private set; } = string.Empty;
+
     // Navigation
     public User? User { get; private set; }
 
     // Private constructor for EF Core
     private GameSession() { }
 
-    public static GameSession Create(int? userId)
+    public static GameSession Create(int? userId, string? clientFingerprint = null)
     {
         var now = DateTime.UtcNow;
         return new GameSession
@@ -45,7 +51,11 @@ public class GameSession
             Status = GameStatus.Playing,
             StartedAt = now,
             EndedAt = null,
-            LastActivityAt = now
+            LastActivityAt = now,
+            MoveCount = 0,
+            LastMoveAt = null,
+            MoveHistory = "[]",
+            ClientFingerprint = clientFingerprint ?? string.Empty
         };
     }
 
@@ -57,6 +67,55 @@ public class GameSession
         CurrentPieces = currentPieces;
         PieceBagState = pieceBagState;
         LastActivityAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Records a move for anti-cheat tracking.
+    /// </summary>
+    /// <param name="pieceIndex">Index of the piece placed.</param>
+    /// <param name="row">Row position.</param>
+    /// <param name="col">Column position.</param>
+    /// <param name="pointsEarned">Points earned from this move.</param>
+    /// <param name="linesCleared">Lines cleared from this move.</param>
+    public void RecordMove(int pieceIndex, int row, int col, int pointsEarned, int linesCleared)
+    {
+        EnsureGameIsActive();
+
+        var now = DateTime.UtcNow;
+        MoveCount++;
+        LastMoveAt = now;
+
+        // Append to move history (compact format)
+        var moveEntry = $"{{\"i\":{pieceIndex},\"r\":{row},\"c\":{col},\"p\":{pointsEarned},\"l\":{linesCleared},\"t\":\"{now:O}\"}}";
+        if (MoveHistory == "[]")
+        {
+            MoveHistory = $"[{moveEntry}]";
+        }
+        else
+        {
+            MoveHistory = MoveHistory.Insert(MoveHistory.Length - 1, $",{moveEntry}");
+        }
+    }
+
+    /// <summary>
+    /// Gets the time since the last move in milliseconds.
+    /// Returns null if no moves have been made.
+    /// </summary>
+    public double? GetTimeSinceLastMove()
+    {
+        if (LastMoveAt == null)
+            return null;
+
+        return (DateTime.UtcNow - LastMoveAt.Value).TotalMilliseconds;
+    }
+
+    /// <summary>
+    /// Gets the total game duration in seconds.
+    /// </summary>
+    public double GetGameDuration()
+    {
+        var endTime = EndedAt ?? DateTime.UtcNow;
+        return (endTime - StartedAt).TotalSeconds;
     }
 
     public void AddScore(int points, int linesCleared)

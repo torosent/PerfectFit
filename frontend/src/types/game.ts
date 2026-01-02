@@ -44,6 +44,7 @@ export interface GameState {
 export interface PlacePieceRequest {
   pieceIndex: number;
   position: Position;
+  clientTimestamp?: number;
 }
 
 export interface PlacePieceResponse {
