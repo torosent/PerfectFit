@@ -1,2 +1,2 @@
-// Custom React hooks will be added here
-export {};
+// Custom React hooks
+export { useTouchDevice } from './useTouchDevice';

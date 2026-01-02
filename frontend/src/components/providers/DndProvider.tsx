@@ -15,6 +15,10 @@ import type { Piece, Grid, ClearingCell } from '@/types';
 import { useGameStore } from '@/lib/stores/game-store';
 import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
 import { PieceDisplay } from '@/components/game/PieceDisplay';
+import { useTouchDevice } from '@/hooks/useTouchDevice';
+
+// Touch offset constant - how many pixels to lift the dragged piece above the finger
+const TOUCH_DRAG_OFFSET_Y = -60;
 
 interface DragData {
   piece: Piece;
@@ -52,6 +56,9 @@ export function DndProvider({ children }: DndProviderProps) {
   const [draggedPiece, setDraggedPiece] = useState<Piece | null>(null);
   const [draggedPieceIndex, setDraggedPieceIndexState] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  
+  // Detect if we're on a touch device to apply drag offset
+  const isTouchDevice = useTouchDevice();
   
   const { 
     gameState, 
@@ -249,7 +256,11 @@ export function DndProvider({ children }: DndProviderProps) {
         {/* Drag overlay shows the piece being dragged */}
         <DragOverlay dropAnimation={null}>
           {draggedPiece && (
-            <div className="opacity-80 scale-110 pointer-events-none">
+            <div 
+              className="opacity-80 scale-110 pointer-events-none"
+              data-testid="touch-offset-wrapper"
+              style={isTouchDevice ? { transform: `translateY(${TOUCH_DRAG_OFFSET_Y}px)` } : undefined}
+            >
               <PieceDisplay
                 piece={draggedPiece}
                 cellSize={20}
