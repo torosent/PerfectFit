@@ -1,0 +1,61 @@
+using Microsoft.EntityFrameworkCore;
+using PerfectFit.Core.Entities;
+using PerfectFit.Core.Interfaces;
+using PerfectFit.Infrastructure.Data;
+
+namespace PerfectFit.Infrastructure.Data.Repositories;
+
+public class LeaderboardRepository : ILeaderboardRepository
+{
+    private readonly AppDbContext _context;
+
+    public LeaderboardRepository(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<IEnumerable<LeaderboardEntry>> GetTopScoresAsync(int count, CancellationToken cancellationToken = default)
+    {
+        return await _context.LeaderboardEntries
+            .OrderByDescending(le => le.Score)
+            .Take(count)
+            .Include(le => le.User)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<LeaderboardEntry?> GetUserBestScoreAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        return await _context.LeaderboardEntries
+            .Where(le => le.UserId == userId)
+            .OrderByDescending(le => le.Score)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
+    public async Task<int> GetUserRankAsync(int userId, CancellationToken cancellationToken = default)
+    {
+        // Get the user's best score
+        var userBestScore = await _context.LeaderboardEntries
+            .Where(le => le.UserId == userId)
+            .MaxAsync(le => (int?)le.Score, cancellationToken);
+
+        if (userBestScore == null)
+        {
+            return 0; // User has no scores
+        }
+
+        // Count how many unique users have a higher best score
+        var usersWithHigherScore = await _context.LeaderboardEntries
+            .GroupBy(le => le.UserId)
+            .Select(g => g.Max(le => le.Score))
+            .CountAsync(maxScore => maxScore > userBestScore, cancellationToken);
+
+        return usersWithHigherScore + 1;
+    }
+
+    public async Task<LeaderboardEntry> AddAsync(LeaderboardEntry entry, CancellationToken cancellationToken = default)
+    {
+        _context.LeaderboardEntries.Add(entry);
+        await _context.SaveChangesAsync(cancellationToken);
+        return entry;
+    }
+}

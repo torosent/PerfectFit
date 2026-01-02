@@ -1,4 +1,9 @@
+using PerfectFit.Infrastructure;
+
 var builder = WebApplication.CreateBuilder(args);
+
+// Add infrastructure services (DbContext, Repositories)
+builder.Services.AddInfrastructure(builder.Configuration);
 
 // Add services to the container
 builder.Services.AddEndpointsApiExplorer();
