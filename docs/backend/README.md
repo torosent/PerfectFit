@@ -74,5 +74,6 @@ dotnet test --collect:"XPlat Code Coverage"
 ## Related Documentation
 
 - [API Reference](./api-reference.md) - Complete endpoint documentation
+- [Admin API](./admin-api.md) - Admin endpoints and user management
 - [Configuration](./configuration.md) - All configuration options
 - [Database](./database.md) - Database schema and migrations

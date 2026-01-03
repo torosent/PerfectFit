@@ -86,4 +86,5 @@ The frontend will be available at `http://localhost:3000`.
 
 - [Components](./components.md) - UI component documentation
 - [State Management](./state-management.md) - Zustand stores guide
+- [Admin Portal](./admin-portal.md) - Admin interface documentation
 - [Configuration](./configuration.md) - Environment and settings
