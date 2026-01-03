@@ -38,10 +38,10 @@ public class OAuthLoginCommandTests
     {
         // Arrange
         var command = new OAuthLoginCommand(
-            ExternalId: "google-new-user-123",
-            Email: "newuser@gmail.com",
+            ExternalId: "ms-new-user-123",
+            Email: "newuser@outlook.com",
             DisplayName: "New User",
-            Provider: AuthProvider.Google
+            Provider: AuthProvider.Microsoft
         );
 
         _userRepositoryMock
@@ -77,13 +77,13 @@ public class OAuthLoginCommandTests
     public async Task Handle_Should_Return_Existing_User_When_Found()
     {
         // Arrange
-        var existingUser = User.Create("google-existing-123", "existing@gmail.com", "Existing User", AuthProvider.Google);
+        var existingUser = User.Create("ms-existing-123", "existing@outlook.com", "Existing User", AuthProvider.Microsoft);
 
         var command = new OAuthLoginCommand(
-            ExternalId: "google-existing-123",
-            Email: "existing@gmail.com",
+            ExternalId: "ms-existing-123",
+            Email: "existing@outlook.com",
             DisplayName: "Existing User",
-            Provider: AuthProvider.Google
+            Provider: AuthProvider.Microsoft
         );
 
         _userRepositoryMock
@@ -142,10 +142,10 @@ public class OAuthLoginCommandTests
     {
         // Arrange
         var command = new OAuthLoginCommand(
-            ExternalId: "facebook-123",
+            ExternalId: "guest-123",
             Email: null,
-            DisplayName: "Facebook User",
-            Provider: AuthProvider.Facebook
+            DisplayName: "Guest User",
+            Provider: AuthProvider.Guest
         );
 
         _userRepositoryMock
@@ -158,7 +158,7 @@ public class OAuthLoginCommandTests
 
         _jwtServiceMock
             .Setup(x => x.GenerateToken(It.IsAny<User>()))
-            .Returns("facebook-token");
+            .Returns("guest-token");
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -173,10 +173,10 @@ public class OAuthLoginCommandTests
     {
         // Arrange
         var command = new OAuthLoginCommand(
-            ExternalId: "google-token-test",
+            ExternalId: "ms-token-test",
             Email: "token@test.com",
             DisplayName: "Token Test",
-            Provider: AuthProvider.Google
+            Provider: AuthProvider.Microsoft
         );
 
         _userRepositoryMock
@@ -201,41 +201,6 @@ public class OAuthLoginCommandTests
             Times.Once);
     }
 
-    [Theory]
-    [InlineData(AuthProvider.Google)]
-    [InlineData(AuthProvider.Facebook)]
-    [InlineData(AuthProvider.Microsoft)]
-    [InlineData(AuthProvider.Guest)]
-    public async Task Handle_Should_Support_All_Providers(AuthProvider provider)
-    {
-        // Arrange
-        var command = new OAuthLoginCommand(
-            ExternalId: $"{provider}-user-id",
-            Email: $"user@{provider}.com",
-            DisplayName: $"{provider} User",
-            Provider: provider
-        );
-
-        _userRepositoryMock
-            .Setup(x => x.GetByExternalIdAsync(command.ExternalId, command.Provider, It.IsAny<CancellationToken>()))
-            .ReturnsAsync((User?)null);
-
-        _userRepositoryMock
-            .Setup(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync((User user, CancellationToken _) => user);
-
-        _jwtServiceMock
-            .Setup(x => x.GenerateToken(It.IsAny<User>()))
-            .Returns($"{provider}-token");
-
-        // Act
-        var result = await _sut.Handle(command, CancellationToken.None);
-
-        // Assert
-        result.Should().NotBeNull();
-        result.User.Provider.Should().Be(provider);
-    }
-
     [Fact]
     public async Task Handle_Should_Set_Admin_Role_For_Configured_Admin_Email_On_New_User()
     {
@@ -244,10 +209,10 @@ public class OAuthLoginCommandTests
         var handler = CreateHandlerWithAdminEmails(new List<string> { adminEmail });
 
         var command = new OAuthLoginCommand(
-            ExternalId: "google-admin-123",
+            ExternalId: "ms-admin-123",
             Email: adminEmail,
             DisplayName: "Admin User",
-            Provider: AuthProvider.Google
+            Provider: AuthProvider.Microsoft
         );
 
         _userRepositoryMock
@@ -280,10 +245,10 @@ public class OAuthLoginCommandTests
         var handler = CreateHandlerWithAdminEmails(new List<string> { adminEmail });
 
         var command = new OAuthLoginCommand(
-            ExternalId: "google-admin-456",
+            ExternalId: "ms-admin-456",
             Email: "admin@test.com", // Different case
             DisplayName: "Admin User",
-            Provider: AuthProvider.Google
+            Provider: AuthProvider.Microsoft
         );
 
         _userRepositoryMock
@@ -316,13 +281,13 @@ public class OAuthLoginCommandTests
         var handler = CreateHandlerWithAdminEmails(new List<string> { adminEmail });
 
         // Existing user with regular role
-        var existingUser = User.Create("google-promote-123", adminEmail, "To Be Promoted", AuthProvider.Google, UserRole.User);
+        var existingUser = User.Create("ms-promote-123", adminEmail, "To Be Promoted", AuthProvider.Microsoft, UserRole.User);
 
         var command = new OAuthLoginCommand(
-            ExternalId: "google-promote-123",
+            ExternalId: "ms-promote-123",
             Email: adminEmail,
             DisplayName: "To Be Promoted",
-            Provider: AuthProvider.Google
+            Provider: AuthProvider.Microsoft
         );
 
         _userRepositoryMock
@@ -348,13 +313,13 @@ public class OAuthLoginCommandTests
         var handler = CreateHandlerWithAdminEmails(new List<string>());
 
         // Existing admin user whose email is no longer in config
-        var existingAdmin = User.Create("google-demote-123", "was-admin@test.com", "Was Admin", AuthProvider.Google, UserRole.Admin);
+        var existingAdmin = User.Create("ms-demote-123", "was-admin@test.com", "Was Admin", AuthProvider.Microsoft, UserRole.Admin);
 
         var command = new OAuthLoginCommand(
-            ExternalId: "google-demote-123",
+            ExternalId: "ms-demote-123",
             Email: "was-admin@test.com",
             DisplayName: "Was Admin",
-            Provider: AuthProvider.Google
+            Provider: AuthProvider.Microsoft
         );
 
         _userRepositoryMock
@@ -379,10 +344,10 @@ public class OAuthLoginCommandTests
         var handler = CreateHandlerWithAdminEmails(new List<string> { "admin@test.com" });
 
         var command = new OAuthLoginCommand(
-            ExternalId: "google-regular-123",
+            ExternalId: "ms-regular-123",
             Email: "regular@test.com", // Not an admin email
             DisplayName: "Regular User",
-            Provider: AuthProvider.Google
+            Provider: AuthProvider.Microsoft
         );
 
         _userRepositoryMock
@@ -405,5 +370,83 @@ public class OAuthLoginCommandTests
         // Assert
         capturedUser.Should().NotBeNull();
         capturedUser!.Role.Should().Be(UserRole.User);
+    }
+
+    [Fact]
+    public async Task Handle_GoogleProvider_ReturnsRejected()
+    {
+        // Arrange
+        var command = new OAuthLoginCommand(
+            ExternalId: "google-user-123",
+            Email: "user@gmail.com",
+            DisplayName: "Google User",
+            Provider: AuthProvider.Google
+        );
+
+        // Act
+        var act = async () => await _sut.Handle(command, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*Google*not supported*");
+
+        _userRepositoryMock.Verify(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
+        _userRepositoryMock.Verify(x => x.GetByExternalIdAsync(It.IsAny<string>(), It.IsAny<AuthProvider>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_FacebookProvider_ReturnsRejected()
+    {
+        // Arrange
+        var command = new OAuthLoginCommand(
+            ExternalId: "facebook-user-123",
+            Email: "user@facebook.com",
+            DisplayName: "Facebook User",
+            Provider: AuthProvider.Facebook
+        );
+
+        // Act
+        var act = async () => await _sut.Handle(command, CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*Facebook*not supported*");
+
+        _userRepositoryMock.Verify(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
+        _userRepositoryMock.Verify(x => x.GetByExternalIdAsync(It.IsAny<string>(), It.IsAny<AuthProvider>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Theory]
+    [InlineData(AuthProvider.Microsoft)]
+    [InlineData(AuthProvider.Guest)]
+    [InlineData(AuthProvider.Local)]
+    public async Task Handle_Should_Support_Allowed_Providers(AuthProvider provider)
+    {
+        // Arrange
+        var command = new OAuthLoginCommand(
+            ExternalId: $"{provider}-user-id",
+            Email: $"user@{provider}.com",
+            DisplayName: $"{provider} User",
+            Provider: provider
+        );
+
+        _userRepositoryMock
+            .Setup(x => x.GetByExternalIdAsync(command.ExternalId, command.Provider, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User?)null);
+
+        _userRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User user, CancellationToken _) => user);
+
+        _jwtServiceMock
+            .Setup(x => x.GenerateToken(It.IsAny<User>()))
+            .Returns($"{provider}-token");
+
+        // Act
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.User.Provider.Should().Be(provider);
     }
 }

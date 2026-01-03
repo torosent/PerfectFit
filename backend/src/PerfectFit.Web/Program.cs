@@ -60,18 +60,7 @@ var authBuilder = builder.Services.AddAuthentication(options =>
 })
 .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme);
 
-// Configure OAuth providers only if credentials are provided
-var googleSettings = builder.Configuration.GetSection("OAuth:Google").Get<GoogleSettings>();
-if (!string.IsNullOrEmpty(googleSettings?.ClientId) && !string.IsNullOrEmpty(googleSettings?.ClientSecret))
-{
-    authBuilder.AddGoogle(options =>
-    {
-        options.ClientId = googleSettings.ClientId;
-        options.ClientSecret = googleSettings.ClientSecret;
-        options.SignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-    });
-}
-
+// Configure Microsoft OAuth provider only if credentials are provided
 var msSettings = builder.Configuration.GetSection("OAuth:Microsoft").Get<MicrosoftSettings>();
 if (!string.IsNullOrEmpty(msSettings?.ClientId) && !string.IsNullOrEmpty(msSettings?.ClientSecret))
 {

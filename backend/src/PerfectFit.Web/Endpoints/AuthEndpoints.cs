@@ -1,8 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
-using Microsoft.AspNetCore.Authorization;
 using PerfectFit.Core.Enums;
 using PerfectFit.Infrastructure.Identity;
 using PerfectFit.UseCases.Auth.Commands;
@@ -92,17 +90,13 @@ public static class AuthEndpoints
             return Results.BadRequest(new { error = $"Unsupported OAuth provider: {provider}" });
         }
 
-        var scheme = authProvider switch
+        // Only Microsoft OAuth is supported
+        if (authProvider != AuthProvider.Microsoft)
         {
-            AuthProvider.Google => GoogleDefaults.AuthenticationScheme,
-            AuthProvider.Microsoft => MicrosoftAccountDefaults.AuthenticationScheme,
-            _ => null
-        };
-
-        if (scheme is null)
-        {
-            return Results.BadRequest(new { error = $"OAuth not configured for provider: {provider}" });
+            return Results.BadRequest(new { error = $"OAuth provider '{provider}' is not supported. Only Microsoft OAuth is available." });
         }
+
+        var scheme = MicrosoftAccountDefaults.AuthenticationScheme;
 
         // Set the return URL (frontend callback URL)
         var callbackUrl = $"/api/auth/callback/{provider.ToLowerInvariant()}";

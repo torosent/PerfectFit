@@ -61,6 +61,17 @@ public class OAuthLoginCommandHandler : IRequestHandler<OAuthLoginCommand, OAuth
 
     public async Task<OAuthLoginResult> Handle(OAuthLoginCommand request, CancellationToken cancellationToken)
     {
+        // Reject Google and Facebook providers - only Microsoft, Local, and Guest are supported
+        if (request.Provider == AuthProvider.Google)
+        {
+            throw new InvalidOperationException("Google authentication is not supported. Please use Microsoft, local, or guest authentication.");
+        }
+
+        if (request.Provider == AuthProvider.Facebook)
+        {
+            throw new InvalidOperationException("Facebook authentication is not supported. Please use Microsoft, local, or guest authentication.");
+        }
+
         // Try to find existing user
         var user = await _userRepository.GetByExternalIdAsync(
             request.ExternalId,
