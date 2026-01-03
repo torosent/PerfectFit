@@ -18,6 +18,7 @@ namespace PerfectFit.UseCases.Games.Commands;
 /// <param name="ClientTimestamp">Optional client timestamp for timing validation.</param>
 public record PlacePieceCommand(
     Guid GameId,
+    int? UserId,
     int PieceIndex,
     int Row,
     int Col,
@@ -58,6 +59,16 @@ public class PlacePieceCommandHandler : IRequestHandler<PlacePieceCommand, Place
         if (session is null)
         {
             return new PlacePieceResult(Found: false, GameActive: false, Response: null);
+        }
+
+        // Verify session ownership if user is authenticated
+        if (request.UserId.HasValue && session.UserId != request.UserId.Value)
+        {
+            return new PlacePieceResult(
+                Found: true,
+                GameActive: true,
+                Response: null,
+                RejectionReason: "Game session does not belong to this user");
         }
 
         if (session.Status != GameStatus.Playing)

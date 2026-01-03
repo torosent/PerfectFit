@@ -10,6 +10,7 @@ import {
   useIsAuthLoading,
   useAuthError,
   useLockoutEnd,
+  useIsGuest,
 } from '@/lib/stores/auth-store';
 
 /**
@@ -27,6 +28,7 @@ function formatLockoutTime(lockoutEnd: string): string {
 export default function LoginPage() {
   const router = useRouter();
   const isAuthenticated = useIsAuthenticated();
+  const isGuest = useIsGuest();
   const isLoading = useIsAuthLoading();
   const error = useAuthError();
   const lockoutEnd = useLockoutEnd();
@@ -49,10 +51,12 @@ export default function LoginPage() {
   }, [initializeAuth]);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    // Only redirect if authenticated AND not a guest
+    // Guests should be allowed to see the login page to upgrade/switch account
+    if (isAuthenticated && !isGuest) {
       router.push('/play');
     }
-  }, [isAuthenticated, router]);
+  }, [isAuthenticated, isGuest, router]);
 
   const validateForm = (): boolean => {
     const errors: { email?: string; password?: string } = {};

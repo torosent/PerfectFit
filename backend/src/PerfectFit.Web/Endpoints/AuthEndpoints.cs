@@ -190,7 +190,7 @@ public static class AuthEndpoints
                 DisplayName: result.User.DisplayName,
                 Avatar: result.User.Avatar,
                 Email: result.User.Email,
-                Provider: result.User.Provider.ToString(),
+                Provider: result.User.Provider.ToString().ToLowerInvariant(),
                 HighScore: result.User.HighScore,
                 GamesPlayed: result.User.GamesPlayed
             )
@@ -219,7 +219,7 @@ public static class AuthEndpoints
             DisplayName: dbUser.DisplayName,
             Avatar: dbUser.Avatar,
             Email: dbUser.Email,
-            Provider: dbUser.Provider.ToString(),
+            Provider: dbUser.Provider.ToString().ToLowerInvariant(),
             HighScore: dbUser.HighScore,
             GamesPlayed: dbUser.GamesPlayed,
             Role: dbUser.Role.ToString()
@@ -251,7 +251,7 @@ public static class AuthEndpoints
                 DisplayName: result.User.DisplayName,
                 Avatar: result.User.Avatar,
                 Email: result.User.Email,
-                Provider: result.User.Provider.ToString(),
+                Provider: result.User.Provider.ToString().ToLowerInvariant(),
                 HighScore: result.User.HighScore,
                 GamesPlayed: result.User.GamesPlayed,
                 Role: result.User.Role.ToString()
@@ -383,7 +383,7 @@ public static class AuthEndpoints
                 DisplayName: result.User.DisplayName,
                 Avatar: result.User.Avatar,
                 Email: result.User.Email,
-                Provider: result.User.Provider.ToString(),
+                Provider: result.User.Provider.ToString().ToLowerInvariant(),
                 HighScore: result.User.HighScore,
                 GamesPlayed: result.User.GamesPlayed,
                 Role: result.User.Role.ToString()),

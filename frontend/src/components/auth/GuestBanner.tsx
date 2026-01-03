@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useSyncExternalStore } from 'react';
-import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useIsGuest, useIsAuthenticated } from '@/lib/stores/auth-store';
 
 /**
@@ -34,7 +34,6 @@ export function GuestBanner({
   storageKey = 'perfectfit-guest-banner-dismissed',
   className = '',
 }: GuestBannerProps) {
-  const router = useRouter();
   const isAuthenticated = useIsAuthenticated();
   const isGuest = useIsGuest();
   const isMounted = useIsMounted();
@@ -54,10 +53,6 @@ export function GuestBanner({
   const handleDismiss = () => {
     localStorage.setItem(storageKey, 'true');
     setIsDismissed(true);
-  };
-
-  const handleSignIn = () => {
-    router.push('/login');
   };
 
   return (
@@ -103,13 +98,13 @@ export function GuestBanner({
       </div>
 
       <div className="flex items-center gap-2 flex-shrink-0">
-        <button
-          onClick={handleSignIn}
+        <Link
+          href="/login"
           className="px-3 py-1.5 text-sm font-medium text-white rounded-md transition-colors"
           style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}
         >
           Sign In
-        </button>
+        </Link>
         <button
           onClick={handleDismiss}
           className={`

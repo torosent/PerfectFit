@@ -79,11 +79,21 @@ public static class GameEndpoints
     private static async Task<IResult> PlacePiece(
         Guid id,
         PlacePieceRequestDto request,
+        ClaimsPrincipal user,
         IMediator mediator,
         CancellationToken cancellationToken)
     {
+        // Extract userId from JWT if authenticated
+        int? userId = null;
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedId))
+        {
+            userId = parsedId;
+        }
+
         var command = new PlacePieceCommand(
             GameId: id,
+            UserId: userId,
             PieceIndex: request.PieceIndex,
             Row: request.Position.Row,
             Col: request.Position.Col,

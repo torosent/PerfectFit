@@ -336,10 +336,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // Leaderboard actions
   submitScoreToLeaderboard: async () => {
     const { gameState } = get();
-    const { token, isAuthenticated } = useAuthStore.getState();
+    const { token, isAuthenticated, user } = useAuthStore.getState();
     
     // Can only submit if authenticated and game is over
     if (!gameState || gameState.status !== 'Ended' || !isAuthenticated || !token) {
+      return;
+    }
+
+    // Guest users cannot submit scores to leaderboard
+    if (user?.provider === 'guest') {
       return;
     }
 
