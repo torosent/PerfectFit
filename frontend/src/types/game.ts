@@ -63,13 +63,38 @@ export interface LeaderboardEntry {
   displayName: string;
   score: number;
   achievedAt: string;
+  avatar?: string;
 }
 
 export interface UserProfile {
   id: string;
   displayName: string;
+  username: string;
   email?: string;
   provider: 'google' | 'apple' | 'microsoft' | 'guest';
   highScore: number;
   gamesPlayed: number;
+  avatar?: string;
+}
+
+/**
+ * Request payload for updating user profile
+ */
+export interface UpdateProfileRequest {
+  username?: string;
+  avatar?: string;
+}
+
+/**
+ * Response from profile update endpoint
+ */
+export interface UpdateProfileResponse {
+  success: boolean;
+  errorMessage?: string;
+  suggestedUsername?: string;
+  profile?: {
+    id: number;
+    username: string;
+    avatar?: string;
+  };
 }

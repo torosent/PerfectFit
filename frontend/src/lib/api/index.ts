@@ -30,3 +30,7 @@ export {
   type UserStats,
   type SubmitScoreResult,
 } from './leaderboard-client';
+
+export {
+  updateProfile,
+} from './profile-client';
