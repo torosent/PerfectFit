@@ -119,7 +119,7 @@ public class GameEngineTests
     public void PlacePiece_ValidPlacement_DoesNotDrawNewPieceUntilAllPlaced()
     {
         var engine = new GameEngine(seed: 42);
-        
+
         // After placing first piece, should have 2 pieces
         engine.PlacePiece(0, 0, 0);
         engine.CurrentPieces.Should().HaveCount(2);
@@ -129,7 +129,7 @@ public class GameEngineTests
     public void PlacePiece_AllThreePiecesPlaced_DrawsNewPieces()
     {
         var engine = new GameEngine(seed: 42);
-        
+
         // Place all 3 pieces in different locations
         engine.PlacePiece(0, 0, 0);  // 2 pieces left
         engine.PlacePiece(0, 3, 3);  // 1 piece left  
@@ -143,15 +143,15 @@ public class GameEngineTests
     public void PlacePiece_ReturnsCorrectPiecesRemainingInTurn()
     {
         var engine = new GameEngine(seed: 42);
-        
+
         var result1 = engine.PlacePiece(0, 0, 0);
         result1.PiecesRemainingInTurn.Should().Be(2);
         result1.NewTurnStarted.Should().BeFalse();
-        
+
         var result2 = engine.PlacePiece(0, 3, 3);
         result2.PiecesRemainingInTurn.Should().Be(1);
         result2.NewTurnStarted.Should().BeFalse();
-        
+
         var result3 = engine.PlacePiece(0, 6, 6);
         result3.PiecesRemainingInTurn.Should().Be(3); // After drawing new pieces
         result3.NewTurnStarted.Should().BeTrue();

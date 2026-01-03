@@ -38,7 +38,7 @@ public class GetUserStatsQueryHandler : IRequestHandler<GetUserStatsQuery, UserS
     public async Task<UserStatsResult?> Handle(GetUserStatsQuery request, CancellationToken cancellationToken)
     {
         var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken);
-        
+
         if (user is null)
         {
             return null;
@@ -46,10 +46,10 @@ public class GetUserStatsQueryHandler : IRequestHandler<GetUserStatsQuery, UserS
 
         // Get user's best leaderboard entry
         var bestEntry = await _leaderboardRepository.GetUserBestScoreAsync(request.UserId, cancellationToken);
-        
+
         // Get user's rank (0 if no scores)
         var rank = await _leaderboardRepository.GetUserRankAsync(request.UserId, cancellationToken);
-        
+
         LeaderboardEntryResult? bestGame = null;
         if (bestEntry is not null)
         {

@@ -28,7 +28,7 @@ public class LeaderboardEndpointsTests
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var scores = await response.Content.ReadFromJsonAsync<List<LeaderboardEntryDto>>();
         scores.Should().NotBeNull();
         scores.Should().BeEmpty();
@@ -40,16 +40,16 @@ public class LeaderboardEndpointsTests
         // Arrange
         await using var factory = new CustomWebApplicationFactory();
         var client = factory.CreateClient();
-        
+
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
+
         // Create test users
         var user1 = User.Create("ext-1", "user1@test.com", "Player One", AuthProvider.Google);
         var user2 = User.Create("ext-2", "user2@test.com", "Player Two", AuthProvider.Google);
         db.Users.AddRange(user1, user2);
         await db.SaveChangesAsync();
-        
+
         // Create game sessions
         var session1 = GameSession.Create(user1.Id);
         var session2 = GameSession.Create(user2.Id);
@@ -59,7 +59,7 @@ public class LeaderboardEndpointsTests
         session2.EndGame();
         db.GameSessions.AddRange(session1, session2);
         await db.SaveChangesAsync();
-        
+
         // Create leaderboard entries
         var entry1 = LeaderboardEntry.Create(user1.Id, 100, 5, 2, session1.Id);
         var entry2 = LeaderboardEntry.Create(user2.Id, 200, 10, 4, session2.Id);
@@ -71,7 +71,7 @@ public class LeaderboardEndpointsTests
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var scores = await response.Content.ReadFromJsonAsync<List<LeaderboardEntryDto>>();
         scores.Should().NotBeNull();
         scores.Should().HaveCount(2);
@@ -87,15 +87,15 @@ public class LeaderboardEndpointsTests
         // Arrange
         await using var factory = new CustomWebApplicationFactory();
         var client = factory.CreateClient();
-        
+
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
+
         // Create test user
         var user = User.Create("ext-limit", "limit@test.com", "Limit User", AuthProvider.Google);
         db.Users.Add(user);
         await db.SaveChangesAsync();
-        
+
         // Create multiple game sessions and entries
         for (int i = 0; i < 5; i++)
         {
@@ -104,7 +104,7 @@ public class LeaderboardEndpointsTests
             session.EndGame();
             db.GameSessions.Add(session);
             await db.SaveChangesAsync();
-            
+
             var entry = LeaderboardEntry.Create(user.Id, (i + 1) * 100, i + 1, i, session.Id);
             db.LeaderboardEntries.Add(entry);
             await db.SaveChangesAsync();
@@ -115,7 +115,7 @@ public class LeaderboardEndpointsTests
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var scores = await response.Content.ReadFromJsonAsync<List<LeaderboardEntryDto>>();
         scores.Should().NotBeNull();
         scores.Should().HaveCount(3);
@@ -141,24 +141,24 @@ public class LeaderboardEndpointsTests
     {
         // Arrange
         await using var factory = new CustomWebApplicationFactory();
-        
+
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
+
         var user = User.Create("ext-stats", "stats@test.com", "Stats User", AuthProvider.Google);
         user.IncrementGamesPlayed();
         user.IncrementGamesPlayed();
         user.UpdateHighScore(500);
         db.Users.Add(user);
         await db.SaveChangesAsync();
-        
+
         var session = GameSession.Create(user.Id);
         session.AddScore(500, 20);
         session.UpdateCombo(5);
         session.EndGame();
         db.GameSessions.Add(session);
         await db.SaveChangesAsync();
-        
+
         var entry = LeaderboardEntry.Create(user.Id, 500, 20, 5, session.Id);
         db.LeaderboardEntries.Add(entry);
         await db.SaveChangesAsync();
@@ -171,7 +171,7 @@ public class LeaderboardEndpointsTests
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var stats = await response.Content.ReadFromJsonAsync<UserStatsDto>();
         stats.Should().NotBeNull();
         stats!.HighScore.Should().Be(500);
@@ -201,14 +201,14 @@ public class LeaderboardEndpointsTests
     {
         // Arrange
         await using var factory = new CustomWebApplicationFactory();
-        
+
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
+
         var user = User.Create("ext-submit", "submit@test.com", "Submit User", AuthProvider.Google);
         db.Users.Add(user);
         await db.SaveChangesAsync();
-        
+
         var session = GameSession.Create(user.Id);
         session.AddScore(300, 15);
         session.UpdateCombo(3);
@@ -224,7 +224,7 @@ public class LeaderboardEndpointsTests
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
-        
+
         var result = await response.Content.ReadFromJsonAsync<SubmitScoreResponseDto>();
         result.Should().NotBeNull();
         result!.Success.Should().BeTrue();
@@ -239,10 +239,10 @@ public class LeaderboardEndpointsTests
     {
         // Arrange
         await using var factory = new CustomWebApplicationFactory();
-        
+
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
+
         var user = User.Create("ext-invalid", "invalid@test.com", "Invalid User", AuthProvider.Google);
         db.Users.Add(user);
         await db.SaveChangesAsync();
@@ -255,7 +255,7 @@ public class LeaderboardEndpointsTests
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        
+
         var result = await response.Content.ReadFromJsonAsync<SubmitScoreResponseDto>();
         result.Should().NotBeNull();
         result!.Success.Should().BeFalse();
@@ -267,14 +267,14 @@ public class LeaderboardEndpointsTests
     {
         // Arrange
         await using var factory = new CustomWebApplicationFactory();
-        
+
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
+
         var guestUser = User.Create("guest-123", null, "Guest_ABC123", AuthProvider.Guest);
         db.Users.Add(guestUser);
         await db.SaveChangesAsync();
-        
+
         var session = GameSession.Create(guestUser.Id);
         session.AddScore(100, 5);
         session.EndGame();
@@ -289,7 +289,7 @@ public class LeaderboardEndpointsTests
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
-        
+
         var result = await response.Content.ReadFromJsonAsync<SubmitScoreResponseDto>();
         result.Should().NotBeNull();
         result!.Success.Should().BeFalse();
@@ -301,14 +301,14 @@ public class LeaderboardEndpointsTests
     {
         // Arrange
         await using var factory = new CustomWebApplicationFactory();
-        
+
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
+
         var user = User.Create("ext-notended", "notended@test.com", "NotEnded User", AuthProvider.Google);
         db.Users.Add(user);
         await db.SaveChangesAsync();
-        
+
         var session = GameSession.Create(user.Id);
         session.AddScore(100, 5);
         // NOT calling EndGame()
@@ -323,7 +323,7 @@ public class LeaderboardEndpointsTests
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        
+
         var result = await response.Content.ReadFromJsonAsync<SubmitScoreResponseDto>();
         result.Should().NotBeNull();
         result!.Success.Should().BeFalse();
@@ -335,20 +335,20 @@ public class LeaderboardEndpointsTests
     {
         // Arrange
         await using var factory = new CustomWebApplicationFactory();
-        
+
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
+
         var user = User.Create("ext-dup", "dup@test.com", "Dup User", AuthProvider.Google);
         db.Users.Add(user);
         await db.SaveChangesAsync();
-        
+
         var session = GameSession.Create(user.Id);
         session.AddScore(200, 10);
         session.EndGame();
         db.GameSessions.Add(session);
         await db.SaveChangesAsync();
-        
+
         // Already submitted
         var existingEntry = LeaderboardEntry.Create(user.Id, 200, 10, 2, session.Id);
         db.LeaderboardEntries.Add(existingEntry);
@@ -362,7 +362,7 @@ public class LeaderboardEndpointsTests
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        
+
         var result = await response.Content.ReadFromJsonAsync<SubmitScoreResponseDto>();
         result.Should().NotBeNull();
         result!.Success.Should().BeFalse();
@@ -374,15 +374,15 @@ public class LeaderboardEndpointsTests
     {
         // Arrange
         await using var factory = new CustomWebApplicationFactory();
-        
+
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        
+
         var user1 = User.Create("ext-owner", "owner@test.com", "Owner User", AuthProvider.Google);
         var user2 = User.Create("ext-other", "other@test.com", "Other User", AuthProvider.Google);
         db.Users.AddRange(user1, user2);
         await db.SaveChangesAsync();
-        
+
         var session = GameSession.Create(user1.Id); // Owned by user1
         session.AddScore(200, 10);
         session.EndGame();
@@ -398,7 +398,7 @@ public class LeaderboardEndpointsTests
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-        
+
         var result = await response.Content.ReadFromJsonAsync<SubmitScoreResponseDto>();
         result.Should().NotBeNull();
         result!.Success.Should().BeFalse();

@@ -15,12 +15,12 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         var databaseProvider = configuration.GetValue<string>("DatabaseProvider") ?? "PostgreSQL";
-        
+
         services.AddDbContext<AppDbContext>(options =>
         {
             if (databaseProvider.Equals("SQLite", StringComparison.OrdinalIgnoreCase))
             {
-                var sqliteConnection = configuration.GetConnectionString("SqliteConnection") 
+                var sqliteConnection = configuration.GetConnectionString("SqliteConnection")
                     ?? "Data Source=perfectfit.db";
                 options.UseSqlite(sqliteConnection);
             }
@@ -43,6 +43,15 @@ public static class DependencyInjection
 
         // Register domain services
         services.AddScoped<IScoreValidationService, ScoreValidationService>();
+
+        // Register profanity checker with HttpClient
+        services.AddHttpClient<IProfanityChecker, PurgoMalumProfanityChecker>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5); // Reasonable timeout for external API
+        });
+
+        // Register username validation service
+        services.AddScoped<IUsernameValidationService, UsernameValidationService>();
 
         return services;
     }

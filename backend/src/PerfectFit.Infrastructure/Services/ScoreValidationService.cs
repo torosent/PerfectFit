@@ -41,7 +41,7 @@ public class ScoreValidationService : IScoreValidationService
     {
         // Check if game session exists
         var session = await _gameSessionRepository.GetByIdAsync(gameSessionId, cancellationToken);
-        
+
         if (session is null)
         {
             return new ScoreValidationResult(
@@ -79,7 +79,7 @@ public class ScoreValidationService : IScoreValidationService
 
         // Check if already submitted to leaderboard
         var alreadySubmitted = await _leaderboardRepository.ExistsByGameSessionIdAsync(gameSessionId, cancellationToken);
-        
+
         if (alreadySubmitted)
         {
             return new ScoreValidationResult(

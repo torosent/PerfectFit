@@ -1,4 +1,7 @@
 using FluentAssertions;
+using CoreMarker = PerfectFit.Core.CoreAssemblyMarker;
+using UseCasesMarker = PerfectFit.UseCases.UseCasesAssemblyMarker;
+using InfrastructureMarker = PerfectFit.Infrastructure.InfrastructureAssemblyMarker;
 
 namespace PerfectFit.UnitTests;
 
@@ -24,7 +27,7 @@ public class HealthCheckTests
     public void Core_Assembly_Should_Be_Loaded()
     {
         // Arrange & Act
-        var assemblyName = Core.CoreAssemblyMarker.AssemblyName;
+        var assemblyName = CoreMarker.AssemblyName;
 
         // Assert
         assemblyName.Should().Be("PerfectFit.Core");
@@ -34,7 +37,7 @@ public class HealthCheckTests
     public void UseCases_Assembly_Should_Be_Loaded()
     {
         // Arrange & Act
-        var assemblyName = UseCases.UseCasesAssemblyMarker.AssemblyName;
+        var assemblyName = UseCasesMarker.AssemblyName;
 
         // Assert
         assemblyName.Should().Be("PerfectFit.UseCases");
@@ -44,7 +47,7 @@ public class HealthCheckTests
     public void Infrastructure_Assembly_Should_Be_Loaded()
     {
         // Arrange & Act
-        var assemblyName = Infrastructure.InfrastructureAssemblyMarker.AssemblyName;
+        var assemblyName = InfrastructureMarker.AssemblyName;
 
         // Assert
         assemblyName.Should().Be("PerfectFit.Infrastructure");

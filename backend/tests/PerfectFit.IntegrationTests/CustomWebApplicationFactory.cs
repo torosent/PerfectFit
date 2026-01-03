@@ -20,7 +20,7 @@ namespace PerfectFit.IntegrationTests;
 public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _databaseName;
-    
+
     // Use the same JWT secret as in appsettings.json
     private const string JwtSecret = "your-256-bit-secret-key-here-minimum-32-characters-long-for-security";
 

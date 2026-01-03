@@ -66,7 +66,7 @@ public class SubmitScoreCommandHandler : IRequestHandler<SubmitScoreCommand, Sub
         }
 
         var session = validationResult.GameSession!;
-        
+
         // Don't submit zero scores
         if (session.Score <= 0)
         {

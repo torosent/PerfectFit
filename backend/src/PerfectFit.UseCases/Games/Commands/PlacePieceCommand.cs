@@ -17,9 +17,9 @@ namespace PerfectFit.UseCases.Games.Commands;
 /// <param name="Col">Column position on the board.</param>
 /// <param name="ClientTimestamp">Optional client timestamp for timing validation.</param>
 public record PlacePieceCommand(
-    Guid GameId, 
-    int PieceIndex, 
-    int Row, 
+    Guid GameId,
+    int PieceIndex,
+    int Row,
     int Col,
     long? ClientTimestamp = null
 ) : IRequest<PlacePieceResult>;
@@ -72,8 +72,8 @@ public class PlacePieceCommandHandler : IRequestHandler<PlacePieceCommand, Place
             session.EndGame();
             await _gameSessionRepository.UpdateAsync(session, cancellationToken);
             return new PlacePieceResult(
-                Found: true, 
-                GameActive: false, 
+                Found: true,
+                GameActive: false,
                 Response: null,
                 RejectionReason: "Game exceeded maximum duration");
         }
@@ -82,8 +82,8 @@ public class PlacePieceCommandHandler : IRequestHandler<PlacePieceCommand, Place
         if (session.MoveCount >= MaxMovesPerGame)
         {
             return new PlacePieceResult(
-                Found: true, 
-                GameActive: true, 
+                Found: true,
+                GameActive: true,
                 Response: null,
                 RejectionReason: "Maximum moves reached");
         }
@@ -93,8 +93,8 @@ public class PlacePieceCommandHandler : IRequestHandler<PlacePieceCommand, Place
         if (timeSinceLastMove.HasValue && timeSinceLastMove.Value < MinTimeBetweenMovesMs)
         {
             return new PlacePieceResult(
-                Found: true, 
-                GameActive: true, 
+                Found: true,
+                GameActive: true,
                 Response: null,
                 RejectionReason: "Move rate limit exceeded");
         }
@@ -103,8 +103,8 @@ public class PlacePieceCommandHandler : IRequestHandler<PlacePieceCommand, Place
         if (request.PieceIndex < 0 || request.PieceIndex > 2)
         {
             return new PlacePieceResult(
-                Found: true, 
-                GameActive: true, 
+                Found: true,
+                GameActive: true,
                 Response: null,
                 RejectionReason: "Invalid piece index");
         }
@@ -113,8 +113,8 @@ public class PlacePieceCommandHandler : IRequestHandler<PlacePieceCommand, Place
         if (request.Row < 0 || request.Row > 9 || request.Col < 0 || request.Col > 9)
         {
             return new PlacePieceResult(
-                Found: true, 
-                GameActive: true, 
+                Found: true,
+                GameActive: true,
                 Response: null,
                 RejectionReason: "Invalid board position");
         }
@@ -146,10 +146,10 @@ public class PlacePieceCommandHandler : IRequestHandler<PlacePieceCommand, Place
 
         // Record the move for anti-cheat tracking
         session.RecordMove(
-            request.PieceIndex, 
-            request.Row, 
-            request.Col, 
-            placementResult.PointsEarned, 
+            request.PieceIndex,
+            request.Row,
+            request.Col,
+            placementResult.PointsEarned,
             placementResult.LinesCleared);
 
         // Update session with new state

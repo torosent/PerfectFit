@@ -130,4 +130,109 @@ public class UserTests
         user.LastLoginAt.Should().NotBeNull();
         user.LastLoginAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
     }
+
+    [Fact]
+    public void User_SetUsername_UpdatesUsername_WhenValid()
+    {
+        // Arrange
+        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var newUsername = "NewUser_123";
+
+        // Act
+        user.SetUsername(newUsername);
+
+        // Assert
+        user.Username.Should().Be(newUsername);
+    }
+
+    [Fact]
+    public void User_SetUsername_ThrowsException_WhenInvalidFormat()
+    {
+        // Arrange
+        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+
+        // Act
+        var act = () => user.SetUsername("ab"); // too short
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*Username*");
+    }
+
+    [Fact]
+    public void User_SetUsername_ThrowsException_WhenContainsInvalidChars()
+    {
+        // Arrange
+        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+
+        // Act
+        var act = () => user.SetUsername("user@name");
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithMessage("*alphanumeric*");
+    }
+
+    [Fact]
+    public void User_SetAvatar_UpdatesAvatar()
+    {
+        // Arrange
+        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var avatar = "🎮";
+
+        // Act
+        user.SetAvatar(avatar);
+
+        // Assert
+        user.Avatar.Should().Be(avatar);
+    }
+
+    [Fact]
+    public void User_SetAvatar_AllowsNull()
+    {
+        // Arrange
+        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        user.SetAvatar("🎮");
+
+        // Act
+        user.SetAvatar(null);
+
+        // Assert
+        user.Avatar.Should().BeNull();
+    }
+
+    [Fact]
+    public void User_Create_GeneratesRandomUsername()
+    {
+        // Arrange & Act
+        var user1 = User.Create("external-id-1", "test1@example.com", "Test User 1", AuthProvider.Google);
+        var user2 = User.Create("external-id-2", "test2@example.com", "Test User 2", AuthProvider.Google);
+
+        // Assert
+        user1.Username.Should().StartWith("Player_");
+        user2.Username.Should().StartWith("Player_");
+        user1.Username.Should().HaveLength(13); // "Player_" (7) + 6 random chars
+        user2.Username.Should().HaveLength(13);
+        user1.Username.Should().NotBe(user2.Username); // Should be different
+    }
+
+    [Fact]
+    public void User_Create_UsernameIsAlphanumeric()
+    {
+        // Arrange & Act
+        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+
+        // Assert
+        user.Username.Should().MatchRegex(@"^[A-Za-z0-9_]+$");
+    }
+
+    [Fact]
+    public void User_Create_AvatarIsNull()
+    {
+        // Arrange & Act
+        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+
+        // Assert
+        user.Avatar.Should().BeNull();
+    }
 }

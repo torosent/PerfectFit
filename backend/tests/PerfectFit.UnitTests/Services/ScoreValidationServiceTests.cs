@@ -81,7 +81,7 @@ public class ScoreValidationServiceTests
         var session = CreateTestSession(userId: 1, ageSeconds: 10, endGame: true);
         session.AddScore(100, 1);
         session.EndGame();
-        
+
         _gameSessionRepositoryMock.Setup(x => x.GetByIdAsync(gameId, default))
             .ReturnsAsync(session);
         _leaderboardRepositoryMock.Setup(x => x.ExistsByGameSessionIdAsync(gameId, default))
@@ -103,7 +103,7 @@ public class ScoreValidationServiceTests
         var session = CreateTestSession(userId: 1, ageSeconds: 10, endGame: true);
         session.AddScore(100, 1);
         session.EndGame();
-        
+
         _gameSessionRepositoryMock.Setup(x => x.GetByIdAsync(gameId, default))
             .ReturnsAsync(session);
         _leaderboardRepositoryMock.Setup(x => x.ExistsByGameSessionIdAsync(gameId, default))
@@ -123,7 +123,7 @@ public class ScoreValidationServiceTests
         // Arrange
         var gameId = Guid.NewGuid();
         var session = CreateTestSession(userId: 1, ageSeconds: 30, endGame: false);
-        
+
         // Add realistic game data
         for (int i = 0; i < 10; i++)
         {
@@ -132,7 +132,7 @@ public class ScoreValidationServiceTests
         session.AddScore(300, 10);
         session.UpdateCombo(2); // Realistic combo
         session.EndGame();
-        
+
         _gameSessionRepositoryMock.Setup(x => x.GetByIdAsync(gameId, default))
             .ReturnsAsync(session);
         _leaderboardRepositoryMock.Setup(x => x.ExistsByGameSessionIdAsync(gameId, default))
@@ -157,7 +157,7 @@ public class ScoreValidationServiceTests
         session.RecordMove(0, 0, 0, 100, 1);
         session.AddScore(100, 1);
         session.EndGame();
-        
+
         _gameSessionRepositoryMock.Setup(x => x.GetByIdAsync(gameId, default))
             .ReturnsAsync(session);
         _leaderboardRepositoryMock.Setup(x => x.ExistsByGameSessionIdAsync(gameId, default))
@@ -177,13 +177,13 @@ public class ScoreValidationServiceTests
         // Arrange - High score but very few moves (suspicious)
         var gameId = Guid.NewGuid();
         var session = CreateTestSession(userId: 1, ageSeconds: 60, endGame: false); // 60 seconds - long enough
-        
+
         // Only 2 moves but very high score (impossible)
         session.RecordMove(0, 0, 0, 5000, 5);
         session.RecordMove(1, 1, 1, 5000, 5);
         session.AddScore(15000, 10); // Score above suspicious threshold with few moves
         session.EndGame();
-        
+
         _gameSessionRepositoryMock.Setup(x => x.GetByIdAsync(gameId, default))
             .ReturnsAsync(session);
         _leaderboardRepositoryMock.Setup(x => x.ExistsByGameSessionIdAsync(gameId, default))
@@ -203,7 +203,7 @@ public class ScoreValidationServiceTests
         // Arrange - Max combo is higher than lines cleared (impossible)
         var gameId = Guid.NewGuid();
         var session = CreateTestSession(userId: 1, ageSeconds: 60, endGame: false);
-        
+
         // Build up an impossible state
         for (int i = 0; i < 10; i++)
         {
@@ -212,7 +212,7 @@ public class ScoreValidationServiceTests
         session.UpdateCombo(5); // But somehow have a combo of 5 (impossible without clearing lines)
         session.AddScore(50, 0); // No lines cleared
         session.EndGame();
-        
+
         _gameSessionRepositoryMock.Setup(x => x.GetByIdAsync(gameId, default))
             .ReturnsAsync(session);
         _leaderboardRepositoryMock.Setup(x => x.ExistsByGameSessionIdAsync(gameId, default))
@@ -232,7 +232,7 @@ public class ScoreValidationServiceTests
         // Arrange - More lines than theoretically possible
         var gameId = Guid.NewGuid();
         var session = CreateTestSession(userId: 1, ageSeconds: 60, endGame: false);
-        
+
         // Only 5 moves but way too many lines cleared
         for (int i = 0; i < 5; i++)
         {
@@ -240,7 +240,7 @@ public class ScoreValidationServiceTests
         }
         session.AddScore(500, 100); // 100 lines from 5 moves is impossible (max 10)
         session.EndGame();
-        
+
         _gameSessionRepositoryMock.Setup(x => x.GetByIdAsync(gameId, default))
             .ReturnsAsync(session);
         _leaderboardRepositoryMock.Setup(x => x.ExistsByGameSessionIdAsync(gameId, default))
@@ -259,7 +259,7 @@ public class ScoreValidationServiceTests
         // Arrange - Score that exceeds what's mathematically possible
         var gameId = Guid.NewGuid();
         var session = CreateTestSession(userId: 1, ageSeconds: 3600, endGame: false); // Long game to avoid rate limit
-        
+
         // 5 moves but impossibly high score
         for (int i = 0; i < 5; i++)
         {
@@ -267,7 +267,7 @@ public class ScoreValidationServiceTests
         }
         session.AddScore(100000, 10); // Way too high for 5 moves
         session.EndGame();
-        
+
         _gameSessionRepositoryMock.Setup(x => x.GetByIdAsync(gameId, default))
             .ReturnsAsync(session);
         _leaderboardRepositoryMock.Setup(x => x.ExistsByGameSessionIdAsync(gameId, default))
@@ -287,14 +287,14 @@ public class ScoreValidationServiceTests
         // Arrange - User already has max leaderboard entries
         var gameId = Guid.NewGuid();
         var session = CreateTestSession(userId: 1, ageSeconds: 30, endGame: false);
-        
+
         for (int i = 0; i < 10; i++)
         {
             session.RecordMove(i % 3, i % 10, i % 10, 30, 1);
         }
         session.AddScore(300, 10);
         session.EndGame();
-        
+
         _gameSessionRepositoryMock.Setup(x => x.GetByIdAsync(gameId, default))
             .ReturnsAsync(session);
         _leaderboardRepositoryMock.Setup(x => x.ExistsByGameSessionIdAsync(gameId, default))
@@ -316,14 +316,14 @@ public class ScoreValidationServiceTests
         // Arrange - Game is older than 48 hours
         var gameId = Guid.NewGuid();
         var session = CreateTestSession(userId: 1, ageSeconds: 49 * 3600, endGame: false); // 49 hours old
-        
+
         for (int i = 0; i < 10; i++)
         {
             session.RecordMove(i % 3, i % 10, i % 10, 30, 1);
         }
         session.AddScore(300, 10);
         session.EndGame();
-        
+
         _gameSessionRepositoryMock.Setup(x => x.GetByIdAsync(gameId, default))
             .ReturnsAsync(session);
         _leaderboardRepositoryMock.Setup(x => x.ExistsByGameSessionIdAsync(gameId, default))
@@ -345,14 +345,14 @@ public class ScoreValidationServiceTests
         // Arrange - Game started in the future (clock manipulation)
         var gameId = Guid.NewGuid();
         var session = CreateTestSession(userId: 1, ageSeconds: -600, endGame: false); // 10 minutes in future
-        
+
         for (int i = 0; i < 10; i++)
         {
             session.RecordMove(i % 3, i % 10, i % 10, 30, 1);
         }
         session.AddScore(300, 10);
         session.EndGame();
-        
+
         _gameSessionRepositoryMock.Setup(x => x.GetByIdAsync(gameId, default))
             .ReturnsAsync(session);
         _leaderboardRepositoryMock.Setup(x => x.ExistsByGameSessionIdAsync(gameId, default))
@@ -374,7 +374,7 @@ public class ScoreValidationServiceTests
     private static GameSession CreateTestSession(int? userId, int ageSeconds = 0, bool endGame = false)
     {
         var session = GameSession.Create(userId);
-        
+
         // Use reflection to set StartedAt to simulate game age
         if (ageSeconds > 0)
         {
@@ -385,7 +385,7 @@ public class ScoreValidationServiceTests
                 backingField?.SetValue(session, DateTime.UtcNow.AddSeconds(-ageSeconds));
             }
         }
-        
+
         return session;
     }
 }
