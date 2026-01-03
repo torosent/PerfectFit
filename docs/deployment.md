@@ -406,6 +406,8 @@ The project includes a workflow at \`.github/workflows/deploy-cloudflare.yml\`:
 | \`OAuth__Google__ClientSecret\` | No | Google OAuth client secret |
 | \`OAuth__Microsoft__ClientId\` | No | Microsoft OAuth client ID |
 | \`OAuth__Microsoft__ClientSecret\` | No | Microsoft OAuth client secret |
+| \`OAuth__Facebook__AppId\` | No | Facebook OAuth app ID |
+| \`OAuth__Facebook__AppSecret\` | No | Facebook OAuth app secret |
 
 ### Frontend Environment Variables
 

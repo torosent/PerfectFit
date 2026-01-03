@@ -232,7 +232,7 @@ GET /api/auth/{provider}
 **Parameters**:
 | Name | Type | Description |
 |------|------|-------------|
-| provider | string | `google`, `microsoft`, or `apple` |
+| provider | string | `google`, `microsoft`, or `facebook` |
 
 **Query Parameters** (Optional):
 | Name | Type | Description |
@@ -513,7 +513,7 @@ All errors follow this format:
 | `Guest` | Anonymous guest user |
 | `Google` | Google OAuth |
 | `Microsoft` | Microsoft OAuth |
-| `Apple` | Apple OAuth |
+| `Facebook` | Facebook OAuth |
 
 ### PieceType
 

@@ -39,7 +39,7 @@ public class UserRepositoryTests : RepositoryTestBase
     public async Task GetByIdAsync_WhenUserExists_ShouldReturnUser()
     {
         // Arrange
-        var user = User.Create("apple-456", "user@example.com", "Apple User", AuthProvider.Apple);
+        var user = User.Create("facebook-456", "user@example.com", "Facebook User", AuthProvider.Facebook);
         await _repository.AddAsync(user);
 
         // Act
@@ -47,8 +47,8 @@ public class UserRepositoryTests : RepositoryTestBase
 
         // Assert
         result.Should().NotBeNull();
-        result!.ExternalId.Should().Be("apple-456");
-        result.DisplayName.Should().Be("Apple User");
+        result!.ExternalId.Should().Be("facebook-456");
+        result.DisplayName.Should().Be("Facebook User");
     }
 
     [Fact]
@@ -84,7 +84,7 @@ public class UserRepositoryTests : RepositoryTestBase
         await _repository.AddAsync(user);
 
         // Act
-        var result = await _repository.GetByExternalIdAsync("external-id", AuthProvider.Apple);
+        var result = await _repository.GetByExternalIdAsync("external-id", AuthProvider.Facebook);
 
         // Assert
         result.Should().BeNull();

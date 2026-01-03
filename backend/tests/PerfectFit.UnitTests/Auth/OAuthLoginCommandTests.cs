@@ -142,10 +142,10 @@ public class OAuthLoginCommandTests
     {
         // Arrange
         var command = new OAuthLoginCommand(
-            ExternalId: "apple-123",
+            ExternalId: "facebook-123",
             Email: null,
-            DisplayName: "Apple User",
-            Provider: AuthProvider.Apple
+            DisplayName: "Facebook User",
+            Provider: AuthProvider.Facebook
         );
 
         _userRepositoryMock
@@ -158,7 +158,7 @@ public class OAuthLoginCommandTests
 
         _jwtServiceMock
             .Setup(x => x.GenerateToken(It.IsAny<User>()))
-            .Returns("apple-token");
+            .Returns("facebook-token");
 
         // Act
         var result = await _sut.Handle(command, CancellationToken.None);
@@ -203,7 +203,7 @@ public class OAuthLoginCommandTests
 
     [Theory]
     [InlineData(AuthProvider.Google)]
-    [InlineData(AuthProvider.Apple)]
+    [InlineData(AuthProvider.Facebook)]
     [InlineData(AuthProvider.Microsoft)]
     [InlineData(AuthProvider.Guest)]
     public async Task Handle_Should_Support_All_Providers(AuthProvider provider)

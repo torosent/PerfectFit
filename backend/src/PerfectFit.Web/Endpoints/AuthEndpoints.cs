@@ -300,7 +300,7 @@ public static class AuthEndpoints
         return provider.ToLowerInvariant() switch
         {
             "google" => AuthProvider.Google,
-            "apple" => AuthProvider.Apple,
+            "facebook" => AuthProvider.Facebook,
             "microsoft" => AuthProvider.Microsoft,
             "guest" => AuthProvider.Guest,
             _ => null

@@ -103,7 +103,7 @@ export default function LoginPage() {
           <div className="space-y-3">
             <LoginButton provider="google" disabled={isLoading} />
             <LoginButton provider="microsoft" disabled={isLoading} />
-            <LoginButton provider="apple" disabled={isLoading} />
+            <LoginButton provider="facebook" disabled={isLoading} />
           </div>
 
           {/* Divider */}

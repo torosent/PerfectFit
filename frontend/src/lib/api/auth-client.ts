@@ -18,7 +18,7 @@ export class AuthError extends Error {
 /**
  * Supported OAuth providers
  */
-export type OAuthProvider = 'google' | 'microsoft' | 'apple';
+export type OAuthProvider = 'google' | 'microsoft' | 'facebook';
 
 /**
  * Get the OAuth authorization URL for a provider

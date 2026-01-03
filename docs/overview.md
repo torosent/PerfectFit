@@ -19,7 +19,7 @@ PerfectFit is a full-stack grid-based block placement puzzle game inspired by cl
 
 ### User Management
 - **Guest Play**: Instant play without registration
-- **OAuth Authentication**: Google, Microsoft, Apple sign-in
+- **OAuth Authentication**: Google, Microsoft, Facebook sign-in
 - **User Profiles**: Track high scores and games played
 - **Session Management**: JWT-based authentication
 

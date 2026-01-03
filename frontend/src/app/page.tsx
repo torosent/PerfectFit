@@ -495,7 +495,7 @@ export default function LandingPage() {
                   </div>
                   <div className="text-left">
                     <div className="font-bold" style={{ color: theme.textPrimary }}>Easy Sign In</div>
-                    <div className="text-sm" style={{ color: theme.textSecondary }}>Login with Google, Apple, or Microsoft</div>
+                    <div className="text-sm" style={{ color: theme.textSecondary }}>Login with Google, Facebook, or Microsoft</div>
                   </div>
                 </div>
                 

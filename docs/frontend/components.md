@@ -230,7 +230,7 @@ import { LoginButton } from '@/components/auth';
 **Props**:
 | Prop | Type | Description |
 |------|------|-------------|
-| `provider` | `'google' \| 'microsoft' \| 'apple' \| 'guest'` | OAuth provider |
+| `provider` | `'google' \| 'microsoft' \| 'facebook' \| 'guest'` | OAuth provider |
 
 ### UserProfile
 

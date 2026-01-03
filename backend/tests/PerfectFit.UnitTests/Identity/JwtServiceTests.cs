@@ -147,8 +147,8 @@ public class JwtServiceTests
     public void GenerateToken_Should_Include_External_Id_Claim()
     {
         // Arrange
-        var externalId = "apple-unique-id-12345";
-        var user = User.Create(externalId, "apple@icloud.com", "Apple User", AuthProvider.Apple);
+        var externalId = "facebook-unique-id-12345";
+        var user = User.Create(externalId, "user@facebook.com", "Facebook User", AuthProvider.Facebook);
 
         // Act
         var token = _sut.GenerateToken(user);

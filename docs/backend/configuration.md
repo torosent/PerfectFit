@@ -36,11 +36,9 @@ The backend uses ASP.NET Core 10 configuration system with support for JSON file
       "ClientId": "",
       "ClientSecret": ""
     },
-    "Apple": {
-      "ClientId": "",
-      "TeamId": "",
-      "KeyId": "",
-      "PrivateKey": ""
+    "Facebook": {
+      "AppId": "",
+      "AppSecret": ""
     }
   }
 }
@@ -165,20 +163,18 @@ dotnet user-secrets set "Jwt:Secret" "$(openssl rand -base64 32)"
 3. Add redirect URI: `http://localhost:5050/api/auth/callback/microsoft`
 4. Create a client secret
 
-#### Apple OAuth
+#### Facebook OAuth
 
 | Key | Type | Description |
 |-----|------|-------------|
-| `OAuth:Apple:ClientId` | string | Apple Service ID |
-| `OAuth:Apple:TeamId` | string | Apple Developer Team ID |
-| `OAuth:Apple:KeyId` | string | Key ID for private key |
-| `OAuth:Apple:PrivateKey` | string | Private key content (PEM format) |
+| `OAuth:Facebook:AppId` | string | Facebook App ID |
+| `OAuth:Facebook:AppSecret` | string | Facebook App Secret |
 
 **Setup**:
-1. Go to [Apple Developer Portal](https://developer.apple.com/)
-2. Create a Service ID
-3. Generate a private key
-4. Configure Sign in with Apple
+1. Go to [Facebook Developers](https://developers.facebook.com/)
+2. Create a new app
+3. Add Facebook Login product
+4. Add redirect URI: `http://localhost:5050/api/auth/callback/facebook`
 
 ---
 

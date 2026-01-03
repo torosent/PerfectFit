@@ -34,7 +34,7 @@ public class UserTests
     public void Create_WithNullEmail_ShouldAllowNullEmail()
     {
         // Arrange & Act
-        var user = User.Create("external-id", null, "Display Name", AuthProvider.Apple);
+        var user = User.Create("external-id", null, "Display Name", AuthProvider.Facebook);
 
         // Assert
         user.Email.Should().BeNull();

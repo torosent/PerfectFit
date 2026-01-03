@@ -9,7 +9,7 @@ public class OAuthSettings
 
     public GoogleSettings Google { get; set; } = new();
     public MicrosoftSettings Microsoft { get; set; } = new();
-    public AppleSettings Apple { get; set; } = new();
+    public FacebookSettings Facebook { get; set; } = new();
 }
 
 public class GoogleSettings
@@ -24,10 +24,8 @@ public class MicrosoftSettings
     public string ClientSecret { get; set; } = string.Empty;
 }
 
-public class AppleSettings
+public class FacebookSettings
 {
-    public string ClientId { get; set; } = string.Empty;
-    public string TeamId { get; set; } = string.Empty;
-    public string KeyId { get; set; } = string.Empty;
-    public string PrivateKey { get; set; } = string.Empty;
+    public string AppId { get; set; } = string.Empty;
+    public string AppSecret { get; set; } = string.Empty;
 }

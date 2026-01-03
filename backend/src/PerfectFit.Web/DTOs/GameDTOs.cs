@@ -30,7 +30,7 @@ public enum GameStatusDto
 public enum AuthProviderDto
 {
     Google,
-    Apple,
+    Facebook,
     Microsoft,
     Guest
 }
