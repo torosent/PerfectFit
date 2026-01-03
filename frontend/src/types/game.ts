@@ -71,7 +71,7 @@ export interface UserProfile {
   displayName: string;
   username: string;
   email?: string;
-  provider: 'google' | 'facebook' | 'microsoft' | 'guest';
+  provider: 'google' | 'facebook' | 'microsoft' | 'guest' | 'local';
   highScore: number;
   gamesPlayed: number;
   avatar?: string;

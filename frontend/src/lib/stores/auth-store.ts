@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { UserProfile } from '@/types';
 import * as authClient from '@/lib/api/auth-client';
+import type { RegisterResponse } from '@/lib/api/auth-client';
 
 /**
  * Auth store state interface
@@ -13,6 +14,7 @@ export interface AuthState {
   isLoading: boolean;
   isInitialized: boolean;
   error: string | null;
+  lockoutEnd: string | null;
 }
 
 /**
@@ -27,6 +29,8 @@ export interface AuthActions {
   initializeAuth: () => Promise<void>;
   loginAsGuest: () => Promise<void>;
   clearError: () => void;
+  localLogin: (email: string, password: string) => Promise<void>;
+  localRegister: (email: string, password: string, displayName: string) => Promise<RegisterResponse>;
 }
 
 /**
@@ -44,6 +48,7 @@ const initialState: AuthState = {
   isLoading: false,
   isInitialized: false,
   error: null,
+  lockoutEnd: null,
 };
 
 /**
@@ -175,6 +180,71 @@ export const useAuthStore = create<AuthStore>()(
           throw err;
         }
       },
+
+      /**
+       * Login with email and password
+       */
+      localLogin: async (email: string, password: string) => {
+        set({ isLoading: true, error: null, lockoutEnd: null });
+
+        try {
+          const response = await authClient.login(email, password);
+          
+          if (!response.success) {
+            set({
+              error: response.error || 'Login failed',
+              lockoutEnd: response.lockoutEnd || null,
+              isLoading: false,
+            });
+            throw new Error(response.error || 'Login failed');
+          }
+
+          if (response.token && response.user) {
+            set({
+              token: response.token,
+              user: response.user,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
+              lockoutEnd: null,
+            });
+          }
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Login failed';
+          // Only set error if not already set by the response handling
+          const currentState = get();
+          if (!currentState.error) {
+            set({
+              error: message,
+              isLoading: false,
+            });
+          }
+          throw err;
+        }
+      },
+
+      /**
+       * Register a new user with email and password
+       */
+      localRegister: async (email: string, password: string, displayName: string): Promise<RegisterResponse> => {
+        set({ isLoading: true, error: null });
+
+        try {
+          const response = await authClient.register(email, password, displayName);
+          set({ isLoading: false });
+          return response;
+        } catch (err) {
+          const message = err instanceof Error ? err.message : 'Registration failed';
+          set({
+            error: message,
+            isLoading: false,
+          });
+          return {
+            success: false,
+            error: message,
+          };
+        }
+      },
     }),
     {
       name: 'perfectfit-auth',
@@ -198,5 +268,6 @@ export const useIsAuthenticated = () => useAuthStore((state) => state.isAuthenti
 export const useIsAuthLoading = () => useAuthStore((state) => state.isLoading);
 export const useIsAuthInitialized = () => useAuthStore((state) => state.isInitialized);
 export const useAuthError = () => useAuthStore((state) => state.error);
+export const useLockoutEnd = () => useAuthStore((state) => state.lockoutEnd);
 export const useIsGuest = () => useAuthStore((state) => state.user?.provider === 'guest');
 export const useIsAdmin = () => useAuthStore((state) => state.user?.role === 'Admin');

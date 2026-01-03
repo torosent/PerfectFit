@@ -17,8 +17,14 @@ export {
   createGuestSession,
   logout,
   getAuthHeaders,
+  login,
+  register,
+  verifyEmail,
   AuthError,
   type OAuthProvider,
+  type LoginResponse,
+  type RegisterResponse,
+  type VerifyEmailResponse,
 } from './auth-client';
 
 export {

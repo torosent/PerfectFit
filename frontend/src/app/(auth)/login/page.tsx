@@ -1,17 +1,27 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { LoginButton, GuestButton } from '@/components/auth/LoginButton';
 import {
   useAuthStore,
   useIsAuthenticated,
   useIsAuthLoading,
   useAuthError,
+  useLockoutEnd,
 } from '@/lib/stores/auth-store';
 
 /**
- * Login page with OAuth and guest options
+ * Format lockout end time for display
+ */
+function formatLockoutTime(lockoutEnd: string): string {
+  const lockoutDate = new Date(lockoutEnd);
+  return lockoutDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+/**
+ * Login page with email/password form, Microsoft OAuth, and guest options
  * Redirects to /play if already authenticated
  */
 export default function LoginPage() {
@@ -19,9 +29,19 @@ export default function LoginPage() {
   const isAuthenticated = useIsAuthenticated();
   const isLoading = useIsAuthLoading();
   const error = useAuthError();
+  const lockoutEnd = useLockoutEnd();
   const loginAsGuest = useAuthStore((state) => state.loginAsGuest);
+  const localLogin = useAuthStore((state) => state.localLogin);
   const clearError = useAuthStore((state) => state.clearError);
   const initializeAuth = useAuthStore((state) => state.initializeAuth);
+
+  // Form state
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [validationErrors, setValidationErrors] = useState<{
+    email?: string;
+    password?: string;
+  }>({});
 
   // Initialize auth and redirect if already authenticated
   useEffect(() => {
@@ -33,6 +53,39 @@ export default function LoginPage() {
       router.push('/play');
     }
   }, [isAuthenticated, router]);
+
+  const validateForm = (): boolean => {
+    const errors: { email?: string; password?: string } = {};
+    
+    if (!email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      errors.email = 'Please enter a valid email';
+    }
+    
+    if (!password) {
+      errors.password = 'Password is required';
+    }
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    clearError();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      await localLogin(email, password);
+      router.push('/play');
+    } catch {
+      // Error is handled by the store
+    }
+  };
 
   const handleGuestLogin = async () => {
     try {
@@ -88,6 +141,11 @@ export default function LoginPage() {
                 </svg>
                 <div>
                   <p>{error}</p>
+                  {lockoutEnd && (
+                    <p className="mt-1 text-xs">
+                      Locked until {formatLockoutTime(lockoutEnd)}
+                    </p>
+                  )}
                   <button
                     onClick={clearError}
                     className="mt-1 text-xs underline hover:no-underline"
@@ -99,11 +157,85 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* OAuth buttons */}
+          {/* Email/Password form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+                Email
+              </label>
+              <input
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (validationErrors.email) {
+                    setValidationErrors((prev) => ({ ...prev, email: undefined }));
+                  }
+                }}
+                disabled={isLoading}
+                className="w-full px-4 py-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder="you@example.com"
+                autoComplete="email"
+              />
+              {validationErrors.email && (
+                <p className="mt-1 text-sm text-red-400">{validationErrors.email}</p>
+              )}
+            </div>
+
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+                Password
+              </label>
+              <input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (validationErrors.password) {
+                    setValidationErrors((prev) => ({ ...prev, password: undefined }));
+                  }
+                }}
+                disabled={isLoading}
+                className="w-full px-4 py-3 rounded-lg bg-gray-800/50 border border-gray-600 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+                placeholder="••••••••"
+                autoComplete="current-password"
+              />
+              {validationErrors.password && (
+                <p className="mt-1 text-sm text-red-400">{validationErrors.password}</p>
+              )}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="w-full py-3 px-4 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+            >
+              {isLoading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Signing in...
+                </span>
+              ) : (
+                'Sign In'
+              )}
+            </button>
+          </form>
+
+          {/* Divider */}
+          <div className="relative my-6">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-gray-600" />
+            </div>
+            <div className="relative flex justify-center text-sm">
+              <span className="px-3 text-gray-400" style={{ backgroundColor: '#0d243d' }}>or continue with</span>
+            </div>
+          </div>
+
+          {/* Microsoft OAuth button */}
           <div className="space-y-3">
-            <LoginButton provider="google" disabled={isLoading} />
             <LoginButton provider="microsoft" disabled={isLoading} />
-            <LoginButton provider="facebook" disabled={isLoading} />
           </div>
 
           {/* Divider */}
@@ -123,8 +255,16 @@ export default function LoginPage() {
             isLoading={isLoading}
           />
 
+          {/* Registration link */}
+          <p className="mt-6 text-center text-sm text-gray-400">
+            Don&apos;t have an account?{' '}
+            <Link href="/register" className="text-teal-400 hover:text-teal-300 underline">
+              Register
+            </Link>
+          </p>
+
           {/* Footer text */}
-          <p className="mt-6 text-center text-xs text-gray-500">
+          <p className="mt-4 text-center text-xs text-gray-500">
             By continuing, you agree to our terms of service and privacy policy.
           </p>
         </div>

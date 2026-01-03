@@ -18,7 +18,35 @@ export class AuthError extends Error {
 /**
  * Supported OAuth providers
  */
-export type OAuthProvider = 'google' | 'microsoft' | 'facebook';
+export type OAuthProvider = 'microsoft';
+
+/**
+ * Response from login endpoint
+ */
+export interface LoginResponse {
+  success: boolean;
+  token?: string;
+  user?: UserProfile;
+  error?: string;
+  lockoutEnd?: string;
+}
+
+/**
+ * Response from registration endpoint
+ */
+export interface RegisterResponse {
+  success: boolean;
+  message?: string;
+  error?: string;
+}
+
+/**
+ * Response from email verification endpoint
+ */
+export interface VerifyEmailResponse {
+  success: boolean;
+  error?: string;
+}
 
 /**
  * Get the OAuth authorization URL for a provider
@@ -130,4 +158,106 @@ export function getAuthHeaders(token?: string | null): HeadersInit {
   }
   
   return headers;
+}
+
+/**
+ * Register a new user with email and password
+ * @param email - User's email address
+ * @param password - User's password
+ * @param displayName - User's display name
+ * @returns Registration result
+ */
+export async function register(
+  email: string,
+  password: string,
+  displayName: string
+): Promise<RegisterResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password, displayName }),
+  });
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    return {
+      success: false,
+      error: data.error || data.message || 'Registration failed',
+    };
+  }
+
+  return {
+    success: true,
+    message: data.message || 'Registration successful. Please check your email to verify your account.',
+  };
+}
+
+/**
+ * Login with email and password
+ * @param email - User's email address
+ * @param password - User's password
+ * @returns Login result with token and user profile
+ */
+export async function login(
+  email: string,
+  password: string
+): Promise<LoginResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, password }),
+  });
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    return {
+      success: false,
+      error: data.error || data.message || 'Login failed',
+      lockoutEnd: data.lockoutEnd,
+    };
+  }
+
+  return {
+    success: true,
+    token: data.token,
+    user: data.user,
+  };
+}
+
+/**
+ * Verify email address with verification token
+ * @param email - User's email address
+ * @param token - Email verification token
+ * @returns Verification result
+ */
+export async function verifyEmail(
+  email: string,
+  token: string
+): Promise<VerifyEmailResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/verify-email`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ email, token }),
+  });
+
+  const data = await response.json();
+  
+  if (!response.ok) {
+    return {
+      success: false,
+      error: data.error || data.message || 'Email verification failed',
+    };
+  }
+
+  return {
+    success: true,
+  };
 }
