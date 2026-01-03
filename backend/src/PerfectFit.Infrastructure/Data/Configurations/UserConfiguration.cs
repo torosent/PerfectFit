@@ -75,6 +75,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.DeletedAt)
             .HasColumnName("deleted_at");
 
+        builder.Property(u => u.PasswordHash)
+            .HasColumnName("password_hash")
+            .HasMaxLength(256);
+
         // Global query filter for soft delete - excludes deleted users by default
         builder.HasQueryFilter(u => !u.IsDeleted);
 

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using PerfectFit.Core.Identity;
 using PerfectFit.Core.Interfaces;
 using PerfectFit.Core.Services;
 using PerfectFit.Infrastructure.Data;
@@ -50,6 +51,9 @@ public static class DependencyInjection
 
         // Register domain services
         services.AddScoped<IScoreValidationService, ScoreValidationService>();
+
+        // Register password hasher as singleton (stateless, thread-safe)
+        services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
 
         // Register profanity checker with HttpClient
         services.AddHttpClient<IProfanityChecker, PurgoMalumProfanityChecker>(client =>

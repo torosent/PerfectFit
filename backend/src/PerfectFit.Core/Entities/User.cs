@@ -20,6 +20,7 @@ public class User
     public UserRole Role { get; private set; }
     public bool IsDeleted { get; private set; }
     public DateTime? DeletedAt { get; private set; }
+    public string? PasswordHash { get; private set; }
 
     // Navigation
     public ICollection<GameSession> GameSessions { get; private set; } = new List<GameSession>();
@@ -108,5 +109,15 @@ public class User
     public void SetRole(UserRole role)
     {
         Role = role;
+    }
+
+    /// <summary>
+    /// Sets the password hash for local authentication.
+    /// </summary>
+    /// <param name="passwordHash">The hashed password to set.</param>
+    public void SetPasswordHash(string passwordHash)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(passwordHash, nameof(passwordHash));
+        PasswordHash = passwordHash;
     }
 }
