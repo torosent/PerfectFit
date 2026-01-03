@@ -232,7 +232,7 @@ GET /api/auth/{provider}
 **Parameters**:
 | Name | Type | Description |
 |------|------|-------------|
-| provider | string | `google`, `microsoft`, or `facebook` |
+| provider | string | `microsoft` |
 
 **Query Parameters** (Optional):
 | Name | Type | Description |
@@ -293,7 +293,7 @@ Authorization: Bearer <token>
   "id": 1,
   "displayName": "John Doe",
   "email": "john@example.com",
-  "provider": "Google"
+  "provider": "Local"
 }
 ```
 
@@ -511,9 +511,8 @@ All errors follow this format:
 | Value | Description |
 |-------|-------------|
 | `Guest` | Anonymous guest user |
-| `Google` | Google OAuth |
+| `Local` | Local email/password authentication |
 | `Microsoft` | Microsoft OAuth |
-| `Facebook` | Facebook OAuth |
 
 ### PieceType
 

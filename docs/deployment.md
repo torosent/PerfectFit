@@ -402,12 +402,10 @@ The project includes a workflow at \`.github/workflows/deploy-cloudflare.yml\`:
 | \`Jwt__Issuer\` | No | JWT issuer (default: PerfectFit) |
 | \`Jwt__Audience\` | No | JWT audience (default: PerfectFit) |
 | \`CORS__AllowedOrigins\` | Yes | Frontend URL(s), comma-separated |
-| \`OAuth__Google__ClientId\` | No | Google OAuth client ID |
-| \`OAuth__Google__ClientSecret\` | No | Google OAuth client secret |
-| \`OAuth__Microsoft__ClientId\` | No | Microsoft OAuth client ID |
-| \`OAuth__Microsoft__ClientSecret\` | No | Microsoft OAuth client secret |
-| \`OAuth__Facebook__AppId\` | No | Facebook OAuth app ID |
-| \`OAuth__Facebook__AppSecret\` | No | Facebook OAuth app secret |
+| `OAuth__Microsoft__ClientId` | No | Microsoft OAuth client ID |
+| `OAuth__Microsoft__ClientSecret` | No | Microsoft OAuth client secret |
+| `Auth__LockoutThreshold` | No | Failed login attempts before lockout (default: 5) |
+| `Auth__LockoutDurationMinutes` | No | Lockout duration in minutes (default: 15) |
 
 ### Frontend Environment Variables
 

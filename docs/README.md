@@ -31,6 +31,6 @@ Welcome to the PerfectFit documentation. This comprehensive guide covers archite
 | Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS 4, Zustand, @dnd-kit, Motion |
 | Backend | ASP.NET Core 10, C# 13, Entity Framework Core, MediatR |
 | Database | PostgreSQL 16 (production), SQLite (development) |
-| Authentication | JWT, OAuth 2.0 (Google, Microsoft, Facebook) |
+| Authentication | JWT, OAuth 2.0 (Microsoft), Local Authentication |
 | Architecture | Clean Architecture, CQRS Pattern |
 | Deployment | Docker, Azure Container Apps, Cloudflare Pages |

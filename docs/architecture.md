@@ -253,7 +253,7 @@ GetUserStatsQuery → GetUserStatsHandler → UserStatsDto
 │         │      │         │      │Provider │      │         │
 └────┬────┘      └────┬────┘      └────┬────┘      └────┬────┘
      │                │                 │                │
-     │ 1. GET /api/auth/google          │                │
+     │ 1. GET /api/auth/microsoft       │                │
      │────────────────>                 │                │
      │                │                 │                │
      │ 2. Redirect to OAuth provider    │                │
@@ -265,7 +265,7 @@ GetUserStatsQuery → GetUserStatsHandler → UserStatsDto
      │ 4. OAuth callback with code      │                │
      │<──────────────────────────────────                │
      │                │                 │                │
-     │ 5. GET /api/auth/callback/google │                │
+     │ 5. GET /api/auth/callback/microsoft               │
      │────────────────>                 │                │
      │                │                 │                │
      │                │ 6. Exchange code for user info   │

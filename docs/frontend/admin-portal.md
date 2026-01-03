@@ -26,7 +26,7 @@ The Users tab displays all registered users with the following information:
 | ID | Unique user identifier |
 | Email | User's email address (null for guests) |
 | Display Name | User's display name |
-| Provider | Authentication provider (Guest, Google, etc.) |
+| Provider | Authentication provider (Guest, Local, Microsoft) |
 | Role | User role (User or Admin) |
 | Created | Account creation date |
 | Actions | Delete button |

@@ -28,17 +28,9 @@ The backend uses ASP.NET Core 10 configuration system with support for JSON file
     "ExpirationDays": 7
   },
   "OAuth": {
-    "Google": {
-      "ClientId": "",
-      "ClientSecret": ""
-    },
     "Microsoft": {
       "ClientId": "",
       "ClientSecret": ""
-    },
-    "Facebook": {
-      "AppId": "",
-      "AppSecret": ""
     }
   }
 }
@@ -136,20 +128,6 @@ dotnet user-secrets set "Jwt:Secret" "$(openssl rand -base64 32)"
 
 ### OAuth Providers
 
-#### Google OAuth
-
-| Key | Type | Description |
-|-----|------|-------------|
-| `OAuth:Google:ClientId` | string | Google OAuth client ID |
-| `OAuth:Google:ClientSecret` | string | Google OAuth client secret |
-
-**Setup**:
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create/select a project
-3. Enable Google+ API
-4. Create OAuth 2.0 credentials
-5. Add authorized redirect URI: `http://localhost:5050/api/auth/callback/google`
-
 #### Microsoft OAuth
 
 | Key | Type | Description |
@@ -162,19 +140,6 @@ dotnet user-secrets set "Jwt:Secret" "$(openssl rand -base64 32)"
 2. Register an application in Azure AD
 3. Add redirect URI: `http://localhost:5050/api/auth/callback/microsoft`
 4. Create a client secret
-
-#### Facebook OAuth
-
-| Key | Type | Description |
-|-----|------|-------------|
-| `OAuth:Facebook:AppId` | string | Facebook App ID |
-| `OAuth:Facebook:AppSecret` | string | Facebook App Secret |
-
-**Setup**:
-1. Go to [Facebook Developers](https://developers.facebook.com/)
-2. Create a new app
-3. Add Facebook Login product
-4. Add redirect URI: `http://localhost:5050/api/auth/callback/facebook`
 
 ---
 
@@ -189,9 +154,9 @@ export ConnectionStrings__DefaultConnection="Host=prod-db;..."
 # JWT
 export Jwt__Secret="your-production-secret"
 
-# OAuth
-export OAuth__Google__ClientId="your-client-id"
-export OAuth__Google__ClientSecret="your-client-secret"
+# OAuth (Microsoft)
+export OAuth__Microsoft__ClientId="your-client-id"
+export OAuth__Microsoft__ClientSecret="your-client-secret"
 ```
 
 ---
@@ -208,8 +173,8 @@ dotnet user-secrets init
 
 # Set secrets
 dotnet user-secrets set "Jwt:Secret" "your-development-secret-key-minimum-32-chars"
-dotnet user-secrets set "OAuth:Google:ClientId" "your-google-client-id"
-dotnet user-secrets set "OAuth:Google:ClientSecret" "your-google-client-secret"
+dotnet user-secrets set "OAuth:Microsoft:ClientId" "your-microsoft-client-id"
+dotnet user-secrets set "OAuth:Microsoft:ClientSecret" "your-microsoft-client-secret"
 
 # List secrets
 dotnet user-secrets list
@@ -266,8 +231,8 @@ Configuration is loaded in this order (later overrides earlier):
 export ASPNETCORE_ENVIRONMENT=Production
 export ConnectionStrings__DefaultConnection="Host=prod-db.example.com;..."
 export Jwt__Secret="$(cat /run/secrets/jwt_secret)"
-export OAuth__Google__ClientId="$(cat /run/secrets/google_client_id)"
-export OAuth__Google__ClientSecret="$(cat /run/secrets/google_client_secret)"
+export OAuth__Microsoft__ClientId="$(cat /run/secrets/microsoft_client_id)"
+export OAuth__Microsoft__ClientSecret="$(cat /run/secrets/microsoft_client_secret)"
 ```
 
 ---

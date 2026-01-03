@@ -2,7 +2,7 @@
 
 ## Overview
 
-The PerfectFit backend is built with ASP.NET Core 9 following Clean Architecture principles. It provides a RESTful API for game management, user authentication, and leaderboard functionality.
+The PerfectFit backend is built with ASP.NET Core 10 following Clean Architecture principles. It provides a RESTful API for game management, user authentication, and leaderboard functionality.
 
 ## Project Structure
 
@@ -22,7 +22,7 @@ backend/
 ## Quick Start
 
 ### Prerequisites
-- .NET 9 SDK
+- .NET 10 SDK
 - Docker (for PostgreSQL) or SQLite for local development
 
 ### Run with SQLite (Development)
@@ -74,6 +74,7 @@ dotnet test --collect:"XPlat Code Coverage"
 ## Related Documentation
 
 - [API Reference](./api-reference.md) - Complete endpoint documentation
+- [Authentication](./authentication.md) - Authentication methods and security
 - [Admin API](./admin-api.md) - Admin endpoints and user management
 - [Configuration](./configuration.md) - All configuration options
 - [Database](./database.md) - Database schema and migrations

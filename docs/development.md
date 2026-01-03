@@ -45,10 +45,15 @@ dotnet user-secrets init
 # Set required secrets
 dotnet user-secrets set "Jwt:Secret" "your-secret-key-at-least-32-characters-long"
 
-# Optionally configure OAuth
-dotnet user-secrets set "OAuth:Google:ClientId" "your-client-id"
-dotnet user-secrets set "OAuth:Google:ClientSecret" "your-client-secret"
+# Configure Microsoft OAuth (optional - needed for Microsoft sign-in)
+dotnet user-secrets set "OAuth:Microsoft:ClientId" "your-microsoft-client-id"
+dotnet user-secrets set "OAuth:Microsoft:ClientSecret" "your-microsoft-client-secret"
 ```
+
+> **Note**: PerfectFit supports three authentication methods:
+> - **Local auth** (email/password) - works out of the box
+> - **Microsoft OAuth** - requires Azure AD app registration
+> - **Guest** - no configuration needed
 
 ### 4. Start the Backend
 

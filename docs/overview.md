@@ -18,10 +18,12 @@ PerfectFit is a full-stack grid-based block placement puzzle game inspired by cl
 - **Real-time Animations**: Smooth visual feedback using Motion
 
 ### User Management
+- **Local Authentication**: Email/password registration with email verification
+- **Microsoft OAuth**: Sign in with Microsoft account
 - **Guest Play**: Instant play without registration
-- **OAuth Authentication**: Google, Microsoft, Facebook sign-in
 - **User Profiles**: Track high scores and games played
 - **Session Management**: JWT-based authentication
+- **Security**: Account lockout, rate limiting, BCrypt password hashing
 
 ### Leaderboard
 - **Global Rankings**: Compete with other players

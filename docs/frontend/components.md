@@ -217,12 +217,11 @@ Located in `src/components/auth/`:
 
 ### LoginButton
 
-OAuth login button with provider icons.
+Authentication button for Microsoft OAuth and guest login.
 
 ```tsx
 import { LoginButton } from '@/components/auth';
 
-<LoginButton provider="google" />
 <LoginButton provider="microsoft" />
 <LoginButton provider="guest" />
 ```
@@ -230,7 +229,41 @@ import { LoginButton } from '@/components/auth';
 **Props**:
 | Prop | Type | Description |
 |------|------|-------------|
-| `provider` | `'google' \| 'microsoft' \| 'facebook' \| 'guest'` | OAuth provider |
+| `provider` | `'microsoft' \| 'guest'` | Authentication provider |
+
+### PasswordStrengthIndicator
+
+Visual indicator showing password strength during registration.
+
+```tsx
+import { PasswordStrengthIndicator } from '@/components/auth';
+
+<PasswordStrengthIndicator password={password} />
+```
+
+**Props**:
+| Prop | Type | Description |
+|------|------|-------------|
+| `password` | `string` | The password to evaluate |
+
+**Password Requirements**:
+- Minimum 8 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one number
+
+**Features**:
+- Real-time strength calculation
+- Color-coded progress bar (red → yellow → green)
+- Checklist showing which requirements are met
+
+### Registration and Login Pages
+
+The authentication system includes these pages:
+
+- `/login` - Email/password login and Microsoft OAuth
+- `/register` - New user registration with password requirements
+- `/verify-email` - Email verification after registration
 
 ### UserProfile
 

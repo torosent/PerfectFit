@@ -64,7 +64,7 @@ Authorization: Bearer <admin_token>
       "displayName": "John Doe",
       "username": "johndoe",
       "avatar": "🎮",
-      "provider": "Google",
+      "provider": "Local",
       "role": "User",
       "createdAt": "2025-12-01T10:00:00Z",
       "lastLoginAt": "2026-01-02T08:30:00Z",
@@ -113,7 +113,7 @@ Authorization: Bearer <admin_token>
   "displayName": "John Doe",
   "username": "johndoe",
   "avatar": "🎮",
-  "provider": "Google",
+  "provider": "Local",
   "role": "User",
   "createdAt": "2025-12-01T10:00:00Z",
   "lastLoginAt": "2026-01-02T08:30:00Z",
@@ -280,7 +280,7 @@ All admin actions are automatically logged for accountability. The following act
 | displayName | string? | Display name |
 | username | string? | Username |
 | avatar | string? | Avatar emoji |
-| provider | string | Auth provider (Guest, Google, etc.) |
+| provider | string | Auth provider (Guest, Local, Microsoft) |
 | role | string | User role (User, Admin) |
 | createdAt | datetime | Account creation date |
 | lastLoginAt | datetime? | Last login timestamp |
