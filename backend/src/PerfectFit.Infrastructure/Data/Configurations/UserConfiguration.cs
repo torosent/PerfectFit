@@ -79,6 +79,18 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasColumnName("password_hash")
             .HasMaxLength(256);
 
+        builder.Property(u => u.EmailVerified)
+            .HasColumnName("email_verified")
+            .HasDefaultValue(false)
+            .IsRequired();
+
+        builder.Property(u => u.EmailVerificationToken)
+            .HasColumnName("email_verification_token")
+            .HasMaxLength(64);
+
+        builder.Property(u => u.EmailVerificationTokenExpiry)
+            .HasColumnName("email_verification_token_expiry");
+
         // Global query filter for soft delete - excludes deleted users by default
         builder.HasQueryFilter(u => !u.IsDeleted);
 

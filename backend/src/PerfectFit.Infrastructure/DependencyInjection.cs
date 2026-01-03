@@ -55,6 +55,9 @@ public static class DependencyInjection
         // Register password hasher as singleton (stateless, thread-safe)
         services.AddSingleton<IPasswordHasher, BCryptPasswordHasher>();
 
+        // Register email verification service as scoped
+        services.AddScoped<IEmailVerificationService, EmailVerificationService>();
+
         // Register profanity checker with HttpClient
         services.AddHttpClient<IProfanityChecker, PurgoMalumProfanityChecker>(client =>
         {

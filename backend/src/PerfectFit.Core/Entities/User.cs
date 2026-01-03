@@ -21,6 +21,9 @@ public class User
     public bool IsDeleted { get; private set; }
     public DateTime? DeletedAt { get; private set; }
     public string? PasswordHash { get; private set; }
+    public bool EmailVerified { get; private set; }
+    public string? EmailVerificationToken { get; private set; }
+    public DateTime? EmailVerificationTokenExpiry { get; private set; }
 
     // Navigation
     public ICollection<GameSession> GameSessions { get; private set; } = new List<GameSession>();
@@ -119,5 +122,36 @@ public class User
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(passwordHash, nameof(passwordHash));
         PasswordHash = passwordHash;
+    }
+
+    /// <summary>
+    /// Sets email verification token and expiry.
+    /// </summary>
+    /// <param name="token">The verification token.</param>
+    /// <param name="expiry">The token expiry time.</param>
+    public void SetEmailVerificationToken(string token, DateTime expiry)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(token, nameof(token));
+        EmailVerificationToken = token;
+        EmailVerificationTokenExpiry = expiry;
+    }
+
+    /// <summary>
+    /// Sets the email verification token expiry (for testing purposes).
+    /// </summary>
+    /// <param name="expiry">The token expiry time.</param>
+    public void SetEmailVerificationTokenExpiry(DateTime expiry)
+    {
+        EmailVerificationTokenExpiry = expiry;
+    }
+
+    /// <summary>
+    /// Marks the user's email as verified and clears the verification token.
+    /// </summary>
+    public void MarkEmailAsVerified()
+    {
+        EmailVerified = true;
+        EmailVerificationToken = null;
+        EmailVerificationTokenExpiry = null;
     }
 }
