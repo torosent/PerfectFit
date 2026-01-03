@@ -63,6 +63,21 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.LastUsernameChangeAt)
             .HasColumnName("last_username_change_at");
 
+        builder.Property(u => u.Role)
+            .HasColumnName("role")
+            .IsRequired();
+
+        builder.Property(u => u.IsDeleted)
+            .HasColumnName("is_deleted")
+            .HasDefaultValue(false)
+            .IsRequired();
+
+        builder.Property(u => u.DeletedAt)
+            .HasColumnName("deleted_at");
+
+        // Global query filter for soft delete - excludes deleted users by default
+        builder.HasQueryFilter(u => !u.IsDeleted);
+
         // Unique index on ExternalId + Provider for OAuth lookups
         builder.HasIndex(u => new { u.ExternalId, u.Provider })
             .IsUnique()
