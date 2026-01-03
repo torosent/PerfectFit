@@ -79,7 +79,11 @@ if (!string.IsNullOrEmpty(msSettings?.ClientId) && !string.IsNullOrEmpty(msSetti
     });
 }
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminPolicy", policy => 
+        policy.RequireClaim(System.Security.Claims.ClaimTypes.Role, "Admin"));
+});
 
 // Add services to the container
 builder.Services.AddEndpointsApiExplorer();

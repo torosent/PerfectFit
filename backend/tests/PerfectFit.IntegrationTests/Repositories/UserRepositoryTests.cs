@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using PerfectFit.Core.Entities;
 using PerfectFit.Core.Enums;
 using PerfectFit.Infrastructure.Data.Repositories;
@@ -131,5 +132,143 @@ public class UserRepositoryTests : RepositoryTestBase
         // TaskCanceledException derives from OperationCanceledException
         await Assert.ThrowsAnyAsync<OperationCanceledException>(
             () => _repository.AddAsync(user, cts.Token));
+    }
+
+    [Fact]
+    public async Task GetAllAsync_ShouldReturnNonDeletedUsers()
+    {
+        // Arrange
+        var user1 = User.Create("user-1", "user1@example.com", "User 1", AuthProvider.Google);
+        var user2 = User.Create("user-2", "user2@example.com", "User 2", AuthProvider.Google);
+        var deletedUser = User.Create("deleted-user", "deleted@example.com", "Deleted User", AuthProvider.Google);
+        deletedUser.SoftDelete();
+
+        await _repository.AddAsync(user1);
+        await _repository.AddAsync(user2);
+        await _repository.AddAsync(deletedUser);
+
+        // Act
+        var result = await _repository.GetAllAsync(1, 10);
+
+        // Assert
+        result.Should().HaveCount(2);
+        result.Should().Contain(u => u.ExternalId == "user-1");
+        result.Should().Contain(u => u.ExternalId == "user-2");
+        result.Should().NotContain(u => u.ExternalId == "deleted-user");
+    }
+
+    [Fact]
+    public async Task GetAllAsync_WithPagination_ShouldReturnCorrectPage()
+    {
+        // Arrange
+        for (int i = 1; i <= 10; i++)
+        {
+            var user = User.Create($"user-{i}", $"user{i}@example.com", $"User {i}", AuthProvider.Google);
+            await _repository.AddAsync(user);
+        }
+
+        // Act
+        var page1 = await _repository.GetAllAsync(1, 3);
+        var page2 = await _repository.GetAllAsync(2, 3);
+        var page4 = await _repository.GetAllAsync(4, 3);
+
+        // Assert
+        page1.Should().HaveCount(3);
+        page2.Should().HaveCount(3);
+        page4.Should().HaveCount(1); // Only 1 remaining (10 total, 3*3=9, 1 left)
+    }
+
+    [Fact]
+    public async Task GetCountAsync_ShouldReturnTotalCount()
+    {
+        // Arrange
+        var user1 = User.Create("count-1", "count1@example.com", "Count User 1", AuthProvider.Google);
+        var user2 = User.Create("count-2", "count2@example.com", "Count User 2", AuthProvider.Google);
+        var deletedUser = User.Create("count-deleted", "deleted@example.com", "Deleted Count", AuthProvider.Google);
+        deletedUser.SoftDelete();
+
+        await _repository.AddAsync(user1);
+        await _repository.AddAsync(user2);
+        await _repository.AddAsync(deletedUser);
+
+        // Act
+        var count = await _repository.GetCountAsync();
+
+        // Assert
+        count.Should().Be(2); // Should not count deleted user
+    }
+
+    [Fact]
+    public async Task SoftDeleteAsync_ShouldMarkUserAsDeleted()
+    {
+        // Arrange
+        var user = User.Create("soft-delete-test", "softdelete@example.com", "Soft Delete User", AuthProvider.Google);
+        await _repository.AddAsync(user);
+        var userId = user.Id;
+
+        // Act
+        await _repository.SoftDeleteAsync(userId);
+
+        // Assert - Use IgnoreQueryFilters to find the deleted user
+        var deletedUser = await DbContext.Users
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == userId);
+        
+        deletedUser.Should().NotBeNull();
+        deletedUser!.IsDeleted.Should().BeTrue();
+        deletedUser.DeletedAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task BulkSoftDeleteByProviderAsync_ShouldDeleteMatchingUsers()
+    {
+        // Arrange
+        var guestUser1 = User.Create("guest-1", null, "Guest 1", AuthProvider.Guest);
+        var guestUser2 = User.Create("guest-2", null, "Guest 2", AuthProvider.Guest);
+        var googleUser = User.Create("google-bulk", "google@example.com", "Google User", AuthProvider.Google);
+
+        await _repository.AddAsync(guestUser1);
+        await _repository.AddAsync(guestUser2);
+        await _repository.AddAsync(googleUser);
+
+        // Act
+        var deletedCount = await _repository.BulkSoftDeleteByProviderAsync(AuthProvider.Guest);
+
+        // Assert
+        deletedCount.Should().Be(2);
+
+        // Verify guest users are deleted
+        var remainingGuestUsers = await DbContext.Users
+            .Where(u => u.Provider == AuthProvider.Guest)
+            .ToListAsync();
+        remainingGuestUsers.Should().BeEmpty();
+
+        // Verify Google user is not affected
+        var googleUserAfter = await _repository.GetByExternalIdAsync("google-bulk", AuthProvider.Google);
+        googleUserAfter.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task GetDeletedUsersAsync_ShouldReturnOnlyDeletedUsers()
+    {
+        // Arrange
+        var activeUser = User.Create("active-user", "active@example.com", "Active User", AuthProvider.Google);
+        var deletedUser1 = User.Create("deleted-1", "deleted1@example.com", "Deleted User 1", AuthProvider.Google);
+        var deletedUser2 = User.Create("deleted-2", "deleted2@example.com", "Deleted User 2", AuthProvider.Google);
+        deletedUser1.SoftDelete();
+        deletedUser2.SoftDelete();
+
+        await _repository.AddAsync(activeUser);
+        await _repository.AddAsync(deletedUser1);
+        await _repository.AddAsync(deletedUser2);
+
+        // Act
+        var result = await _repository.GetDeletedUsersAsync(1, 10);
+
+        // Assert
+        result.Should().HaveCount(2);
+        result.Should().OnlyContain(u => u.IsDeleted);
+        result.Should().Contain(u => u.ExternalId == "deleted-1");
+        result.Should().Contain(u => u.ExternalId == "deleted-2");
     }
 }

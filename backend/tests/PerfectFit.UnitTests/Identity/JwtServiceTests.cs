@@ -158,4 +158,38 @@ public class JwtServiceTests
         principal.Should().NotBeNull();
         principal!.FindFirst("external_id")?.Value.Should().Be(externalId);
     }
+
+    [Fact]
+    public void GenerateToken_WithAdminRole_ShouldIncludeRoleClaim()
+    {
+        // Arrange
+        var user = User.Create("admin-123", "admin@example.com", "Admin User", AuthProvider.Google, UserRole.Admin);
+
+        // Act
+        var token = _sut.GenerateToken(user);
+        var principal = _sut.ValidateToken(token);
+
+        // Assert
+        principal.Should().NotBeNull();
+        var roleClaim = principal!.FindFirst(ClaimTypes.Role);
+        roleClaim.Should().NotBeNull("because the token should include a role claim");
+        roleClaim!.Value.Should().Be("Admin");
+    }
+
+    [Fact]
+    public void GenerateToken_WithUserRole_ShouldIncludeUserRoleClaim()
+    {
+        // Arrange
+        var user = User.Create("user-456", "user@example.com", "Regular User", AuthProvider.Google, UserRole.User);
+
+        // Act
+        var token = _sut.GenerateToken(user);
+        var principal = _sut.ValidateToken(token);
+
+        // Assert
+        principal.Should().NotBeNull();
+        var roleClaim = principal!.FindFirst(ClaimTypes.Role);
+        roleClaim.Should().NotBeNull("because the token should include a role claim");
+        roleClaim!.Value.Should().Be("User");
+    }
 }

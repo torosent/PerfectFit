@@ -11,4 +11,11 @@ public interface IUserRepository
     Task UpdateAsync(User user, CancellationToken cancellationToken = default);
     Task DeleteAsync(User user, CancellationToken cancellationToken = default);
     Task<bool> IsUsernameTakenAsync(string username, int excludeUserId, CancellationToken cancellationToken = default);
+    
+    // Admin methods
+    Task<IEnumerable<User>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default);
+    Task<int> GetCountAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<User>> GetDeletedUsersAsync(int page, int pageSize, CancellationToken cancellationToken = default);
+    Task SoftDeleteAsync(int id, CancellationToken cancellationToken = default);
+    Task<int> BulkSoftDeleteByProviderAsync(AuthProvider provider, CancellationToken cancellationToken = default);
 }

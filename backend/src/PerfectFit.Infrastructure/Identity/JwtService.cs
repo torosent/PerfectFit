@@ -43,6 +43,7 @@ public class JwtService : IJwtService
         {
             new(ClaimTypes.NameIdentifier, user.Id.ToString()),
             new(ClaimTypes.Name, user.DisplayName),
+            new(ClaimTypes.Role, user.Role.ToString()),
             new("external_id", user.ExternalId),
             new("provider", user.Provider.ToString())
         };
