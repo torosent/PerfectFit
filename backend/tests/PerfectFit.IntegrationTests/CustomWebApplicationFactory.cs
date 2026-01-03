@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
+using PerfectFit.Core.Enums;
 using PerfectFit.Infrastructure.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
@@ -51,7 +52,9 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
                 ["Jwt:Secret"] = JwtSecret,
                 ["Jwt:Issuer"] = "PerfectFit",
                 ["Jwt:Audience"] = "PerfectFit",
-                ["Jwt:ExpirationDays"] = "7"
+                ["Jwt:ExpirationDays"] = "7",
+                // Disable database migrations for in-memory test database
+                ["DatabaseMigration:RunMigrationsOnStartup"] = "false"
             });
         });
 
@@ -82,13 +85,21 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     /// </summary>
     public HttpClient CreateAuthenticatedClient(int userId, string displayName, string provider)
     {
+        return CreateAuthenticatedClient(userId, displayName, provider, UserRole.User);
+    }
+
+    /// <summary>
+    /// Creates an HTTP client with a valid JWT token for the specified user with a specific role.
+    /// </summary>
+    public HttpClient CreateAuthenticatedClient(int userId, string displayName, string provider, UserRole role)
+    {
         var client = CreateClient();
-        var token = GenerateTestJwtToken(userId, displayName, provider);
+        var token = GenerateTestJwtToken(userId, displayName, provider, role);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
         return client;
     }
 
-    private static string GenerateTestJwtToken(int userId, string displayName, string provider)
+    private static string GenerateTestJwtToken(int userId, string displayName, string provider, UserRole role = UserRole.User)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
@@ -97,6 +108,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
         {
             new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
             new Claim(ClaimTypes.Name, displayName),
+            new Claim(ClaimTypes.Role, role.ToString()),
             new Claim("provider", provider)
         };
 

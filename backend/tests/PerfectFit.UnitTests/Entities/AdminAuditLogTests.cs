@@ -10,9 +10,9 @@ public class AdminAuditLogTests
     public void Create_ShouldSetAllProperties()
     {
         // Arrange
-        var adminUserId = Guid.NewGuid();
+        var adminUserId = 42;
         var action = AdminAction.ViewUser;
-        var targetUserId = Guid.NewGuid();
+        var targetUserId = 123;
         var details = "{\"userId\": 123}";
 
         // Act
@@ -31,9 +31,9 @@ public class AdminAuditLogTests
     public void Create_WithNullDetails_ShouldAllowNull()
     {
         // Arrange
-        var adminUserId = Guid.NewGuid();
+        var adminUserId = 42;
         var action = AdminAction.ViewUsers;
-        var targetUserId = Guid.NewGuid();
+        var targetUserId = 123;
 
         // Act
         var log = AdminAuditLog.Create(adminUserId, action, targetUserId, null);
@@ -46,7 +46,7 @@ public class AdminAuditLogTests
     public void Create_WithNullTargetUserId_ShouldAllowNull()
     {
         // Arrange
-        var adminUserId = Guid.NewGuid();
+        var adminUserId = 42;
         var action = AdminAction.ViewUsers;
         var details = "Viewed all users";
 
