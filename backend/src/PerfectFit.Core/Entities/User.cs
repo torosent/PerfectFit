@@ -17,6 +17,9 @@ public class User
     public int HighScore { get; private set; }
     public int GamesPlayed { get; private set; }
     public DateTime? LastUsernameChangeAt { get; private set; }
+    public UserRole Role { get; private set; }
+    public bool IsDeleted { get; private set; }
+    public DateTime? DeletedAt { get; private set; }
 
     // Navigation
     public ICollection<GameSession> GameSessions { get; private set; } = new List<GameSession>();
@@ -24,7 +27,7 @@ public class User
     // Private constructor for EF Core
     private User() { }
 
-    public static User Create(string externalId, string? email, string displayName, AuthProvider provider)
+    public static User Create(string externalId, string? email, string displayName, AuthProvider provider, UserRole role = UserRole.User)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(externalId, nameof(externalId));
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName, nameof(displayName));
@@ -40,7 +43,10 @@ public class User
             CreatedAt = DateTime.UtcNow,
             HighScore = 0,
             GamesPlayed = 0,
-            LastLoginAt = null
+            LastLoginAt = null,
+            Role = role,
+            IsDeleted = false,
+            DeletedAt = null
         };
     }
 
@@ -87,5 +93,11 @@ public class User
     public void UpdateLastLogin()
     {
         LastLoginAt = DateTime.UtcNow;
+    }
+
+    public void SoftDelete()
+    {
+        IsDeleted = true;
+        DeletedAt = DateTime.UtcNow;
     }
 }

@@ -260,4 +260,59 @@ public class UserTests
         // Assert
         user.LastUsernameChangeAt.Should().BeNull();
     }
+
+    [Fact]
+    public void Create_WithRole_ShouldSetRole()
+    {
+        // Arrange
+        var externalId = "google-12345";
+        var email = "admin@example.com";
+        var displayName = "Admin User";
+        var provider = AuthProvider.Google;
+        var role = UserRole.Admin;
+
+        // Act
+        var user = User.Create(externalId, email, displayName, provider, role);
+
+        // Assert
+        user.Role.Should().Be(UserRole.Admin);
+    }
+
+    [Fact]
+    public void Create_DefaultRole_ShouldBeUser()
+    {
+        // Arrange & Act
+        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+
+        // Assert
+        user.Role.Should().Be(UserRole.User);
+    }
+
+    [Fact]
+    public void SoftDelete_ShouldSetIsDeletedAndTimestamp()
+    {
+        // Arrange
+        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        user.IsDeleted.Should().BeFalse();
+        user.DeletedAt.Should().BeNull();
+
+        // Act
+        user.SoftDelete();
+
+        // Assert
+        user.IsDeleted.Should().BeTrue();
+        user.DeletedAt.Should().NotBeNull();
+        user.DeletedAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void Create_ShouldHaveIsDeletedFalseByDefault()
+    {
+        // Arrange & Act
+        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+
+        // Assert
+        user.IsDeleted.Should().BeFalse();
+        user.DeletedAt.Should().BeNull();
+    }
 }
