@@ -39,4 +39,10 @@ public class UserRepository : IUserRepository
         _context.Users.Update(user);
         await _context.SaveChangesAsync(cancellationToken);
     }
+
+    public async Task<bool> IsUsernameTakenAsync(string username, int excludeUserId, CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .AnyAsync(u => u.Username == username && u.Id != excludeUserId, cancellationToken);
+    }
 }
