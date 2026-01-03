@@ -22,6 +22,7 @@ let mockAuthState = {
   isAuthenticated: false,
   isInitialized: true,
   user: null as { role?: string } | null,
+  initializeAuth: jest.fn(),
 };
 
 jest.mock('@/lib/stores/auth-store', () => ({
@@ -42,6 +43,7 @@ describe('AdminGuard', () => {
       isAuthenticated: false,
       isInitialized: true,
       user: null,
+      initializeAuth: jest.fn(),
     };
   });
 
@@ -51,6 +53,7 @@ describe('AdminGuard', () => {
         isAuthenticated: false,
         isInitialized: true,
         user: null,
+        initializeAuth: jest.fn(),
       };
 
       render(
@@ -70,6 +73,7 @@ describe('AdminGuard', () => {
         isAuthenticated: true,
         isInitialized: true,
         user: { role: 'User' },
+        initializeAuth: jest.fn(),
       };
 
       render(
@@ -91,6 +95,7 @@ describe('AdminGuard', () => {
         isAuthenticated: true,
         isInitialized: true,
         user: { role: 'Admin' },
+        initializeAuth: jest.fn(),
       };
 
       render(
@@ -110,6 +115,7 @@ describe('AdminGuard', () => {
         isAuthenticated: false,
         isInitialized: false,
         user: null,
+        initializeAuth: jest.fn(),
       };
 
       render(

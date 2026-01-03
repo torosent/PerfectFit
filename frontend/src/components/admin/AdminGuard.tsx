@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useIsAuthenticated, useIsAdmin, useIsAuthInitialized } from '@/lib/stores/auth-store';
+import { useAuthStore, useIsAuthenticated, useIsAdmin, useIsAuthInitialized } from '@/lib/stores/auth-store';
 
 export interface AdminGuardProps {
   children: React.ReactNode;
@@ -20,6 +20,12 @@ export function AdminGuard({ children }: AdminGuardProps) {
   const isAuthenticated = useIsAuthenticated();
   const isAdmin = useIsAdmin();
   const isInitialized = useIsAuthInitialized();
+  const initializeAuth = useAuthStore((state) => state.initializeAuth);
+
+  // Initialize auth on mount
+  useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
 
   useEffect(() => {
     // Wait for auth to be initialized
