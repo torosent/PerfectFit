@@ -161,13 +161,13 @@ export function UserMenu() {
             <div className="flex justify-between text-sm">
               <span className="text-gray-400">High Score</span>
               <span className="text-white font-medium">
-                {user.highScore.toLocaleString()}
+                {(user.highScore ?? 0).toLocaleString()}
               </span>
             </div>
             <div className="flex justify-between text-sm mt-1">
               <span className="text-gray-400">Games Played</span>
               <span className="text-white font-medium">
-                {user.gamesPlayed.toLocaleString()}
+                {(user.gamesPlayed ?? 0).toLocaleString()}
               </span>
             </div>
           </div>

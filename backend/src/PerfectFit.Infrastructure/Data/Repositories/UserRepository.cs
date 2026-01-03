@@ -40,6 +40,12 @@ public class UserRepository : IUserRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
+    public async Task DeleteAsync(User user, CancellationToken cancellationToken = default)
+    {
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
     public async Task<bool> IsUsernameTakenAsync(string username, int excludeUserId, CancellationToken cancellationToken = default)
     {
         return await _context.Users

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { EmojiPicker } from './EmojiPicker';
-import { updateProfile } from '@/lib/api/profile-client';
+import { updateProfile, deleteAccount } from '@/lib/api/profile-client';
 import { useUser, useToken, useAuthStore } from '@/lib/stores/auth-store';
 import type { UserProfile } from '@/types';
 
@@ -21,12 +21,15 @@ export function ProfileSettings({ isOpen, onClose }: ProfileSettingsProps) {
   const user = useUser();
   const token = useToken();
   const setUser = useAuthStore((state) => state.setUser);
+  const logout = useAuthStore((state) => state.logout);
 
   const [username, setUsername] = useState(user?.username || '');
   const [avatar, setAvatar] = useState(user?.avatar || '');
   const [error, setError] = useState('');
   const [suggestedUsername, setSuggestedUsername] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Reset form when modal opens/closes or user changes
   useEffect(() => {
@@ -35,6 +38,7 @@ export function ProfileSettings({ isOpen, onClose }: ProfileSettingsProps) {
       setAvatar(user?.avatar || '');
       setError('');
       setSuggestedUsername(null);
+      setShowDeleteConfirm(false);
     }
   }, [isOpen, user?.username, user?.avatar]);
 
@@ -84,6 +88,33 @@ export function ProfileSettings({ isOpen, onClose }: ProfileSettingsProps) {
       setError('');
     }
   }, [suggestedUsername]);
+
+  const handleDeleteAccount = useCallback(async () => {
+    if (!token) {
+      setError('You must be logged in to delete your account');
+      return;
+    }
+
+    setIsDeleting(true);
+    setError('');
+
+    try {
+      const result = await deleteAccount(token);
+
+      if (result.success) {
+        onClose();
+        await logout();
+      } else {
+        setError(result.error || 'Failed to delete account');
+        setShowDeleteConfirm(false);
+      }
+    } catch {
+      setError('An unexpected error occurred');
+      setShowDeleteConfirm(false);
+    } finally {
+      setIsDeleting(false);
+    }
+  }, [token, logout, onClose]);
 
   if (!isOpen) {
     return null;
@@ -185,6 +216,48 @@ export function ProfileSettings({ isOpen, onClose }: ProfileSettingsProps) {
               )}
             </div>
           )}
+
+          {/* Delete Account Section */}
+          <div 
+            className="pt-4 mt-2"
+            style={{ borderTop: '1px solid rgba(239, 68, 68, 0.2)' }}
+          >
+            <h3 className="text-sm font-medium text-red-400 mb-2">Danger Zone</h3>
+            {!showDeleteConfirm ? (
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="w-full px-4 py-2 rounded-lg text-red-400 border border-red-500/30 hover:bg-red-500/10 transition-colors text-sm"
+                disabled={isLoading}
+              >
+                Delete Account
+              </button>
+            ) : (
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 space-y-3">
+                <p className="text-sm text-red-300">
+                  Are you sure? This will permanently delete your account, scores, and all game data. This action cannot be undone.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="flex-1 px-3 py-2 rounded-lg text-gray-300 hover:bg-white/10 transition-colors text-sm"
+                    disabled={isDeleting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleDeleteAccount}
+                    disabled={isDeleting}
+                    className="flex-1 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium transition-colors text-sm disabled:opacity-50"
+                  >
+                    {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </form>
 
         {/* Footer */}

@@ -27,3 +27,24 @@ export async function updateProfile(
 
   return response.json();
 }
+
+/**
+ * Delete the current user's account permanently
+ * @param token - JWT authentication token
+ * @returns Success status
+ */
+export async function deleteAccount(token: string): Promise<{ success: boolean; error?: string }> {
+  const response = await fetch(`${API_BASE_URL}/api/auth/account`, {
+    method: 'DELETE',
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    return { success: false, error: error.error || 'Failed to delete account' };
+  }
+
+  return { success: true };
+}

@@ -55,6 +55,12 @@ public static class AuthEndpoints
             .RequireRateLimiting("ProfileUpdateLimit")
             .WithName("UpdateProfile")
             .WithDescription("Updates user profile (username and/or avatar)");
+
+        // DELETE /api/auth/account - Delete user account
+        group.MapDelete("/account", DeleteAccount)
+            .RequireAuthorization()
+            .WithName("DeleteAccount")
+            .WithDescription("Permanently deletes the user account and all associated data");
     }
 
     private static IResult InitiateOAuth(
@@ -265,6 +271,28 @@ public static class AuthEndpoints
                 Id: result.UpdatedProfile.Id,
                 Username: result.UpdatedProfile.Username,
                 Avatar: result.UpdatedProfile.Avatar)));
+    }
+
+    private static async Task<IResult> DeleteAccount(
+        ClaimsPrincipal user,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        var command = new DeleteAccountCommand(userId);
+        var result = await mediator.Send(command, cancellationToken);
+
+        if (!result.Success)
+        {
+            return Results.BadRequest(new { error = result.ErrorMessage });
+        }
+
+        return Results.Ok(new { message = "Account deleted successfully" });
     }
 
     private static AuthProvider? ParseProvider(string provider)
