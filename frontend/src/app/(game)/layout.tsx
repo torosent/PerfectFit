@@ -9,6 +9,7 @@ import {
   useIsAuthInitialized,
 } from '@/lib/stores/auth-store';
 import { UserMenu } from '@/components/auth/UserMenu';
+import { MobileNav } from '@/components/ui/MobileNav';
 
 /**
  * Game layout with header
@@ -61,7 +62,10 @@ export default function GameLayout({
               </span>
             </Link>
 
-            {/* Navigation */}
+            {/* Mobile Navigation */}
+            <MobileNav />
+
+            {/* Desktop Navigation */}
             <nav className="hidden sm:flex items-center gap-6">
               <Link
                 href="/play"
