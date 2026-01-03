@@ -197,4 +197,54 @@ public class LeaderboardRepositoryTests : RepositoryTestBase
         rank1.Should().Be(1);  // User1's best (1000) is highest
         rank2.Should().Be(2);  // User2's best (750) is second
     }
+
+    [Fact]
+    public async Task GetScoreRankAsync_ShouldReturnCorrectRankForSpecificScore()
+    {
+        // Arrange
+        var (user1, session1) = await CreateUserAndSessionAsync("score-rank-user1", "Score Rank User 1");
+        var (user2, session2) = await CreateUserAndSessionAsync("score-rank-user2", "Score Rank User 2");
+        var (user3, session3) = await CreateUserAndSessionAsync("score-rank-user3", "Score Rank User 3");
+
+        await _repository.AddAsync(LeaderboardEntry.Create(user1.Id, 1000, 40, 5, session1.Id));
+        await _repository.AddAsync(LeaderboardEntry.Create(user2.Id, 500, 20, 3, session2.Id));
+        await _repository.AddAsync(LeaderboardEntry.Create(user3.Id, 750, 30, 4, session3.Id));
+
+        // Act - get rank for specific scores
+        var rank1000 = await _repository.GetScoreRankAsync(1000);
+        var rank750 = await _repository.GetScoreRankAsync(750);
+        var rank500 = await _repository.GetScoreRankAsync(500);
+        var rank600 = await _repository.GetScoreRankAsync(600);  // Score between existing entries
+
+        // Assert
+        rank1000.Should().Be(1);  // Highest score = rank 1
+        rank750.Should().Be(2);   // Second highest = rank 2
+        rank500.Should().Be(3);   // Lowest = rank 3
+        rank600.Should().Be(3);   // Would be tied at rank 3 (below 750, above 500)
+    }
+
+    [Fact]
+    public async Task GetScoreRankAsync_WithSameUserMultipleScores_ShouldRankIndividualScores()
+    {
+        // Arrange - same user submits multiple games
+        var (user, session1) = await CreateUserAndSessionAsync("multi-game-user", "Multi Game User");
+        var session2 = GameSession.Create(user.Id);
+        var session3 = GameSession.Create(user.Id);
+        DbContext.GameSessions.AddRange(session2, session3);
+        await DbContext.SaveChangesAsync();
+
+        await _repository.AddAsync(LeaderboardEntry.Create(user.Id, 90, 10, 2, session1.Id));
+        await _repository.AddAsync(LeaderboardEntry.Create(user.Id, 30, 5, 1, session2.Id));
+        await _repository.AddAsync(LeaderboardEntry.Create(user.Id, 10, 1, 0, session3.Id));
+
+        // Act - each individual score should have its own rank
+        var rank90 = await _repository.GetScoreRankAsync(90);
+        var rank30 = await _repository.GetScoreRankAsync(30);
+        var rank10 = await _repository.GetScoreRankAsync(10);
+
+        // Assert - ranks based on where each score falls in the leaderboard
+        rank90.Should().Be(1);  // 90 is highest
+        rank30.Should().Be(2);  // 30 is second
+        rank10.Should().Be(3);  // 10 is third
+    }
 }

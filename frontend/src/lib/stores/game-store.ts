@@ -127,7 +127,8 @@ export const useGameStore = create<GameStore>((set, get) => ({
 
   // Actions
   startNewGame: async () => {
-    set({ isLoading: true, error: null, selectedPieceIndex: null });
+    // Clear previous game's submit result to avoid showing stale data
+    set({ isLoading: true, error: null, selectedPieceIndex: null, lastSubmitResult: null });
     
     try {
       // Initialize anti-cheat session tracking

@@ -110,8 +110,8 @@ public class SubmitScoreCommandHandler : IRequestHandler<SubmitScoreCommand, Sub
             await _userRepository.UpdateAsync(user, cancellationToken);
         }
 
-        // Get the new rank
-        var newRank = await _leaderboardRepository.GetUserRankAsync(request.UserId, cancellationToken);
+        // Get the rank of this specific score (not the user's overall rank)
+        var newRank = await _leaderboardRepository.GetScoreRankAsync(entry.Score, cancellationToken);
 
         var entryResult = new LeaderboardEntryResult(
             Rank: newRank,

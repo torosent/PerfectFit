@@ -44,12 +44,24 @@ public class LeaderboardRepository : ILeaderboardRepository
         }
 
         // Count how many unique users have a higher best score
+        // Using Where + Count instead of CountAsync(predicate) for better EF Core translation
         var usersWithHigherScore = await _context.LeaderboardEntries
             .GroupBy(le => le.UserId)
             .Select(g => g.Max(le => le.Score))
-            .CountAsync(maxScore => maxScore > userBestScore, cancellationToken);
+            .Where(maxScore => maxScore > userBestScore)
+            .CountAsync(cancellationToken);
 
         return usersWithHigherScore + 1;
+    }
+
+    public async Task<int> GetScoreRankAsync(int score, CancellationToken cancellationToken = default)
+    {
+        // Count how many entries have a higher score
+        var entriesWithHigherScore = await _context.LeaderboardEntries
+            .Where(le => le.Score > score)
+            .CountAsync(cancellationToken);
+
+        return entriesWithHigherScore + 1;
     }
 
     public async Task<LeaderboardEntry> AddAsync(LeaderboardEntry entry, CancellationToken cancellationToken = default)

@@ -22,9 +22,29 @@ function formatNumber(value: number): string {
  * Format a date as relative time (e.g., "2 hours ago")
  */
 function formatRelativeTime(dateString: string): string {
-  const date = new Date(dateString);
+  // Ensure the date string is treated as UTC if no timezone specified
+  // .NET DateTime.UtcNow serializes as "2026-01-03T12:00:00" without 'Z'
+  // We need to append 'Z' if not present to ensure proper UTC parsing
+  let normalizedDateString = dateString;
+  if (dateString && !dateString.endsWith('Z') && !dateString.includes('+') && !dateString.includes('-', 10)) {
+    normalizedDateString = dateString + 'Z';
+  }
+  
+  const date = new Date(normalizedDateString);
+  
+  // Handle invalid dates
+  if (isNaN(date.getTime())) {
+    return 'unknown';
+  }
+  
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
+  
+  // Handle future dates (clock skew) - show as "just now"
+  if (diffMs < 0) {
+    return 'just now';
+  }
+  
   const diffSeconds = Math.floor(diffMs / 1000);
   const diffMinutes = Math.floor(diffSeconds / 60);
   const diffHours = Math.floor(diffMinutes / 60);
