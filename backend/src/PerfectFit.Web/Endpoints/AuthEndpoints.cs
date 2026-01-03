@@ -52,6 +52,7 @@ public static class AuthEndpoints
         // PUT /api/auth/profile - Update user profile
         group.MapPut("/profile", UpdateProfile)
             .RequireAuthorization()
+            .RequireRateLimiting("ProfileUpdateLimit")
             .WithName("UpdateProfile")
             .WithDescription("Updates user profile (username and/or avatar)");
     }

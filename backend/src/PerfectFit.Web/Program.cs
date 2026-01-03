@@ -1,6 +1,8 @@
+using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Json;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PerfectFit.Infrastructure;
@@ -131,6 +133,23 @@ builder.Services.AddCors(options =>
 // Add health checks
 builder.Services.AddHealthChecks();
 
+// Add rate limiting for profile update endpoint
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("ProfileUpdateLimit", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
+});
+
 var app = builder.Build();
 
 // Apply migrations on startup (especially useful for SQLite development)
@@ -156,6 +175,9 @@ app.UseCors();
 // Authentication & Authorization middleware
 app.UseAuthentication();
 app.UseAuthorization();
+
+// Rate limiting middleware (after auth so user claims are available)
+app.UseRateLimiter();
 
 // Health check endpoint
 app.MapHealthChecks("/health");

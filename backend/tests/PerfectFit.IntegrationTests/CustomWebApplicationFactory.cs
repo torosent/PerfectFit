@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.IdentityModel.Tokens;
@@ -21,7 +22,7 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
 {
     private readonly string _databaseName;
 
-    // Use the same JWT secret as in appsettings.json
+    // Use the same JWT secret for test token generation and application configuration
     private const string JwtSecret = "your-256-bit-secret-key-here-minimum-32-characters-long-for-security";
 
     /// <summary>
@@ -41,6 +42,18 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Test");
+
+        // Configure test JWT settings
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Jwt:Secret"] = JwtSecret,
+                ["Jwt:Issuer"] = "PerfectFit",
+                ["Jwt:Audience"] = "PerfectFit",
+                ["Jwt:ExpirationDays"] = "7"
+            });
+        });
 
         builder.ConfigureServices(services =>
         {
