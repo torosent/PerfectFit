@@ -21,6 +21,7 @@ export interface AuthState {
 export interface AuthActions {
   login: (token: string, user: UserProfile) => void;
   logout: () => Promise<void>;
+  setUser: (user: UserProfile) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   initializeAuth: () => Promise<void>;
@@ -83,6 +84,13 @@ export const useAuthStore = create<AuthStore>()(
         if (token) {
           authClient.logout(token);
         }
+      },
+
+      /**
+       * Update the current user profile
+       */
+      setUser: (user: UserProfile) => {
+        set({ user });
       },
 
       /**

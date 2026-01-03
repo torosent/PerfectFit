@@ -44,6 +44,42 @@ function formatRelativeTime(dateString: string): string {
 }
 
 /**
+ * Get initials from display name
+ */
+function getInitials(displayName: string): string {
+  const parts = displayName.trim().split(/\s+/);
+  if (parts.length === 1) {
+    return parts[0].substring(0, 2).toUpperCase();
+  }
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+/**
+ * Get background color based on user id (consistent per user)
+ */
+function getAvatarColor(userId: string): string {
+  const colors = [
+    '#14b8a6', // teal
+    '#06b6d4', // cyan
+    '#0ea5e9', // sky
+    '#10b981', // emerald
+    '#6366f1', // indigo
+    '#3b82f6', // blue
+    '#f59e0b', // amber
+    '#f43f5e', // rose
+  ];
+  
+  // Simple hash based on user id
+  let hash = 0;
+  for (let i = 0; i < userId.length; i++) {
+    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+    hash = hash & hash;
+  }
+  
+  return colors[Math.abs(hash) % colors.length];
+}
+
+/**
  * Loading skeleton for table rows
  */
 function TableSkeleton() {
@@ -101,6 +137,8 @@ function LeaderboardTableComponent({
       isCurrentUser: entry.userId === currentUserId,
       formattedScore: formatNumber(entry.score),
       formattedTime: formatRelativeTime(entry.achievedAt),
+      initials: getInitials(entry.displayName),
+      avatarColor: getAvatarColor(entry.userId),
     }));
   }, [entries, currentUserId]);
 
@@ -155,11 +193,22 @@ function LeaderboardTableComponent({
                   <RankBadge rank={entry.rank} size="sm" />
                 </td>
 
-                {/* Player Name */}
+                {/* Player Name with Avatar */}
                 <td className="py-3 px-2 sm:px-4">
                   <div className="flex items-center gap-2">
+                    {/* Avatar */}
+                    <div 
+                      data-testid="avatar-container"
+                      className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-semibold"
+                      style={{ 
+                        backgroundColor: entry.avatar ? 'rgba(20, 184, 166, 0.2)' : entry.avatarColor,
+                        color: entry.avatar ? undefined : '#ffffff'
+                      }}
+                    >
+                      {entry.avatar || entry.initials}
+                    </div>
                     <span
-                      className="font-medium truncate max-w-[150px] sm:max-w-[200px]"
+                      className="font-medium truncate max-w-[120px] sm:max-w-[170px]"
                       style={{ color: entry.isCurrentUser ? '#2dd4bf' : '#ffffff' }}
                     >
                       {entry.displayName}

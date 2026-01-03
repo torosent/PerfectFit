@@ -25,6 +25,7 @@ export interface LeaderboardEntry {
   linesCleared: number;
   maxCombo: number;
   achievedAt: string;
+  avatar?: string;
 }
 
 /**

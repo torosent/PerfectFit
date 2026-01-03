@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { useAuthStore, useUser, useIsGuest } from '@/lib/stores/auth-store';
+import { ProfileSettings } from '@/components/profile';
 
 /**
  * Get initials from display name
@@ -48,6 +49,7 @@ export function UserMenu() {
   const isGuest = useIsGuest();
   const logout = useAuthStore((state) => state.logout);
   const [isOpen, setIsOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Close menu when clicking outside
@@ -84,39 +86,49 @@ export function UserMenu() {
     await logout();
   };
 
+  const handleEditProfile = () => {
+    setIsOpen(false);
+    setIsProfileOpen(true);
+  };
+
+  // Determine what to show in the avatar button
+  const hasEmojiAvatar = user.avatar && user.avatar.length > 0;
+
   return (
-    <div className="relative" ref={menuRef}>
-      {/* Avatar Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`
-          flex items-center gap-2 p-1 rounded-full
-          hover:bg-white/10 transition-colors
-          focus:outline-none focus:ring-2 focus:ring-teal-500/50
-        `}
-        aria-expanded={isOpen}
-        aria-haspopup="true"
-        aria-label="User menu"
-      >
-        <div
+    <>
+      <div className="relative" ref={menuRef}>
+        {/* Avatar Button */}
+        <button
+          onClick={() => setIsOpen(!isOpen)}
           className={`
-            w-9 h-9 rounded-full flex items-center justify-center
-            ${avatarColor} text-white font-semibold text-sm
-            ring-2 ring-white/20
+            flex items-center gap-2 p-1 rounded-full
+            hover:bg-white/10 transition-colors
+            focus:outline-none focus:ring-2 focus:ring-teal-500/50
           `}
+          aria-expanded={isOpen}
+          aria-haspopup="true"
+          aria-label="User menu"
         >
-          {initials}
-        </div>
-        <svg
-          className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
-      </button>
+          <div
+            className={`
+              w-9 h-9 rounded-full flex items-center justify-center
+              ${hasEmojiAvatar ? '' : avatarColor} text-white font-semibold text-sm
+              ring-2 ring-white/20
+            `}
+            style={hasEmojiAvatar ? { backgroundColor: 'rgba(20, 184, 166, 0.3)' } : undefined}
+          >
+            {hasEmojiAvatar ? <span className="text-xl">{user.avatar}</span> : initials}
+          </div>
+          <svg
+            className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
@@ -163,6 +175,31 @@ export function UserMenu() {
           {/* Actions */}
           <div className="py-1">
             <button
+              onClick={handleEditProfile}
+              className={`
+                w-full px-4 py-2 text-left text-sm
+                text-gray-300 hover:text-white hover:bg-gray-700/50
+                transition-colors flex items-center gap-2
+              `}
+              role="menuitem"
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                aria-hidden="true"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
+              </svg>
+              Edit Profile
+            </button>
+            <button
               onClick={handleLogout}
               className={`
                 w-full px-4 py-2 text-left text-sm
@@ -190,6 +227,13 @@ export function UserMenu() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+
+      {/* Profile Settings Modal */}
+      <ProfileSettings 
+        isOpen={isProfileOpen} 
+        onClose={() => setIsProfileOpen(false)} 
+      />
+    </>
   );
 }
