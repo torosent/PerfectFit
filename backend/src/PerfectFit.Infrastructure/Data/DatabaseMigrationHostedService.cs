@@ -69,6 +69,15 @@ public class DatabaseMigrationHostedService : IHostedService
 
     private async Task WaitForDatabaseAsync(AppDbContext dbContext, CancellationToken cancellationToken)
     {
+        var providerName = dbContext.Database.ProviderName ?? string.Empty;
+        
+        // SQLite doesn't need retry logic - it creates the file automatically
+        if (providerName.Contains("Sqlite", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogInformation("Using SQLite database - no connection retry needed");
+            return;
+        }
+
         var retryCount = 0;
         var maxRetries = _settings.ConnectionRetryCount;
         var retryDelay = TimeSpan.FromSeconds(_settings.ConnectionRetryDelaySeconds);

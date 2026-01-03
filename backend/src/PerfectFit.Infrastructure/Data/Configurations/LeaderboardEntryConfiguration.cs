@@ -70,5 +70,9 @@ public class LeaderboardEntryConfiguration : IEntityTypeConfiguration<Leaderboar
         builder.HasIndex(le => le.GameSessionId)
             .IsUnique()
             .HasDatabaseName("ix_leaderboard_entries_game_session_id_unique");
+
+        // Global query filter to exclude entries from soft-deleted users
+        // This matches the User entity's IsDeleted filter to avoid EF Core warning about mismatched filters
+        builder.HasQueryFilter(le => !le.User.IsDeleted);
     }
 }
