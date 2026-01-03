@@ -117,7 +117,7 @@ export async function deleteUser(id: number, token: string): Promise<void> {
 export async function bulkDeleteGuests(
   token: string
 ): Promise<BulkDeleteResponse> {
-  const response = await fetch(`${API_BASE_URL}/api/admin/users/guests`, {
+  const response = await fetch(`${API_BASE_URL}/api/admin/users/bulk/guests`, {
     method: 'DELETE',
     headers: getAdminHeaders(token),
   });

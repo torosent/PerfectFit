@@ -280,7 +280,7 @@ describe('admin-client', () => {
 
       expect(mockFetch).toHaveBeenCalledTimes(1);
       expect(mockFetch).toHaveBeenCalledWith(
-        `${API_BASE_URL}/api/admin/users/guests`,
+        `${API_BASE_URL}/api/admin/users/bulk/guests`,
         {
           method: 'DELETE',
           headers: {
