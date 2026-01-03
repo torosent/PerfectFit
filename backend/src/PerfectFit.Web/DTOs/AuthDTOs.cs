@@ -51,3 +51,33 @@ public record UpdateProfileResponse(
 /// User profile data in responses.
 /// </summary>
 public record UserProfileResponse(int Id, string Username, string? Avatar);
+
+/// <summary>
+/// Request for local user registration.
+/// </summary>
+public record RegisterRequest(string Email, string Password, string DisplayName);
+
+/// <summary>
+/// Request for local user login.
+/// </summary>
+public record LoginRequest(string Email, string Password);
+
+/// <summary>
+/// Request to verify email address.
+/// </summary>
+public record VerifyEmailRequest(string Email, string Token);
+
+/// <summary>
+/// Response from registration operation.
+/// </summary>
+public record RegisterResponse(bool Success, string? Message, string? ErrorMessage);
+
+/// <summary>
+/// Response from login operation.
+/// </summary>
+public record LocalLoginResponse(bool Success, string? Token, UserDto? User, string? ErrorMessage);
+
+/// <summary>
+/// Response from email verification operation.
+/// </summary>
+public record VerifyEmailResponse(bool Success, string? Message, string? ErrorMessage);

@@ -61,6 +61,21 @@ public static class AuthEndpoints
             .RequireAuthorization()
             .WithName("DeleteAccount")
             .WithDescription("Permanently deletes the user account and all associated data");
+
+        // POST /api/auth/register - Register a new local user
+        group.MapPost("/register", Register)
+            .WithName("Register")
+            .WithDescription("Registers a new user with email and password");
+
+        // POST /api/auth/login - Login with email and password
+        group.MapPost("/login", Login)
+            .WithName("Login")
+            .WithDescription("Authenticates a user with email and password");
+
+        // POST /api/auth/verify-email - Verify email address
+        group.MapPost("/verify-email", VerifyEmail)
+            .WithName("VerifyEmail")
+            .WithDescription("Verifies a user's email address with a token");
     }
 
     private static IResult InitiateOAuth(
@@ -305,5 +320,91 @@ public static class AuthEndpoints
             "guest" => AuthProvider.Guest,
             _ => null
         };
+    }
+
+    private static async Task<IResult> Register(
+        RegisterRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var command = new RegisterCommand(
+            Email: request.Email,
+            Password: request.Password,
+            DisplayName: request.DisplayName);
+
+        var result = await mediator.Send(command, cancellationToken);
+
+        if (!result.Success)
+        {
+            return Results.BadRequest(new RegisterResponse(
+                Success: false,
+                Message: null,
+                ErrorMessage: result.ErrorMessage));
+        }
+
+        return Results.Ok(new RegisterResponse(
+            Success: true,
+            Message: result.Message,
+            ErrorMessage: null));
+    }
+
+    private static async Task<IResult> Login(
+        LoginRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var command = new LocalLoginCommand(
+            Email: request.Email,
+            Password: request.Password);
+
+        var result = await mediator.Send(command, cancellationToken);
+
+        if (!result.Success)
+        {
+            return Results.BadRequest(new LocalLoginResponse(
+                Success: false,
+                Token: null,
+                User: null,
+                ErrorMessage: result.ErrorMessage));
+        }
+
+        return Results.Ok(new LocalLoginResponse(
+            Success: true,
+            Token: result.Token,
+            User: result.User is null ? null : new UserDto(
+                Id: result.User.Id,
+                DisplayName: result.User.DisplayName,
+                Username: result.User.Username,
+                Avatar: result.User.Avatar,
+                Email: result.User.Email,
+                Provider: result.User.Provider.ToString(),
+                HighScore: result.User.HighScore,
+                GamesPlayed: result.User.GamesPlayed),
+            ErrorMessage: null));
+    }
+
+    private static async Task<IResult> VerifyEmail(
+        VerifyEmailRequest request,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var command = new VerifyEmailCommand(
+            Email: request.Email,
+            Token: request.Token);
+
+        var result = await mediator.Send(command, cancellationToken);
+
+        if (!result.Success)
+        {
+            return Results.BadRequest(new VerifyEmailResponse(
+                Success: false,
+                Message: null,
+                ErrorMessage: result.ErrorMessage));
+        }
+
+        return Results.Ok(new VerifyEmailResponse(
+            Success: true,
+            Message: result.Message,
+            ErrorMessage: null));
     }
 }
