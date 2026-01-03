@@ -153,6 +153,42 @@ Users 1 ←─────→ N GameSessions
 
 ## Database Migrations
 
+### Migration Strategy
+
+PerfectFit uses Entity Framework Core migrations to manage database schema changes. The application is configured to **automatically apply pending migrations on startup**, ensuring the database schema stays in sync with the application code.
+
+**Key Benefits:**
+- No data loss when schema changes - existing data is preserved
+- Version-controlled schema changes
+- Rollback capability
+- Consistent schema across environments
+
+### Configuration
+
+Migration behavior can be configured in `appsettings.json`:
+
+```json
+{
+  "DatabaseMigration": {
+    "RunMigrationsOnStartup": true,
+    "FailOnMigrationError": true,
+    "MigrationTimeoutSeconds": 300,
+    "LogMigrationSql": false,
+    "ConnectionRetryCount": 5,
+    "ConnectionRetryDelaySeconds": 5
+  }
+}
+```
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `RunMigrationsOnStartup` | Run migrations when the app starts | `true` |
+| `FailOnMigrationError` | Stop the app if migrations fail | `true` |
+| `MigrationTimeoutSeconds` | Maximum time to wait for migrations | `300` |
+| `LogMigrationSql` | Log SQL commands during migration | `false` |
+| `ConnectionRetryCount` | Retry attempts if database is unavailable | `5` |
+| `ConnectionRetryDelaySeconds` | Delay between connection retries | `5` |
+
 ### Using EF Core Migrations
 
 ```bash
@@ -178,17 +214,81 @@ dotnet ef migrations script \
 
 ### Auto-Migration on Startup
 
-The application automatically ensures the database exists on startup:
+The application uses a hosted service (`DatabaseMigrationHostedService`) to apply migrations:
+
+1. **Connection Retry** - Waits for the database to be available (useful for containerized deployments)
+2. **Pending Migration Check** - Lists any unapplied migrations
+3. **Migration Application** - Applies pending migrations in order
+4. **Error Handling** - Configurable behavior on failure
 
 ```csharp
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.EnsureCreated();
-}
+// Migrations are automatically applied via DatabaseMigrationHostedService
+// Configure behavior in appsettings.json under "DatabaseMigration"
 ```
 
-**Note**: For production, use explicit migrations instead of `EnsureCreated()`.
+**Important:** 
+- For production, always review migrations before deployment
+- Use `dotnet ef migrations script` to generate SQL for review
+- Back up your database before applying migrations in production
+
+### Migration Best Practices
+
+1. **Always Create Migrations for Schema Changes**
+   ```bash
+   dotnet ef migrations add DescriptiveMigrationName \
+     --project ../PerfectFit.Infrastructure
+   ```
+
+2. **Review Generated Migration Code** - Check the `Up()` and `Down()` methods
+
+3. **Test Migrations Locally** - Apply migrations to a local database before deployment
+
+4. **Include Data Migrations When Needed** - For data transformations, add code to the migration
+
+5. **Never Modify Applied Migrations** - Create a new migration instead
+
+### Manual Migration (Production)
+
+For production deployments where you want more control over migrations:
+
+**Option 1: Disable Auto-Migration**
+
+Set `RunMigrationsOnStartup` to `false` and run migrations separately:
+
+```bash
+# Generate SQL script for review
+dotnet ef migrations script --idempotent \
+  --project ../PerfectFit.Infrastructure \
+  --output migration.sql
+
+# Review the script, then apply manually
+psql -U perfectfit -d perfectfit -f migration.sql
+```
+
+**Option 2: Use a Migration Job/Init Container**
+
+In Kubernetes or container orchestration, run migrations as a separate job before deployment:
+
+```bash
+# Run migrations in a container
+docker run --rm \
+  -e ConnectionStrings__DefaultConnection="your-connection-string" \
+  perfectfit-backend \
+  dotnet ef database update --project src/PerfectFit.Infrastructure
+```
+
+**Option 3: CI/CD Pipeline Migration**
+
+Add a migration step to your deployment pipeline:
+
+```yaml
+# Example GitHub Actions step
+- name: Apply Database Migrations
+  run: |
+    dotnet ef database update \
+      --project backend/src/PerfectFit.Infrastructure \
+      --startup-project backend/src/PerfectFit.Web
+```
 
 ## PostgreSQL Setup
 

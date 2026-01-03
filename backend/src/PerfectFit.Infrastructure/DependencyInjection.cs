@@ -30,6 +30,12 @@ public static class DependencyInjection
             }
         });
 
+        // Register database migration service
+        services.AddScoped<DatabaseMigrationService>();
+
+        // Configure database migration settings
+        services.Configure<DatabaseMigrationSettings>(configuration.GetSection(DatabaseMigrationSettings.SectionName));
+
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IGameSessionRepository, GameSessionRepository>();
         services.AddScoped<ILeaderboardRepository, LeaderboardRepository>();
@@ -53,6 +59,16 @@ public static class DependencyInjection
         // Register username validation service
         services.AddScoped<IUsernameValidationService, UsernameValidationService>();
 
+        return services;
+    }
+
+    /// <summary>
+    /// Adds the database migration hosted service that runs migrations on startup.
+    /// Call this method to enable automatic migrations with retry logic.
+    /// </summary>
+    public static IServiceCollection AddDatabaseMigration(this IServiceCollection services)
+    {
+        services.AddHostedService<DatabaseMigrationHostedService>();
         return services;
     }
 }

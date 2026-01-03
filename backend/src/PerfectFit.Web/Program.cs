@@ -3,10 +3,8 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.RateLimiting;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PerfectFit.Infrastructure;
-using PerfectFit.Infrastructure.Data;
 using PerfectFit.Infrastructure.Identity;
 using PerfectFit.UseCases.Games.Commands;
 using PerfectFit.Web.Endpoints;
@@ -25,6 +23,9 @@ builder.Services.Configure<JsonOptions>(options =>
 
 // Add infrastructure services (DbContext, Repositories, JWT)
 builder.Services.AddInfrastructure(builder.Configuration);
+
+// Add database migration hosted service for automatic migrations with retry logic
+builder.Services.AddDatabaseMigration();
 
 // Add MediatR for CQRS
 builder.Services.AddMediatR(cfg =>
@@ -151,13 +152,6 @@ builder.Services.AddRateLimiter(options =>
 });
 
 var app = builder.Build();
-
-// Apply migrations on startup (especially useful for SQLite development)
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    dbContext.Database.EnsureCreated();
-}
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
