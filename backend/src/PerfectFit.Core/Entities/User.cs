@@ -16,6 +16,7 @@ public class User
     public DateTime? LastLoginAt { get; private set; }
     public int HighScore { get; private set; }
     public int GamesPlayed { get; private set; }
+    public DateTime? LastUsernameChangeAt { get; private set; }
 
     // Navigation
     public ICollection<GameSession> GameSessions { get; private set; } = new List<GameSession>();
@@ -58,6 +59,7 @@ public class User
         }
 
         Username = username;
+        LastUsernameChangeAt = DateTime.UtcNow;
     }
 
     /// <summary>

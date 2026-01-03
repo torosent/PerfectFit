@@ -1,5 +1,6 @@
 using MediatR;
 using PerfectFit.Core.Interfaces;
+using PerfectFit.Core.Services;
 
 namespace PerfectFit.UseCases.Auth.Commands;
 
@@ -8,6 +9,8 @@ namespace PerfectFit.UseCases.Auth.Commands;
 /// </summary>
 public class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand, UpdateProfileResult>
 {
+    private static readonly TimeSpan UsernameCooldownPeriod = TimeSpan.FromDays(7);
+
     private readonly IUserRepository _userRepository;
     private readonly IUsernameValidationService _usernameValidationService;
 
@@ -28,11 +31,28 @@ public class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand,
             return UpdateProfileResult.Failed("User not found.");
         }
 
+        // Avatar validation (if avatar provided and not empty)
+        if (request.Avatar is not null && !string.IsNullOrEmpty(request.Avatar) && !AvatarValidator.IsValidAvatar(request.Avatar))
+        {
+            return UpdateProfileResult.Failed("Invalid avatar. Please select from the available options.");
+        }
+
         var hasChanges = false;
 
         // Handle username update
         if (!string.IsNullOrEmpty(request.Username))
         {
+            // Username cooldown check (only if user has changed username before)
+            if (user.LastUsernameChangeAt.HasValue)
+            {
+                var timeSinceLastChange = DateTime.UtcNow - user.LastUsernameChangeAt.Value;
+                if (timeSinceLastChange < UsernameCooldownPeriod)
+                {
+                    var remainingTime = UsernameCooldownPeriod - timeSinceLastChange;
+                    return UpdateProfileResult.CooldownActive(remainingTime);
+                }
+            }
+
             // Validate username (format + profanity)
             var validationResult = await _usernameValidationService.ValidateAsync(request.Username, cancellationToken);
             if (!validationResult.IsValid)

@@ -60,6 +60,9 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasDefaultValue(0)
             .IsRequired();
 
+        builder.Property(u => u.LastUsernameChangeAt)
+            .HasColumnName("last_username_change_at");
+
         // Unique index on ExternalId + Provider for OAuth lookups
         builder.HasIndex(u => new { u.ExternalId, u.Provider })
             .IsUnique()

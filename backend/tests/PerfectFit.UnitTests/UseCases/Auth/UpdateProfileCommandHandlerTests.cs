@@ -296,4 +296,144 @@ public class UpdateProfileCommandHandlerTests
 
         _userRepositoryMock.Verify(x => x.UpdateAsync(user, It.IsAny<CancellationToken>()), Times.Once);
     }
+
+    [Fact]
+    public async Task Handle_ReturnsError_WhenAvatarInvalid()
+    {
+        // Arrange
+        var user = CreateTestUser(1);
+        var command = new UpdateProfileCommand(UserId: 1, Username: null, Avatar: "💩"); // Not in valid list
+
+        _userRepositoryMock
+            .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        // Act
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("Invalid avatar");
+        result.UpdatedProfile.Should().BeNull();
+
+        _userRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_UpdatesAvatar_WhenAvatarValid()
+    {
+        // Arrange
+        var user = CreateTestUser(1);
+        var command = new UpdateProfileCommand(UserId: 1, Username: null, Avatar: "🦊"); // Valid emoji from list
+
+        _userRepositoryMock
+            .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        // Act
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Success.Should().BeTrue();
+        result.ErrorMessage.Should().BeNull();
+        result.UpdatedProfile.Should().NotBeNull();
+        result.UpdatedProfile!.Avatar.Should().Be("🦊");
+
+        _userRepositoryMock.Verify(x => x.UpdateAsync(user, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_ReturnsError_WhenUsernameCooldownActive()
+    {
+        // Arrange
+        var user = CreateTestUser(1);
+        // Set LastUsernameChangeAt to 3 days ago (cooldown is 7 days)
+        typeof(User).GetProperty(nameof(User.LastUsernameChangeAt))!.SetValue(user, DateTime.UtcNow.AddDays(-3));
+        var command = new UpdateProfileCommand(UserId: 1, Username: "NewUsername", Avatar: null);
+
+        _userRepositoryMock
+            .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        // Act
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("change your username again");
+        result.CooldownRemainingTime.Should().NotBeNull();
+        result.CooldownRemainingTime!.Value.Days.Should().BeGreaterThanOrEqualTo(3); // ~4 days remaining
+        result.UpdatedProfile.Should().BeNull();
+
+        _userRepositoryMock.Verify(x => x.UpdateAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()), Times.Never);
+        _usernameValidationServiceMock.Verify(x => x.ValidateAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task Handle_AllowsUsernameChange_WhenCooldownExpired()
+    {
+        // Arrange
+        var user = CreateTestUser(1);
+        // Set LastUsernameChangeAt to 8 days ago (cooldown is 7 days, so expired)
+        typeof(User).GetProperty(nameof(User.LastUsernameChangeAt))!.SetValue(user, DateTime.UtcNow.AddDays(-8));
+        var command = new UpdateProfileCommand(UserId: 1, Username: "NewUsername", Avatar: null);
+
+        _userRepositoryMock
+            .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _usernameValidationServiceMock
+            .Setup(x => x.ValidateAsync("NewUsername", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(UsernameValidationResult.Success());
+
+        _userRepositoryMock
+            .Setup(x => x.IsUsernameTakenAsync("NewUsername", 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Success.Should().BeTrue();
+        result.ErrorMessage.Should().BeNull();
+        result.CooldownRemainingTime.Should().BeNull();
+        result.UpdatedProfile.Should().NotBeNull();
+        result.UpdatedProfile!.Username.Should().Be("NewUsername");
+
+        _userRepositoryMock.Verify(x => x.UpdateAsync(user, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_AllowsFirstUsernameChange_WithNoCooldown()
+    {
+        // Arrange
+        var user = CreateTestUser(1);
+        // LastUsernameChangeAt is null by default (first change ever)
+        user.LastUsernameChangeAt.Should().BeNull(); // Verify precondition
+        var command = new UpdateProfileCommand(UserId: 1, Username: "FirstUsername", Avatar: null);
+
+        _userRepositoryMock
+            .Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _usernameValidationServiceMock
+            .Setup(x => x.ValidateAsync("FirstUsername", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(UsernameValidationResult.Success());
+
+        _userRepositoryMock
+            .Setup(x => x.IsUsernameTakenAsync("FirstUsername", 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Success.Should().BeTrue();
+        result.ErrorMessage.Should().BeNull();
+        result.CooldownRemainingTime.Should().BeNull();
+        result.UpdatedProfile.Should().NotBeNull();
+        result.UpdatedProfile!.Username.Should().Be("FirstUsername");
+
+        _userRepositoryMock.Verify(x => x.UpdateAsync(user, It.IsAny<CancellationToken>()), Times.Once);
+    }
 }

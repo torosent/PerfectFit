@@ -235,4 +235,29 @@ public class UserTests
         // Assert
         user.Avatar.Should().BeNull();
     }
+
+    [Fact]
+    public void User_SetUsername_UpdatesLastUsernameChangeAt()
+    {
+        // Arrange
+        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        user.LastUsernameChangeAt.Should().BeNull(); // Should be null initially
+
+        // Act
+        user.SetUsername("NewUser_123");
+
+        // Assert
+        user.LastUsernameChangeAt.Should().NotBeNull();
+        user.LastUsernameChangeAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+    }
+
+    [Fact]
+    public void User_Create_LastUsernameChangeAtIsNull()
+    {
+        // Arrange & Act
+        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+
+        // Assert
+        user.LastUsernameChangeAt.Should().BeNull();
+    }
 }
