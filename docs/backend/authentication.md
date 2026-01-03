@@ -45,6 +45,14 @@ Users can register with an email address and password. This provides a tradition
 
 After registration, users receive an email with a verification link. The email must be verified before the user can log in.
 
+**Email Features:**
+- Professional HTML email template with PerfectFit branding
+- Personalized greeting with user's display name
+- Clear call-to-action button to verify email
+- Plain text fallback for email clients that don't support HTML
+- 24-hour expiry notice
+- "If you didn't create an account" notice
+
 **Endpoint**: `POST /api/auth/verify-email`
 
 **Request Body**:
@@ -186,6 +194,12 @@ Configure authentication in `appsettings.json` or via environment variables:
       "TenantId": "common"
     }
   },
+  "Email": {
+    "ConnectionString": "endpoint=https://xxx.communication.azure.com/;accesskey=xxx",
+    "SenderAddress": "DoNotReply@xxx.azurecomm.net",
+    "VerificationEmailSubject": "Verify your PerfectFit account",
+    "FrontendUrl": "https://your-frontend-url.com"
+  },
   "Auth": {
     "LockoutThreshold": 5,
     "LockoutDurationMinutes": 15,
@@ -193,6 +207,26 @@ Configure authentication in `appsettings.json` or via environment variables:
   }
 }
 ```
+
+### Email Configuration
+
+PerfectFit uses Azure Communication Services for sending verification emails.
+
+| Setting | Description |
+|---------|-------------|
+| `Email:ConnectionString` | Azure Communication Services connection string |
+| `Email:SenderAddress` | Sender email address (e.g., DoNotReply@xxx.azurecomm.net) |
+| `Email:VerificationEmailSubject` | Subject line for verification emails (default: "Verify your PerfectFit account") |
+| `Email:FrontendUrl` | Frontend URL used to build verification links |
+
+**Setting up Azure Communication Services:**
+1. Create an Azure Communication Services resource in the Azure Portal
+2. Add a verified email domain (or use Azure-managed domain)
+3. Copy the connection string from the resource's "Keys" section
+4. Configure the sender address using your verified domain
+
+**For local development:**
+If the connection string is empty, emails will be logged but not sent. The verification token is logged for manual testing.
 
 ### User Secrets (Development)
 

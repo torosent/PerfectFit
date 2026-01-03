@@ -1,4 +1,6 @@
 using FluentAssertions;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using PerfectFit.Core.Configuration;
@@ -6,6 +8,7 @@ using PerfectFit.Core.Entities;
 using PerfectFit.Core.Enums;
 using PerfectFit.Core.Identity;
 using PerfectFit.Core.Interfaces;
+using PerfectFit.Core.Services;
 using PerfectFit.UseCases.Auth.Commands;
 
 namespace PerfectFit.UnitTests.UseCases.Auth.Commands;
@@ -15,7 +18,10 @@ public class RegisterCommandTests
     private readonly Mock<IUserRepository> _userRepositoryMock;
     private readonly Mock<IPasswordHasher> _passwordHasherMock;
     private readonly Mock<IEmailVerificationService> _emailVerificationServiceMock;
+    private readonly Mock<IEmailService> _emailServiceMock;
+    private readonly Mock<ILogger<RegisterCommandHandler>> _loggerMock;
     private readonly Mock<IOptions<AdminSettings>> _adminSettingsMock;
+    private readonly Mock<IConfiguration> _configurationMock;
     private readonly RegisterCommandHandler _sut;
 
     public RegisterCommandTests()
@@ -23,14 +29,21 @@ public class RegisterCommandTests
         _userRepositoryMock = new Mock<IUserRepository>();
         _passwordHasherMock = new Mock<IPasswordHasher>();
         _emailVerificationServiceMock = new Mock<IEmailVerificationService>();
+        _emailServiceMock = new Mock<IEmailService>();
+        _loggerMock = new Mock<ILogger<RegisterCommandHandler>>();
         _adminSettingsMock = new Mock<IOptions<AdminSettings>>();
         _adminSettingsMock.Setup(x => x.Value).Returns(new AdminSettings { Emails = new List<string>() });
+        _configurationMock = new Mock<IConfiguration>();
+        _configurationMock.Setup(x => x["Email:FrontendUrl"]).Returns("http://localhost:3000");
 
         _sut = new RegisterCommandHandler(
             _userRepositoryMock.Object,
             _passwordHasherMock.Object,
             _emailVerificationServiceMock.Object,
-            _adminSettingsMock.Object);
+            _emailServiceMock.Object,
+            _loggerMock.Object,
+            _adminSettingsMock.Object,
+            _configurationMock.Object);
     }
 
     [Fact]
@@ -253,5 +266,95 @@ public class RegisterCommandTests
         result.Should().NotBeNull();
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().ContainEquivalentOf("display name");
+    }
+
+    [Fact]
+    public async Task RegisterCommand_SendsVerificationEmail()
+    {
+        // Arrange
+        var command = new RegisterCommand(
+            Email: "test@example.com",
+            Password: "Password123",
+            DisplayName: "Test User");
+
+        _userRepositoryMock
+            .Setup(x => x.GetByExternalIdAsync(command.Email, AuthProvider.Local, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User?)null);
+
+        _passwordHasherMock
+            .Setup(x => x.HashPassword(command.Password))
+            .Returns("hashed_password");
+
+        _emailVerificationServiceMock
+            .Setup(x => x.SetVerificationToken(It.IsAny<User>()))
+            .Callback<User>(user => 
+            {
+                // Simulate setting a verification token
+                var tokenProperty = typeof(User).GetProperty("EmailVerificationToken");
+                tokenProperty?.SetValue(user, "test-verification-token");
+            });
+
+        _userRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User user, CancellationToken _) => user);
+
+        // Act
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        // Assert
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        _emailServiceMock.Verify(
+            x => x.SendVerificationEmailAsync(
+                command.Email,
+                command.DisplayName,
+                It.Is<string>(url => url.Contains("verify-email?token="))),
+            Times.Once);
+    }
+
+    [Fact]
+    public async Task RegisterCommand_EmailServiceFails_StillSucceeds()
+    {
+        // Arrange
+        var command = new RegisterCommand(
+            Email: "test@example.com",
+            Password: "Password123",
+            DisplayName: "Test User");
+
+        _userRepositoryMock
+            .Setup(x => x.GetByExternalIdAsync(command.Email, AuthProvider.Local, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User?)null);
+
+        _passwordHasherMock
+            .Setup(x => x.HashPassword(command.Password))
+            .Returns("hashed_password");
+
+        _emailVerificationServiceMock
+            .Setup(x => x.SetVerificationToken(It.IsAny<User>()))
+            .Callback<User>(user => 
+            {
+                var tokenProperty = typeof(User).GetProperty("EmailVerificationToken");
+                tokenProperty?.SetValue(user, "test-verification-token");
+            });
+
+        _userRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User user, CancellationToken _) => user);
+
+        // Email service returns false (failed to send)
+        _emailServiceMock
+            .Setup(x => x.SendVerificationEmailAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        // Assert - registration should still succeed even if email fails
+        result.Should().NotBeNull();
+        result.Success.Should().BeTrue();
+        result.Message.Should().Contain("check your email");
     }
 }

@@ -2,7 +2,7 @@
 
 Simplify authentication to support only Microsoft OAuth and username/password login, removing Google and Facebook providers. Includes password infrastructure with bcrypt hashing, email verification, account lockout, and rate limiting security measures.
 
-**Phases: 8**
+**Phases: 9**
 
 ### 1. Phase 1: Add Password Infrastructure to Backend
 - **Objective:** Add password hashing capability and extend the User entity to support local authentication
@@ -154,6 +154,28 @@ Simplify authentication to support only Microsoft OAuth and username/password lo
   3. Update deployment guide
   4. Update frontend component documentation
   5. Review all docs for consistency
+
+### 9. Phase 9: Add Email Sending with Azure Communication Services
+- **Objective:** Send verification emails using Azure Communication Services
+- **Files/Functions to Modify/Create:**
+  - `src/PerfectFit.Core/Services/IEmailService.cs` - email service interface
+  - `src/PerfectFit.Infrastructure/Email/EmailSettings.cs` - configuration
+  - `src/PerfectFit.Infrastructure/Email/AzureEmailService.cs` - implementation
+  - `src/PerfectFit.UseCases/Auth/Commands/RegisterCommand.cs` - integrate email sending
+  - `appsettings.json` - add Email configuration section
+  - `docs/deployment.md` - add Email environment variables
+- **Tests to Write:**
+  - `AzureEmailServiceTests.cs` - test email building, verification URL, error handling
+- **Steps:**
+  1. Add Azure.Communication.Email NuGet package
+  2. Write unit tests for email service
+  3. Create IEmailService interface
+  4. Implement AzureEmailService with HTML template
+  5. Update RegisterCommand to send verification email
+  6. Register services in DI
+  7. Update configuration files
+  8. Update documentation
+  9. Run tests to confirm passing
 
 ---
 

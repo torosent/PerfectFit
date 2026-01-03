@@ -6,6 +6,7 @@ using PerfectFit.Core.Interfaces;
 using PerfectFit.Core.Services;
 using PerfectFit.Infrastructure.Data;
 using PerfectFit.Infrastructure.Data.Repositories;
+using PerfectFit.Infrastructure.Email;
 using PerfectFit.Infrastructure.Identity;
 using PerfectFit.Infrastructure.Services;
 
@@ -48,6 +49,10 @@ public static class DependencyInjection
 
         // Configure OAuth settings
         services.Configure<OAuthSettings>(configuration.GetSection(OAuthSettings.SectionName));
+
+        // Configure email settings and service
+        services.Configure<EmailSettings>(configuration.GetSection(EmailSettings.SectionName));
+        services.AddScoped<IEmailService, AzureEmailService>();
 
         // Register domain services
         services.AddScoped<IScoreValidationService, ScoreValidationService>();

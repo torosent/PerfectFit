@@ -1,11 +1,14 @@
 using System.Text.RegularExpressions;
 using MediatR;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using PerfectFit.Core.Configuration;
 using PerfectFit.Core.Entities;
 using PerfectFit.Core.Enums;
 using PerfectFit.Core.Identity;
 using PerfectFit.Core.Interfaces;
+using PerfectFit.Core.Services;
 
 namespace PerfectFit.UseCases.Auth.Commands;
 
@@ -35,7 +38,10 @@ public partial class RegisterCommandHandler : IRequestHandler<RegisterCommand, R
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IEmailVerificationService _emailVerificationService;
+    private readonly IEmailService _emailService;
+    private readonly ILogger<RegisterCommandHandler> _logger;
     private readonly AdminSettings _adminSettings;
+    private readonly string _frontendUrl;
 
     // Password validation regex patterns
     [GeneratedRegex(@"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$")]
@@ -54,12 +60,18 @@ public partial class RegisterCommandHandler : IRequestHandler<RegisterCommand, R
         IUserRepository userRepository,
         IPasswordHasher passwordHasher,
         IEmailVerificationService emailVerificationService,
-        IOptions<AdminSettings> adminSettings)
+        IEmailService emailService,
+        ILogger<RegisterCommandHandler> logger,
+        IOptions<AdminSettings> adminSettings,
+        IConfiguration configuration)
     {
         _userRepository = userRepository;
         _passwordHasher = passwordHasher;
         _emailVerificationService = emailVerificationService;
+        _emailService = emailService;
+        _logger = logger;
         _adminSettings = adminSettings.Value;
+        _frontendUrl = configuration["Email:FrontendUrl"] ?? "http://localhost:3000";
     }
 
     public async Task<RegisterResult> Handle(RegisterCommand request, CancellationToken cancellationToken)
@@ -121,9 +133,27 @@ public partial class RegisterCommandHandler : IRequestHandler<RegisterCommand, R
         // Save the user
         await _userRepository.AddAsync(user, cancellationToken);
 
+        // Send verification email - don't fail registration if email fails
+        var verificationUrl = BuildVerificationUrl(user.EmailVerificationToken!);
+        var emailSent = await _emailService.SendVerificationEmailAsync(
+            user.Email!,
+            user.DisplayName,
+            verificationUrl);
+
+        if (!emailSent)
+        {
+            _logger.LogWarning("Verification email was not sent to {Email}", user.Email);
+        }
+
         return new RegisterResult(
             Success: true,
             Message: "Registration successful. Please check your email to verify your account.");
+    }
+
+    private string BuildVerificationUrl(string token)
+    {
+        var baseUrl = _frontendUrl.TrimEnd('/');
+        return $"{baseUrl}/verify-email?token={token}";
     }
 
     private static (bool IsValid, string? ErrorMessage) ValidatePassword(string password)

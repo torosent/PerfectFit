@@ -404,6 +404,9 @@ The project includes a workflow at \`.github/workflows/deploy-cloudflare.yml\`:
 | \`CORS__AllowedOrigins\` | Yes | Frontend URL(s), comma-separated |
 | `OAuth__Microsoft__ClientId` | No | Microsoft OAuth client ID |
 | `OAuth__Microsoft__ClientSecret` | No | Microsoft OAuth client secret |
+| `Email__ConnectionString` | No | Azure Communication Services connection string |
+| `Email__SenderAddress` | No | Sender email address (e.g., DoNotReply@xxx.azurecomm.net) |
+| `Email__FrontendUrl` | No | Frontend URL for verification links (default: http://localhost:3000) |
 | `Auth__LockoutThreshold` | No | Failed login attempts before lockout (default: 5) |
 | `Auth__LockoutDurationMinutes` | No | Lockout duration in minutes (default: 15) |
 
