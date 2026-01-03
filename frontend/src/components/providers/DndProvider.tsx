@@ -15,7 +15,7 @@ import type { Piece, Grid, ClearingCell } from '@/types';
 import { useGameStore } from '@/lib/stores/game-store';
 import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
 import { PieceDisplay } from '@/components/game/PieceDisplay';
-import { useTouchDevice } from '@/hooks/useTouchDevice';
+import { useTouchDevice, useHaptics } from '@/hooks';
 
 // Touch offset constant - how many pixels to lift the dragged piece above the finger
 const TOUCH_DRAG_OFFSET_Y = -60;
@@ -59,6 +59,9 @@ export function DndProvider({ children }: DndProviderProps) {
   
   // Detect if we're on a touch device to apply drag offset
   const isTouchDevice = useTouchDevice();
+  
+  // Haptic feedback for touch interactions
+  const haptics = useHaptics();
   
   const { 
     gameState, 
@@ -160,8 +163,11 @@ export function DndProvider({ children }: DndProviderProps) {
       setDraggedPieceIndexState(data.pieceIndex);
       setDraggedPieceIndex(data.pieceIndex);
       setIsDragging(true);
+      
+      // Haptic feedback on piece pickup
+      haptics.lightTap();
     }
-  }, [setDraggedPieceIndex]);
+  }, [setDraggedPieceIndex, haptics]);
 
   const handleDragMove = useCallback(() => {
     // Position tracking is handled by the native event listeners
@@ -194,6 +200,9 @@ export function DndProvider({ children }: DndProviderProps) {
         const success = await placePiece(draggedPieceIndex, hoverPosition.row, hoverPosition.col);
         
         if (success) {
+          // Haptic feedback on successful placement
+          haptics.mediumTap();
+          
           // Trigger placed animation
           setLastPlacedCells(placedCells);
           
@@ -205,6 +214,9 @@ export function DndProvider({ children }: DndProviderProps) {
               
               if (clearedCells.length > 0) {
                 setClearingCells(clearedCells);
+                
+                // Haptic feedback for line clear (celebratory)
+                haptics.lineClear();
                 
                 // Clear animation state after animation completes
                 setTimeout(() => {
@@ -231,7 +243,7 @@ export function DndProvider({ children }: DndProviderProps) {
     setHoverPosition(null);
     setIsDragging(false);
     pointerPositionRef.current = null;
-  }, [draggedPieceIndex, draggedPiece, placePiece, setDraggedPieceIndex, setHoverPosition, setLastPlacedCells, setClearingCells, clearAnimationState]);
+  }, [draggedPieceIndex, draggedPiece, placePiece, setDraggedPieceIndex, setHoverPosition, setLastPlacedCells, setClearingCells, clearAnimationState, haptics]);
 
   const handleDragCancel = useCallback(() => {
     setDraggedPiece(null);

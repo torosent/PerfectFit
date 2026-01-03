@@ -10,6 +10,7 @@ import { ScoreDisplay } from '@/components/game/ScoreDisplay';
 import { GameOverModal } from '@/components/game/GameOverModal';
 import { DndProvider } from '@/components/providers/DndProvider';
 import { GuestBanner } from '@/components/auth/GuestBanner';
+import { useHaptics } from '@/hooks/useHaptics';
 import type { Grid, ClearingCell } from '@/types';
 
 /**
@@ -66,6 +67,12 @@ export default function PlayPage() {
   
   // Track previous grid for detecting cleared cells
   const prevGridRef = useRef<Grid | null>(null);
+  
+  // Track previous game over state for haptic feedback
+  const prevGameOverRef = useRef(false);
+  
+  // Haptic feedback
+  const haptics = useHaptics();
 
   // Start a new game on mount
   useEffect(() => {
@@ -175,6 +182,14 @@ export default function PlayPage() {
   }, [error, clearError]);
 
   const isGameOver = gameState?.status === 'Ended';
+
+  // Trigger haptic feedback when game ends
+  useEffect(() => {
+    if (isGameOver && !prevGameOverRef.current) {
+      haptics.gameOver();
+    }
+    prevGameOverRef.current = isGameOver;
+  }, [isGameOver, haptics]);
 
   // Submit score when game ends and user is authenticated
   useEffect(() => {

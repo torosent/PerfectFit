@@ -73,6 +73,58 @@
    END MOBILE TOUCH UTILITY CLASSES
    ============================================ */
 
+/* ============================================
+   TOUCH FEEDBACK STATES
+   ============================================ */
+
+/* General touch feedback for interactive elements */
+.touch-feedback {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.touch-feedback:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+/* Game piece press state - more pronounced visual feedback */
+.piece-press {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, filter 0.1s ease;
+}
+
+.piece-press:active {
+  transform: scale(0.95);
+  filter: brightness(1.1);
+}
+
+/* Button touch feedback */
+.button-press {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, opacity 0.1s ease, box-shadow 0.1s ease;
+}
+
+.button-press:active {
+  transform: scale(0.98);
+  opacity: 0.85;
+}
+
+/* Card/panel touch feedback */
+.card-press {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card-press:active {
+  transform: scale(0.99);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================
+   END TOUCH FEEDBACK STATES
+   ============================================ */
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
