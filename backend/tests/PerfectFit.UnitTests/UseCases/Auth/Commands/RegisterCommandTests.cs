@@ -63,6 +63,14 @@ public class RegisterCommandTests
             .Setup(x => x.HashPassword(command.Password))
             .Returns("hashed_password");
 
+        _emailVerificationServiceMock
+            .Setup(x => x.SetVerificationToken(It.IsAny<User>()))
+            .Callback<User>(user => 
+            {
+                var tokenProperty = typeof(User).GetProperty("EmailVerificationToken");
+                tokenProperty?.SetValue(user, "test-verification-token");
+            });
+
         User? capturedUser = null;
         _userRepositoryMock
             .Setup(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
@@ -215,6 +223,14 @@ public class RegisterCommandTests
             .Setup(x => x.HashPassword(command.Password))
             .Returns("hashed_password");
 
+        _emailVerificationServiceMock
+            .Setup(x => x.SetVerificationToken(It.IsAny<User>()))
+            .Callback<User>(user => 
+            {
+                var tokenProperty = typeof(User).GetProperty("EmailVerificationToken");
+                tokenProperty?.SetValue(user, "test-verification-token");
+            });
+
         User? capturedUser = null;
         _userRepositoryMock
             .Setup(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
@@ -308,7 +324,7 @@ public class RegisterCommandTests
             x => x.SendVerificationEmailAsync(
                 command.Email,
                 command.DisplayName,
-                It.Is<string>(url => url.Contains("verify-email?token="))),
+                It.Is<string>(url => url.Contains("verify-email?") && url.Contains("email=") && url.Contains("token="))),
             Times.Once);
     }
 

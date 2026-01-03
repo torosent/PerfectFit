@@ -14,12 +14,12 @@ public record LoginResponseDto(
 public record UserDto(
     int Id,
     string DisplayName,
-    string Username,
     string? Avatar,
     string? Email,
     string Provider,
     int HighScore,
-    int GamesPlayed
+    int GamesPlayed,
+    string Role = "User"
 );
 
 /// <summary>
@@ -35,7 +35,7 @@ public record OAuthStateDto(string ReturnUrl, string Nonce);
 /// <summary>
 /// Request to update user profile.
 /// </summary>
-public record UpdateProfileRequest(string? Username, string? Avatar);
+public record UpdateProfileRequest(string? DisplayName, string? Avatar);
 
 /// <summary>
 /// Response from profile update operation.
@@ -43,19 +43,19 @@ public record UpdateProfileRequest(string? Username, string? Avatar);
 public record UpdateProfileResponse(
     bool Success,
     string? ErrorMessage,
-    string? SuggestedUsername,
+    string? SuggestedDisplayName,
     UserProfileResponse? Profile
 );
 
 /// <summary>
 /// User profile data in responses.
 /// </summary>
-public record UserProfileResponse(int Id, string Username, string? Avatar);
+public record UserProfileResponse(int Id, string DisplayName, string? Avatar);
 
 /// <summary>
 /// Request for local user registration.
 /// </summary>
-public record RegisterRequest(string Email, string Password, string DisplayName);
+public record RegisterRequest(string Email, string Password, string DisplayName, string? Avatar = null);
 
 /// <summary>
 /// Request for local user login.

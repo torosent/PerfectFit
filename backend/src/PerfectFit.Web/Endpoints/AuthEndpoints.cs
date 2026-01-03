@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using PerfectFit.Core.Enums;
+using PerfectFit.Core.Interfaces;
 using PerfectFit.Infrastructure.Identity;
 using PerfectFit.UseCases.Auth.Commands;
 using PerfectFit.Web.DTOs;
@@ -186,7 +187,6 @@ public static class AuthEndpoints
             User: new UserDto(
                 Id: result.User.Id,
                 DisplayName: result.User.DisplayName,
-                Username: result.User.Username,
                 Avatar: result.User.Avatar,
                 Email: result.User.Email,
                 Provider: result.User.Provider.ToString(),
@@ -196,25 +196,33 @@ public static class AuthEndpoints
         ));
     }
 
-    private static IResult GetCurrentUser(ClaimsPrincipal user)
+    private static async Task<IResult> GetCurrentUser(
+        ClaimsPrincipal user,
+        IUserRepository userRepository)
     {
-        var userId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        var displayName = user.FindFirst(ClaimTypes.Name)?.Value;
-        var email = user.FindFirst(ClaimTypes.Email)?.Value;
-        var provider = user.FindFirst("provider")?.Value;
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-        if (string.IsNullOrEmpty(userId))
+        if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out var userId))
         {
             return Results.Unauthorized();
         }
 
-        return Results.Ok(new
+        var dbUser = await userRepository.GetByIdAsync(userId);
+        if (dbUser == null)
         {
-            Id = int.Parse(userId),
-            DisplayName = displayName,
-            Email = email,
-            Provider = provider
-        });
+            return Results.Unauthorized();
+        }
+
+        return Results.Ok(new UserDto(
+            Id: dbUser.Id,
+            DisplayName: dbUser.DisplayName,
+            Avatar: dbUser.Avatar,
+            Email: dbUser.Email,
+            Provider: dbUser.Provider.ToString(),
+            HighScore: dbUser.HighScore,
+            GamesPlayed: dbUser.GamesPlayed,
+            Role: dbUser.Role.ToString()
+        ));
     }
 
     private static IResult Logout()
@@ -240,12 +248,12 @@ public static class AuthEndpoints
             User: new UserDto(
                 Id: result.User.Id,
                 DisplayName: result.User.DisplayName,
-                Username: result.User.Username,
                 Avatar: result.User.Avatar,
                 Email: result.User.Email,
                 Provider: result.User.Provider.ToString(),
                 HighScore: result.User.HighScore,
-                GamesPlayed: result.User.GamesPlayed
+                GamesPlayed: result.User.GamesPlayed,
+                Role: result.User.Role.ToString()
             )
         ));
     }
@@ -262,7 +270,7 @@ public static class AuthEndpoints
             return Results.Unauthorized();
         }
 
-        var command = new UpdateProfileCommand(userId, request.Username, request.Avatar);
+        var command = new UpdateProfileCommand(userId, request.DisplayName, request.Avatar);
         var result = await mediator.Send(command, cancellationToken);
 
         if (!result.Success)
@@ -270,17 +278,17 @@ public static class AuthEndpoints
             return Results.BadRequest(new UpdateProfileResponse(
                 Success: false,
                 ErrorMessage: result.ErrorMessage,
-                SuggestedUsername: result.SuggestedUsername,
+                SuggestedDisplayName: result.SuggestedDisplayName,
                 Profile: null));
         }
 
         return Results.Ok(new UpdateProfileResponse(
             Success: true,
             ErrorMessage: null,
-            SuggestedUsername: null,
+            SuggestedDisplayName: null,
             Profile: result.UpdatedProfile is null ? null : new UserProfileResponse(
                 Id: result.UpdatedProfile.Id,
-                Username: result.UpdatedProfile.Username,
+                DisplayName: result.UpdatedProfile.DisplayName,
                 Avatar: result.UpdatedProfile.Avatar)));
     }
 
@@ -326,7 +334,8 @@ public static class AuthEndpoints
         var command = new RegisterCommand(
             Email: request.Email,
             Password: request.Password,
-            DisplayName: request.DisplayName);
+            DisplayName: request.DisplayName,
+            Avatar: request.Avatar);
 
         var result = await mediator.Send(command, cancellationToken);
 
@@ -371,12 +380,12 @@ public static class AuthEndpoints
             User: result.User is null ? null : new UserDto(
                 Id: result.User.Id,
                 DisplayName: result.User.DisplayName,
-                Username: result.User.Username,
                 Avatar: result.User.Avatar,
                 Email: result.User.Email,
                 Provider: result.User.Provider.ToString(),
                 HighScore: result.User.HighScore,
-                GamesPlayed: result.User.GamesPlayed),
+                GamesPlayed: result.User.GamesPlayed,
+                Role: result.User.Role.ToString()),
             ErrorMessage: null));
     }
 

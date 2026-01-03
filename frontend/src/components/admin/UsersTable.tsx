@@ -197,7 +197,7 @@ export function UsersTable({ onDeleteClick, onBulkDeleteClick, refreshTrigger }:
                         <span className="text-lg">{user.avatar}</span>
                       )}
                       <span className="text-white text-sm">
-                        {user.displayName || user.username || <span className="text-gray-500">-</span>}
+                        {user.displayName || <span className="text-gray-500">-</span>}
                       </span>
                       {user.isDeleted && (
                         <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400">

@@ -98,7 +98,7 @@ export function DeleteUserModal({ user, isOpen, onClose, onSuccess }: DeleteUser
               )}
               <div>
                 <p className="text-white font-medium">
-                  {user.displayName || user.username || 'Unknown User'}
+                  {user.displayName || 'Unknown User'}
                 </p>
                 <p className="text-gray-400 text-sm">
                   {user.email || 'No email'}

@@ -208,7 +208,7 @@ export default function LeaderboardPage() {
           <motion.div variants={staggerItemVariants}>
             <LeaderboardTable
               entries={entries}
-              currentUserId={user?.id}
+              currentUserId={user?.displayName}
               isLoading={isLoadingEntries}
             />
           </motion.div>

@@ -59,17 +59,18 @@ export interface PlacePieceResponse {
 
 export interface LeaderboardEntry {
   rank: number;
-  userId: string;
+  userId?: string;
   displayName: string;
   score: number;
   achievedAt: string;
   avatar?: string;
+  linesCleared?: number;
+  maxCombo?: number;
 }
 
 export interface UserProfile {
   id: string;
   displayName: string;
-  username: string;
   email?: string;
   provider: 'google' | 'facebook' | 'microsoft' | 'guest' | 'local';
   highScore: number;
@@ -82,7 +83,7 @@ export interface UserProfile {
  * Request payload for updating user profile
  */
 export interface UpdateProfileRequest {
-  username?: string;
+  displayName?: string;
   avatar?: string;
 }
 
@@ -92,10 +93,10 @@ export interface UpdateProfileRequest {
 export interface UpdateProfileResponse {
   success: boolean;
   errorMessage?: string;
-  suggestedUsername?: string;
+  suggestedDisplayName?: string;
   profile?: {
     id: number;
-    username: string;
+    displayName: string;
     avatar?: string;
   };
 }

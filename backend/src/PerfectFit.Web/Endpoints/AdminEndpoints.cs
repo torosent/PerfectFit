@@ -257,7 +257,6 @@ public static class AdminEndpoints
             Id: user.Id,
             Email: user.Email,
             DisplayName: user.DisplayName,
-            Username: user.Username,
             Avatar: user.Avatar,
             Provider: user.Provider.ToString(),
             Role: user.Role.ToString(),

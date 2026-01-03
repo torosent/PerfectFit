@@ -2,6 +2,7 @@ using MediatR;
 using PerfectFit.UseCases.Games.Commands;
 using PerfectFit.UseCases.Games.DTOs;
 using PerfectFit.UseCases.Games.Queries;
+using System.Security.Claims;
 
 namespace PerfectFit.Web.Endpoints;
 
@@ -45,10 +46,18 @@ public static class GameEndpoints
 
     private static async Task<IResult> CreateGame(
         IMediator mediator,
+        ClaimsPrincipal user,
         CancellationToken cancellationToken)
     {
-        // TODO: Extract userId from JWT when authentication is implemented
-        var command = new CreateGameCommand(UserId: null);
+        // Extract userId from JWT if authenticated
+        int? userId = null;
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!string.IsNullOrEmpty(userIdClaim) && int.TryParse(userIdClaim, out var parsedId))
+        {
+            userId = parsedId;
+        }
+
+        var command = new CreateGameCommand(UserId: userId);
         var result = await mediator.Send(command, cancellationToken);
 
         return Results.Created($"/api/games/{result.Id}", result);

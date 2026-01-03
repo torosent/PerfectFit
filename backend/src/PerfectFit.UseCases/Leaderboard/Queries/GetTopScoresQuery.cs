@@ -47,7 +47,7 @@ public class GetTopScoresQueryHandler : IRequestHandler<GetTopScoresQuery, List<
         {
             results.Add(new LeaderboardEntryResult(
                 Rank: rank++,
-                DisplayName: entry.User?.Username ?? "Unknown",
+                DisplayName: entry.User?.DisplayName ?? "Unknown",
                 Avatar: entry.User?.Avatar,
                 Score: entry.Score,
                 LinesCleared: entry.LinesCleared,

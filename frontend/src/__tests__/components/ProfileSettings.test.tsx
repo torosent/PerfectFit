@@ -2,7 +2,7 @@
  * ProfileSettings Component Tests
  * 
  * Tests for the profile settings modal that allows users to
- * edit their username and avatar.
+ * edit their display name and avatar.
  */
 
 import React from 'react';
@@ -20,8 +20,7 @@ jest.mock('@/lib/api/profile-client', () => ({
 // Mock the auth store
 const mockUser = {
   id: 'user-123',
-  displayName: 'Test User',
-  username: 'testuser',
+  displayName: 'testuser',
   email: 'test@example.com',
   provider: 'google' as const,
   highScore: 1000,
@@ -35,6 +34,7 @@ const mockToken = 'test-jwt-token';
 jest.mock('@/lib/stores/auth-store', () => ({
   useUser: () => mockUser,
   useToken: () => mockToken,
+  useIsGuest: () => false,
   useAuthStore: jest.fn((selector: (state: { user: typeof mockUser; setUser: typeof mockSetUser }) => unknown) => {
     if (typeof selector === 'function') {
       return selector({ user: mockUser, setUser: mockSetUser });
@@ -50,17 +50,22 @@ describe('ProfileSettings', () => {
     jest.clearAllMocks();
   });
 
-  describe('renders with current username', () => {
-    it('should display the username input with current username', () => {
+  describe('renders with current display name', () => {
+    it('should display the display name input with current value', () => {
       render(<ProfileSettings isOpen={true} onClose={jest.fn()} />);
 
-      const usernameInput = screen.getByLabelText(/username/i);
-      expect(usernameInput).toHaveValue('testuser');
+      const displayNameInput = screen.getByLabelText(/display name/i);
+      expect(displayNameInput).toHaveValue('testuser');
     });
 
     it('should display the current avatar as selected', () => {
       render(<ProfileSettings isOpen={true} onClose={jest.fn()} />);
 
+      // Open emoji picker popup
+      const changeAvatarButton = screen.getByRole('button', { name: /change/i });
+      fireEvent.click(changeAvatarButton);
+
+      // Check current avatar is marked as selected
       const selectedButton = screen.getByRole('button', { name: '😎' });
       expect(selectedButton).toHaveAttribute('aria-pressed', 'true');
     });
@@ -79,12 +84,12 @@ describe('ProfileSettings', () => {
   });
 
   describe('submits updated profile', () => {
-    it('should call updateProfile with new username and avatar on submit', async () => {
+    it('should call updateProfile with new display name and avatar on submit', async () => {
       const mockResponse: UpdateProfileResponse = {
         success: true,
         profile: {
           id: 1,
-          username: 'newusername',
+          displayName: 'newdisplayname',
           avatar: '🚀',
         },
       };
@@ -93,12 +98,14 @@ describe('ProfileSettings', () => {
       const onClose = jest.fn();
       render(<ProfileSettings isOpen={true} onClose={onClose} />);
 
-      // Change username
-      const usernameInput = screen.getByLabelText(/username/i);
-      await userEvent.clear(usernameInput);
-      await userEvent.type(usernameInput, 'newusername');
+      // Change display name
+      const displayNameInput = screen.getByLabelText(/display name/i);
+      await userEvent.clear(displayNameInput);
+      await userEvent.type(displayNameInput, 'newdisplayname');
 
-      // Select new avatar
+      // Open emoji picker popup and select new avatar
+      const changeAvatarButton = screen.getByRole('button', { name: /change/i });
+      fireEvent.click(changeAvatarButton);
       const newAvatarButton = screen.getByRole('button', { name: '🚀' });
       fireEvent.click(newAvatarButton);
 
@@ -109,7 +116,7 @@ describe('ProfileSettings', () => {
       await waitFor(() => {
         expect(mockUpdateProfile).toHaveBeenCalledWith(
           {
-            username: 'newusername',
+            displayName: 'newdisplayname',
             avatar: '🚀',
           },
           mockToken
@@ -122,7 +129,7 @@ describe('ProfileSettings', () => {
         success: true,
         profile: {
           id: 1,
-          username: 'testuser',
+          displayName: 'newdisplayname',
           avatar: '😎',
         },
       };
@@ -130,6 +137,11 @@ describe('ProfileSettings', () => {
 
       const onClose = jest.fn();
       render(<ProfileSettings isOpen={true} onClose={onClose} />);
+
+      // Change display name to trigger API call
+      const displayNameInput = screen.getByLabelText(/display name/i);
+      await userEvent.clear(displayNameInput);
+      await userEvent.type(displayNameInput, 'newdisplayname');
 
       const saveButton = screen.getByRole('button', { name: /save/i });
       fireEvent.click(saveButton);
@@ -149,6 +161,11 @@ describe('ProfileSettings', () => {
 
       render(<ProfileSettings isOpen={true} onClose={jest.fn()} />);
 
+      // Change display name to trigger API call
+      const displayNameInput = screen.getByLabelText(/display name/i);
+      await userEvent.clear(displayNameInput);
+      await userEvent.type(displayNameInput, 'newdisplayname');
+
       const saveButton = screen.getByRole('button', { name: /save/i });
       fireEvent.click(saveButton);
 
@@ -160,7 +177,7 @@ describe('ProfileSettings', () => {
       // Resolve the promise
       resolvePromise!({
         success: true,
-        profile: { id: 1, username: 'testuser', avatar: '😎' },
+        profile: { id: 1, displayName: 'newdisplayname', avatar: '😎' },
       });
     });
   });
@@ -169,51 +186,66 @@ describe('ProfileSettings', () => {
     it('should display error message when API returns error', async () => {
       const mockResponse: UpdateProfileResponse = {
         success: false,
-        errorMessage: 'Username is already taken',
+        errorMessage: 'Display name is already taken',
       };
       mockUpdateProfile.mockResolvedValueOnce(mockResponse);
 
       render(<ProfileSettings isOpen={true} onClose={jest.fn()} />);
 
+      // Change display name to trigger API call
+      const displayNameInput = screen.getByLabelText(/display name/i);
+      await userEvent.clear(displayNameInput);
+      await userEvent.type(displayNameInput, 'newdisplayname');
+
       const saveButton = screen.getByRole('button', { name: /save/i });
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/username is already taken/i)).toBeInTheDocument();
+        expect(screen.getByText(/display name is already taken/i)).toBeInTheDocument();
       });
     });
 
     it('should not close modal when there is an error', async () => {
       const mockResponse: UpdateProfileResponse = {
         success: false,
-        errorMessage: 'Username is already taken',
+        errorMessage: 'Display name is already taken',
       };
       mockUpdateProfile.mockResolvedValueOnce(mockResponse);
 
       const onClose = jest.fn();
       render(<ProfileSettings isOpen={true} onClose={onClose} />);
 
+      // Change display name to trigger API call
+      const displayNameInput = screen.getByLabelText(/display name/i);
+      await userEvent.clear(displayNameInput);
+      await userEvent.type(displayNameInput, 'newdisplayname');
+
       const saveButton = screen.getByRole('button', { name: /save/i });
       fireEvent.click(saveButton);
 
       await waitFor(() => {
-        expect(screen.getByText(/username is already taken/i)).toBeInTheDocument();
+        expect(screen.getByText(/display name is already taken/i)).toBeInTheDocument();
       });
 
       expect(onClose).not.toHaveBeenCalled();
     });
   });
 
-  describe('shows suggested username when API suggests one', () => {
-    it('should display suggested username when API returns one', async () => {
+  describe('shows suggested display name when API suggests one', () => {
+    it('should display suggested display name when API returns one', async () => {
       const mockResponse: UpdateProfileResponse = {
         success: false,
-        errorMessage: 'Username is already taken',
-        suggestedUsername: 'testuser123',
+        errorMessage: 'Display name is already taken',
+        suggestedDisplayName: 'testuser123',
       };
       mockUpdateProfile.mockResolvedValueOnce(mockResponse);
 
       render(<ProfileSettings isOpen={true} onClose={jest.fn()} />);
+
+      // Change display name to trigger API call
+      const displayNameInput = screen.getByLabelText(/display name/i);
+      await userEvent.clear(displayNameInput);
+      await userEvent.type(displayNameInput, 'newdisplayname');
 
       const saveButton = screen.getByRole('button', { name: /save/i });
       fireEvent.click(saveButton);
@@ -223,15 +255,20 @@ describe('ProfileSettings', () => {
       });
     });
 
-    it('should allow clicking suggested username to use it', async () => {
+    it('should allow clicking suggested display name to use it', async () => {
       const mockResponse: UpdateProfileResponse = {
         success: false,
-        errorMessage: 'Username is already taken',
-        suggestedUsername: 'testuser123',
+        errorMessage: 'Display name is already taken',
+        suggestedDisplayName: 'testuser123',
       };
       mockUpdateProfile.mockResolvedValueOnce(mockResponse);
 
       render(<ProfileSettings isOpen={true} onClose={jest.fn()} />);
+
+      // Change display name to trigger API call
+      const displayNameInput = screen.getByLabelText(/display name/i);
+      await userEvent.clear(displayNameInput);
+      await userEvent.type(displayNameInput, 'newdisplayname');
 
       const saveButton = screen.getByRole('button', { name: /save/i });
       fireEvent.click(saveButton);
@@ -241,8 +278,8 @@ describe('ProfileSettings', () => {
         fireEvent.click(suggestionButton);
       });
 
-      const usernameInput = screen.getByLabelText(/username/i);
-      expect(usernameInput).toHaveValue('testuser123');
+      const displayNameInputAfter = screen.getByLabelText(/display name/i);
+      expect(displayNameInputAfter).toHaveValue('testuser123');
     });
   });
 
@@ -260,10 +297,10 @@ describe('ProfileSettings', () => {
     it('should reset form when reopening modal', async () => {
       const { rerender } = render(<ProfileSettings isOpen={true} onClose={jest.fn()} />);
 
-      // Change username
-      const usernameInput = screen.getByLabelText(/username/i);
-      await userEvent.clear(usernameInput);
-      await userEvent.type(usernameInput, 'changedname');
+      // Change display name
+      const displayNameInput = screen.getByLabelText(/display name/i);
+      await userEvent.clear(displayNameInput);
+      await userEvent.type(displayNameInput, 'changedname');
 
       // Close modal
       rerender(<ProfileSettings isOpen={false} onClose={jest.fn()} />);
@@ -271,9 +308,9 @@ describe('ProfileSettings', () => {
       // Reopen modal
       rerender(<ProfileSettings isOpen={true} onClose={jest.fn()} />);
 
-      // Username should be reset to original
-      const newUsernameInput = screen.getByLabelText(/username/i);
-      expect(newUsernameInput).toHaveValue('testuser');
+      // Display name should be reset to original
+      const newDisplayNameInput = screen.getByLabelText(/display name/i);
+      expect(newDisplayNameInput).toHaveValue('testuser');
     });
   });
 });

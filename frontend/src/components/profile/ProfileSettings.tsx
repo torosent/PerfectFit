@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { EmojiPicker } from './EmojiPicker';
 import { updateProfile, deleteAccount } from '@/lib/api/profile-client';
-import { useUser, useToken, useAuthStore } from '@/lib/stores/auth-store';
+import { useUser, useToken, useAuthStore, useIsGuest } from '@/lib/stores/auth-store';
 import type { UserProfile } from '@/types';
 
 export interface ProfileSettingsProps {
@@ -14,7 +14,7 @@ export interface ProfileSettingsProps {
 }
 
 /**
- * Profile settings modal for editing username and avatar.
+ * Profile settings modal for editing display name and avatar.
  * Uses the updateProfile API to save changes.
  */
 export function ProfileSettings({ isOpen, onClose }: ProfileSettingsProps) {
@@ -22,11 +22,13 @@ export function ProfileSettings({ isOpen, onClose }: ProfileSettingsProps) {
   const token = useToken();
   const setUser = useAuthStore((state) => state.setUser);
   const logout = useAuthStore((state) => state.logout);
+  const isGuest = useIsGuest();
 
-  const [username, setUsername] = useState(user?.username || '');
+  const [displayName, setDisplayName] = useState(user?.displayName || '');
   const [avatar, setAvatar] = useState(user?.avatar || '');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [error, setError] = useState('');
-  const [suggestedUsername, setSuggestedUsername] = useState<string | null>(null);
+  const [suggestedDisplayName, setSuggestedDisplayName] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -34,13 +36,14 @@ export function ProfileSettings({ isOpen, onClose }: ProfileSettingsProps) {
   // Reset form when modal opens/closes or user changes
   useEffect(() => {
     if (isOpen) {
-      setUsername(user?.username || '');
+      setDisplayName(user?.displayName || '');
       setAvatar(user?.avatar || '');
       setError('');
-      setSuggestedUsername(null);
+      setSuggestedDisplayName(null);
       setShowDeleteConfirm(false);
+      setShowEmojiPicker(false);
     }
-  }, [isOpen, user?.username, user?.avatar]);
+  }, [isOpen, user?.displayName, user?.avatar]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,19 +53,38 @@ export function ProfileSettings({ isOpen, onClose }: ProfileSettingsProps) {
       return;
     }
 
+    // Build request with only changed fields
+    const request: { displayName?: string; avatar?: string } = {};
+    
+    // Only include displayName if changed (and not a guest)
+    if (!isGuest && displayName !== user?.displayName) {
+      request.displayName = displayName;
+    }
+    
+    // Only include avatar if changed
+    if (avatar !== (user?.avatar || '')) {
+      request.avatar = avatar || undefined;
+    }
+    
+    // Don't submit if nothing changed
+    if (Object.keys(request).length === 0) {
+      onClose();
+      return;
+    }
+
     setIsLoading(true);
     setError('');
-    setSuggestedUsername(null);
+    setSuggestedDisplayName(null);
 
     try {
-      const response = await updateProfile({ username, avatar }, token);
+      const response = await updateProfile(request, token);
 
       if (response.success && response.profile) {
         // Update the user in the store
         if (user && setUser) {
           const updatedUser: UserProfile = {
             ...user,
-            username: response.profile.username,
+            displayName: response.profile.displayName,
             avatar: response.profile.avatar,
           };
           setUser(updatedUser);
@@ -70,8 +92,8 @@ export function ProfileSettings({ isOpen, onClose }: ProfileSettingsProps) {
         onClose();
       } else {
         setError(response.errorMessage || 'Failed to update profile');
-        if (response.suggestedUsername) {
-          setSuggestedUsername(response.suggestedUsername);
+        if (response.suggestedDisplayName) {
+          setSuggestedDisplayName(response.suggestedDisplayName);
         }
       }
     } catch {
@@ -79,15 +101,15 @@ export function ProfileSettings({ isOpen, onClose }: ProfileSettingsProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [username, avatar, token, user, setUser, onClose]);
+  }, [displayName, avatar, token, user, setUser, onClose, isGuest]);
 
   const handleUseSuggestion = useCallback(() => {
-    if (suggestedUsername) {
-      setUsername(suggestedUsername);
-      setSuggestedUsername(null);
+    if (suggestedDisplayName) {
+      setDisplayName(suggestedDisplayName);
+      setSuggestedDisplayName(null);
       setError('');
     }
-  }, [suggestedUsername]);
+  }, [suggestedDisplayName]);
 
   const handleDeleteAccount = useCallback(async () => {
     if (!token) {
@@ -158,24 +180,29 @@ export function ProfileSettings({ isOpen, onClose }: ProfileSettingsProps) {
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="px-6 py-4 space-y-6">
-          {/* Username field */}
+          {/* Display Name field */}
           <div>
             <label 
-              htmlFor="username"
+              htmlFor="displayName"
               className="block text-sm font-medium text-gray-300 mb-2"
             >
-              Username
+              Display Name
             </label>
             <input
-              id="username"
+              id="displayName"
               type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 rounded-lg bg-gray-800/50 text-white border border-gray-700 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30 focus:outline-none transition-colors"
-              placeholder="Enter your username"
-              disabled={isLoading}
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              className="w-full px-4 py-2 rounded-lg bg-gray-800/50 text-white border border-gray-700 focus:border-teal-500 focus:ring-2 focus:ring-teal-500/30 focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              placeholder="Enter your display name"
+              disabled={isLoading || isGuest}
               maxLength={30}
             />
+            {isGuest && (
+              <p className="mt-1 text-xs text-gray-400">
+                Sign in with Microsoft or create an account to customize your display name.
+              </p>
+            )}
           </div>
 
           {/* Avatar picker */}
@@ -183,81 +210,128 @@ export function ProfileSettings({ isOpen, onClose }: ProfileSettingsProps) {
             <label className="block text-sm font-medium text-gray-300 mb-2">
               Avatar
             </label>
-            <div className="flex items-center gap-4 mb-3">
+            <div className="flex items-center gap-4">
               <div 
                 className="w-14 h-14 rounded-full flex items-center justify-center text-3xl"
                 style={{ backgroundColor: 'rgba(20, 184, 166, 0.2)' }}
               >
                 {avatar || '👤'}
               </div>
-              <span className="text-gray-400 text-sm">
-                Select an emoji below
-              </span>
+              {!isGuest && (
+                <button
+                  type="button"
+                  onClick={() => setShowEmojiPicker(true)}
+                  className="px-3 py-1.5 rounded-lg text-sm text-teal-400 border border-teal-500/30 hover:bg-teal-500/10 transition-colors"
+                >
+                  Change
+                </button>
+              )}
             </div>
-            <EmojiPicker selected={avatar} onSelect={setAvatar} />
+            {isGuest && (
+              <p className="mt-2 text-xs text-gray-400">
+                Sign in with Microsoft or create an account to customize your avatar.
+              </p>
+            )}
           </div>
+
+          {/* Emoji Picker Popup */}
+          {showEmojiPicker && (
+            <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+              <div 
+                className="absolute inset-0 bg-black/60"
+                onClick={() => setShowEmojiPicker(false)}
+              />
+              <div 
+                className="relative rounded-xl p-4 shadow-2xl max-w-sm w-full"
+                style={{ 
+                  backgroundColor: '#0d243d', 
+                  border: '1px solid rgba(20, 184, 166, 0.3)' 
+                }}
+              >
+                <div className="flex justify-between items-center mb-3">
+                  <h3 className="text-lg font-medium text-white">Select Avatar</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker(false)}
+                    className="text-gray-400 hover:text-white"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <EmojiPicker 
+                  selected={avatar} 
+                  onSelect={(emoji) => {
+                    setAvatar(emoji);
+                    setShowEmojiPicker(false);
+                  }} 
+                />
+              </div>
+            </div>
+          )}
 
           {/* Error message */}
           {error && (
             <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
               {error}
-              {suggestedUsername && (
+              {suggestedDisplayName && (
                 <div className="mt-2">
                   <span className="text-gray-400">Try: </span>
                   <button
                     type="button"
                     onClick={handleUseSuggestion}
                     className="text-teal-400 hover:text-teal-300 underline"
-                    aria-label={`Use ${suggestedUsername}`}
+                    aria-label={`Use ${suggestedDisplayName}`}
                   >
-                    {suggestedUsername}
+                    {suggestedDisplayName}
                   </button>
                 </div>
               )}
             </div>
           )}
 
-          {/* Delete Account Section */}
-          <div 
-            className="pt-4 mt-2"
-            style={{ borderTop: '1px solid rgba(239, 68, 68, 0.2)' }}
-          >
-            <h3 className="text-sm font-medium text-red-400 mb-2">Danger Zone</h3>
-            {!showDeleteConfirm ? (
-              <button
-                type="button"
-                onClick={() => setShowDeleteConfirm(true)}
-                className="w-full px-4 py-2 rounded-lg text-red-400 border border-red-500/30 hover:bg-red-500/10 transition-colors text-sm"
-                disabled={isLoading}
-              >
-                Delete Account
-              </button>
-            ) : (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 space-y-3">
-                <p className="text-sm text-red-300">
-                  Are you sure? This will permanently delete your account, scores, and all game data. This action cannot be undone.
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setShowDeleteConfirm(false)}
-                    className="flex-1 px-3 py-2 rounded-lg text-gray-300 hover:bg-white/10 transition-colors text-sm"
-                    disabled={isDeleting}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    onClick={handleDeleteAccount}
-                    disabled={isDeleting}
-                    className="flex-1 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium transition-colors text-sm disabled:opacity-50"
-                  >
-                    {isDeleting ? 'Deleting...' : 'Yes, Delete'}
-                  </button>
+          {/* Delete Account Section - Hidden for guests */}
+          {!isGuest && (
+            <div 
+              className="pt-4 mt-2"
+              style={{ borderTop: '1px solid rgba(239, 68, 68, 0.2)' }}
+            >
+              <h3 className="text-sm font-medium text-red-400 mb-2">Danger Zone</h3>
+              {!showDeleteConfirm ? (
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="w-full px-4 py-2 rounded-lg text-red-400 border border-red-500/30 hover:bg-red-500/10 transition-colors text-sm"
+                  disabled={isLoading}
+                >
+                  Delete Account
+                </button>
+              ) : (
+                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 space-y-3">
+                  <p className="text-sm text-red-300">
+                    Are you sure? This will permanently delete your account, scores, and all game data. This action cannot be undone.
+                  </p>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowDeleteConfirm(false)}
+                      className="flex-1 px-3 py-2 rounded-lg text-gray-300 hover:bg-white/10 transition-colors text-sm"
+                      disabled={isDeleting}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDeleteAccount}
+                      disabled={isDeleting}
+                      className="flex-1 px-3 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium transition-colors text-sm disabled:opacity-50"
+                    >
+                      {isDeleting ? 'Deleting...' : 'Yes, Delete'}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          )}
         </form>
 
         {/* Footer */}
@@ -273,19 +347,21 @@ export function ProfileSettings({ isOpen, onClose }: ProfileSettingsProps) {
             className="px-4 py-2 rounded-lg text-gray-300 hover:text-white hover:bg-white/10 transition-colors"
             disabled={isLoading}
           >
-            Cancel
+            {isGuest ? 'Close' : 'Cancel'}
           </button>
-          <button
-            type="submit"
-            onClick={handleSubmit}
-            disabled={isLoading}
-            className="px-4 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ 
-              background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)',
-            }}
-          >
-            {isLoading ? 'Saving...' : 'Save'}
-          </button>
+          {!isGuest && (
+            <button
+              type="submit"
+              onClick={handleSubmit}
+              disabled={isLoading}
+              className="px-4 py-2 rounded-lg text-white font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ 
+                background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)',
+              }}
+            >
+              {isLoading ? 'Saving...' : 'Save'}
+            </button>
+          )}
         </div>
       </div>
     </div>

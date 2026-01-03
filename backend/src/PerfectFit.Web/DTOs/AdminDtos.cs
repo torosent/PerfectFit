@@ -6,7 +6,6 @@ namespace PerfectFit.Web.DTOs;
 /// <param name="Id">The unique identifier of the user.</param>
 /// <param name="Email">The user's email address.</param>
 /// <param name="DisplayName">The user's display name.</param>
-/// <param name="Username">The user's unique username.</param>
 /// <param name="Avatar">The user's avatar emoji.</param>
 /// <param name="Provider">The authentication provider (Google, Microsoft, Guest, etc.).</param>
 /// <param name="Role">The user's role (User or Admin).</param>
@@ -20,7 +19,6 @@ public record AdminUserDto(
     int Id,
     string? Email,
     string? DisplayName,
-    string? Username,
     string? Avatar,
     string Provider,
     string Role,

@@ -18,7 +18,8 @@ namespace PerfectFit.UseCases.Auth.Commands;
 public record RegisterCommand(
     string Email,
     string Password,
-    string DisplayName
+    string DisplayName,
+    string? Avatar = null
 ) : IRequest<RegisterResult>;
 
 /// <summary>
@@ -93,6 +94,12 @@ public partial class RegisterCommandHandler : IRequestHandler<RegisterCommand, R
             return new RegisterResult(false, ErrorMessage: "Display name is required.");
         }
 
+        // Validate avatar if provided
+        if (!string.IsNullOrEmpty(request.Avatar) && !AvatarValidator.IsValidAvatar(request.Avatar))
+        {
+            return new RegisterResult(false, ErrorMessage: "Invalid avatar emoji.");
+        }
+
         // Validate password strength
         var passwordValidation = ValidatePassword(request.Password);
         if (!passwordValidation.IsValid)
@@ -127,6 +134,12 @@ public partial class RegisterCommandHandler : IRequestHandler<RegisterCommand, R
         var hashedPassword = _passwordHasher.HashPassword(request.Password);
         user.SetPasswordHash(hashedPassword);
 
+        // Set avatar if provided
+        if (!string.IsNullOrEmpty(request.Avatar))
+        {
+            user.SetAvatar(request.Avatar);
+        }
+
         // Set email verification token
         _emailVerificationService.SetVerificationToken(user);
 
@@ -134,7 +147,7 @@ public partial class RegisterCommandHandler : IRequestHandler<RegisterCommand, R
         await _userRepository.AddAsync(user, cancellationToken);
 
         // Send verification email - don't fail registration if email fails
-        var verificationUrl = BuildVerificationUrl(user.EmailVerificationToken!);
+        var verificationUrl = BuildVerificationUrl(user.Email!, user.EmailVerificationToken!);
         var emailSent = await _emailService.SendVerificationEmailAsync(
             user.Email!,
             user.DisplayName,
@@ -150,10 +163,10 @@ public partial class RegisterCommandHandler : IRequestHandler<RegisterCommand, R
             Message: "Registration successful. Please check your email to verify your account.");
     }
 
-    private string BuildVerificationUrl(string token)
+    private string BuildVerificationUrl(string email, string token)
     {
         var baseUrl = _frontendUrl.TrimEnd('/');
-        return $"{baseUrl}/verify-email?token={token}";
+        return $"{baseUrl}/verify-email?email={Uri.EscapeDataString(email)}&token={Uri.EscapeDataString(token)}";
     }
 
     private static (bool IsValid, string? ErrorMessage) ValidatePassword(string password)

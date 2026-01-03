@@ -30,11 +30,6 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasMaxLength(100)
             .IsRequired();
 
-        builder.Property(u => u.Username)
-            .HasColumnName("username")
-            .HasMaxLength(20)
-            .IsRequired();
-
         builder.Property(u => u.Avatar)
             .HasColumnName("avatar")
             .HasMaxLength(10);
@@ -60,8 +55,8 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasDefaultValue(0)
             .IsRequired();
 
-        builder.Property(u => u.LastUsernameChangeAt)
-            .HasColumnName("last_username_change_at");
+        builder.Property(u => u.LastDisplayNameChangeAt)
+            .HasColumnName("last_display_name_change_at");
 
         builder.Property(u => u.Role)
             .HasColumnName("role")
@@ -107,10 +102,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .IsUnique()
             .HasDatabaseName("ix_users_external_id_provider");
 
-        // Unique index on Username
-        builder.HasIndex(u => u.Username)
+        // Unique index on DisplayName
+        builder.HasIndex(u => u.DisplayName)
             .IsUnique()
-            .HasDatabaseName("ix_users_username");
+            .HasDatabaseName("ix_users_display_name");
 
         // Index on HighScore for leaderboard queries (descending)
         builder.HasIndex(u => u.HighScore)

@@ -1,7 +1,7 @@
 /**
  * Profile API Client Tests
  * 
- * Tests for the updateProfile function that updates user profile (username/avatar)
+ * Tests for the updateProfile function that updates user profile (displayName/avatar)
  */
 
 import { updateProfile } from '@/lib/api/profile-client';
@@ -23,7 +23,7 @@ describe('updateProfile', () => {
         success: true,
         profile: {
           id: 1,
-          username: 'newuser',
+          displayName: 'newuser',
           avatar: '😎',
         },
       };
@@ -33,7 +33,7 @@ describe('updateProfile', () => {
       });
 
       const request: UpdateProfileRequest = {
-        username: 'newuser',
+        displayName: 'newuser',
         avatar: '😎',
       };
       const token = 'test-jwt-token';
@@ -54,12 +54,12 @@ describe('updateProfile', () => {
       );
     });
 
-    it('should send request with only username when avatar not provided', async () => {
+    it('should send request with only displayName when avatar not provided', async () => {
       const mockResponse: UpdateProfileResponse = {
         success: true,
         profile: {
           id: 1,
-          username: 'newuser',
+          displayName: 'newuser',
         },
       };
       mockFetch.mockResolvedValueOnce({
@@ -68,7 +68,7 @@ describe('updateProfile', () => {
       });
 
       const request: UpdateProfileRequest = {
-        username: 'newuser',
+        displayName: 'newuser',
       };
       const token = 'test-jwt-token';
 
@@ -77,17 +77,17 @@ describe('updateProfile', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         expect.any(String),
         expect.objectContaining({
-          body: JSON.stringify({ username: 'newuser' }),
+          body: JSON.stringify({ displayName: 'newuser' }),
         })
       );
     });
 
-    it('should send request with only avatar when username not provided', async () => {
+    it('should send request with only avatar when displayName not provided', async () => {
       const mockResponse: UpdateProfileResponse = {
         success: true,
         profile: {
           id: 1,
-          username: 'existinguser',
+          displayName: 'existinguser',
           avatar: '🎮',
         },
       };
@@ -118,7 +118,7 @@ describe('updateProfile', () => {
         success: true,
         profile: {
           id: 123,
-          username: 'testuser',
+          displayName: 'testuser',
           avatar: '🚀',
         },
       };
@@ -128,7 +128,7 @@ describe('updateProfile', () => {
       });
 
       const request: UpdateProfileRequest = {
-        username: 'testuser',
+        displayName: 'testuser',
         avatar: '🚀',
       };
       const token = 'test-jwt-token';
@@ -138,7 +138,7 @@ describe('updateProfile', () => {
       expect(result.success).toBe(true);
       expect(result.profile).toEqual({
         id: 123,
-        username: 'testuser',
+        displayName: 'testuser',
         avatar: '🚀',
       });
       expect(result.errorMessage).toBeUndefined();
@@ -149,7 +149,7 @@ describe('updateProfile', () => {
         success: true,
         profile: {
           id: 123,
-          username: 'testuser',
+          displayName: 'testuser',
         },
       };
       mockFetch.mockResolvedValueOnce({
@@ -158,7 +158,7 @@ describe('updateProfile', () => {
       });
 
       const request: UpdateProfileRequest = {
-        username: 'testuser',
+        displayName: 'testuser',
       };
       const token = 'test-jwt-token';
 
@@ -170,11 +170,11 @@ describe('updateProfile', () => {
   });
 
   describe('handles error response', () => {
-    it('should return error response when username is taken', async () => {
+    it('should return error response when displayName is taken', async () => {
       const mockErrorResponse: UpdateProfileResponse = {
         success: false,
-        errorMessage: 'Username is already taken',
-        suggestedUsername: 'testuser123',
+        errorMessage: 'Display name is already taken',
+        suggestedDisplayName: 'testuser123',
       };
       mockFetch.mockResolvedValueOnce({
         ok: false,
@@ -183,15 +183,15 @@ describe('updateProfile', () => {
       });
 
       const request: UpdateProfileRequest = {
-        username: 'testuser',
+        displayName: 'testuser',
       };
       const token = 'test-jwt-token';
 
       const result = await updateProfile(request, token);
 
       expect(result.success).toBe(false);
-      expect(result.errorMessage).toBe('Username is already taken');
-      expect(result.suggestedUsername).toBe('testuser123');
+      expect(result.errorMessage).toBe('Display name is already taken');
+      expect(result.suggestedDisplayName).toBe('testuser123');
     });
 
     it('should return error response for invalid avatar', async () => {
@@ -228,7 +228,7 @@ describe('updateProfile', () => {
       });
 
       const request: UpdateProfileRequest = {
-        username: 'testuser',
+        displayName: 'testuser',
       };
       const token = 'invalid-token';
 

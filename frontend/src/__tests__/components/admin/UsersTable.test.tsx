@@ -30,7 +30,6 @@ function createMockUser(overrides: Partial<AdminUser> = {}): AdminUser {
     id: 1,
     email: 'user@example.com',
     displayName: 'Test User',
-    username: 'testuser',
     avatar: '😎',
     provider: 'google',
     role: 'User',

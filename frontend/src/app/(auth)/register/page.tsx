@@ -5,6 +5,7 @@ import Link from 'next/link';
 import PasswordStrengthIndicator, {
   isPasswordValid,
 } from '@/components/auth/PasswordStrengthIndicator';
+import { EmojiPicker } from '@/components/profile/EmojiPicker';
 import {
   useAuthStore,
   useIsAuthLoading,
@@ -31,6 +32,8 @@ export default function RegisterPage() {
   // Form state
   const [email, setEmail] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [avatar, setAvatar] = useState<string | null>(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [validationErrors, setValidationErrors] = useState<ValidationErrors>({});
@@ -74,7 +77,7 @@ export default function RegisterPage() {
       return;
     }
 
-    const response = await localRegister(email, password, displayName);
+    const response = await localRegister(email, password, displayName, avatar || undefined);
 
     if (response.success) {
       setSuccessMessage(
@@ -247,6 +250,73 @@ export default function RegisterPage() {
                   </p>
                 )}
               </div>
+
+              {/* Avatar picker */}
+              <div>
+                <label className="block text-sm font-medium text-gray-300 mb-2">
+                  Avatar (optional)
+                </label>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker(true)}
+                    className="w-14 h-14 rounded-full flex items-center justify-center text-2xl border-2 border-gray-600 hover:border-teal-500 transition-colors"
+                    style={{ backgroundColor: 'rgba(10, 37, 64, 0.7)' }}
+                  >
+                    {avatar || '😀'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker(true)}
+                    className="text-sm text-teal-400 hover:text-teal-300 underline"
+                  >
+                    {avatar ? 'Change avatar' : 'Choose an avatar'}
+                  </button>
+                  {avatar && (
+                    <button
+                      type="button"
+                      onClick={() => setAvatar(null)}
+                      className="text-sm text-gray-400 hover:text-gray-300"
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Avatar picker popup */}
+              {showEmojiPicker && (
+                <div 
+                  className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                  style={{ backgroundColor: 'rgba(0, 0, 0, 0.7)' }}
+                  onClick={() => setShowEmojiPicker(false)}
+                >
+                  <div 
+                    className="glass-panel rounded-2xl p-6 max-w-sm w-full max-h-[80vh] overflow-hidden"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="text-lg font-semibold text-white">Choose Avatar</h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowEmojiPicker(false)}
+                        className="text-gray-400 hover:text-white p-1"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <EmojiPicker 
+                      selected={avatar} 
+                      onSelect={(emoji) => {
+                        setAvatar(emoji);
+                        setShowEmojiPicker(false);
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
 
               <div>
                 <label

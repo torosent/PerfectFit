@@ -15,6 +15,26 @@ using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Load .env file if it exists (for local development)
+var envPath = Path.Combine(builder.Environment.ContentRootPath, ".env");
+if (File.Exists(envPath))
+{
+    foreach (var line in File.ReadAllLines(envPath))
+    {
+        if (string.IsNullOrWhiteSpace(line) || line.StartsWith('#'))
+            continue;
+
+        var parts = line.Split('=', 2);
+        if (parts.Length == 2)
+        {
+            Environment.SetEnvironmentVariable(parts[0].Trim(), parts[1].Trim());
+        }
+    }
+    
+    // Reload configuration to pick up new environment variables
+    builder.Configuration.AddEnvironmentVariables();
+}
+
 // Configure JSON serialization for camelCase properties and string enums
 builder.Services.Configure<JsonOptions>(options =>
 {

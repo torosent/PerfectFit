@@ -7,7 +7,7 @@ public record UpdateProfileResult
 {
     public bool Success { get; init; }
     public string? ErrorMessage { get; init; }
-    public string? SuggestedUsername { get; init; }
+    public string? SuggestedDisplayName { get; init; }
     public UserProfileDto? UpdatedProfile { get; init; }
     public TimeSpan? CooldownRemainingTime { get; init; }
 
@@ -17,13 +17,13 @@ public record UpdateProfileResult
     public static UpdateProfileResult Failed(string errorMessage) =>
         new() { Success = false, ErrorMessage = errorMessage };
 
-    public static UpdateProfileResult FailedWithSuggestion(string errorMessage, string suggestedUsername) =>
-        new() { Success = false, ErrorMessage = errorMessage, SuggestedUsername = suggestedUsername };
+    public static UpdateProfileResult FailedWithSuggestion(string errorMessage, string suggestedDisplayName) =>
+        new() { Success = false, ErrorMessage = errorMessage, SuggestedDisplayName = suggestedDisplayName };
 
     public static UpdateProfileResult CooldownActive(TimeSpan remainingTime) => new()
     {
         Success = false,
-        ErrorMessage = $"You can change your username again in {FormatTimeSpan(remainingTime)}.",
+        ErrorMessage = $"You can change your display name again in {FormatTimeSpan(remainingTime)}.",
         CooldownRemainingTime = remainingTime
     };
 
@@ -34,4 +34,4 @@ public record UpdateProfileResult
 /// <summary>
 /// User profile data returned from profile operations.
 /// </summary>
-public record UserProfileDto(int Id, string Username, string? Avatar);
+public record UserProfileDto(int Id, string DisplayName, string? Avatar);

@@ -12,7 +12,7 @@ public class UserTests
         // Arrange
         var externalId = "google-12345";
         var email = "test@example.com";
-        var displayName = "Test User";
+        var displayName = "Test_User";
         var provider = AuthProvider.Google;
 
         // Act
@@ -34,7 +34,7 @@ public class UserTests
     public void Create_WithNullEmail_ShouldAllowNullEmail()
     {
         // Arrange & Act
-        var user = User.Create("external-id", null, "Display Name", AuthProvider.Facebook);
+        var user = User.Create("external-id", null, "Display_Name", AuthProvider.Facebook);
 
         // Assert
         user.Email.Should().BeNull();
@@ -44,7 +44,7 @@ public class UserTests
     public void Create_WithEmptyExternalId_ShouldThrowArgumentException()
     {
         // Arrange & Act
-        var act = () => User.Create("", "test@example.com", "Test", AuthProvider.Google);
+        var act = () => User.Create("", "test@example.com", "Test123", AuthProvider.Google);
 
         // Assert
         act.Should().Throw<ArgumentException>()
@@ -66,7 +66,7 @@ public class UserTests
     public void UpdateHighScore_WhenNewScoreIsHigher_ShouldUpdateHighScore()
     {
         // Arrange
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
 
         // Act
         user.UpdateHighScore(100);
@@ -79,7 +79,7 @@ public class UserTests
     public void UpdateHighScore_WhenNewScoreIsLower_ShouldNotUpdateHighScore()
     {
         // Arrange
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
         user.UpdateHighScore(100);
 
         // Act
@@ -93,7 +93,7 @@ public class UserTests
     public void UpdateHighScore_WhenNewScoreIsEqual_ShouldNotChange()
     {
         // Arrange
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
         user.UpdateHighScore(100);
 
         // Act
@@ -107,7 +107,7 @@ public class UserTests
     public void IncrementGamesPlayed_ShouldIncrementByOne()
     {
         // Arrange
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
 
         // Act
         user.IncrementGamesPlayed();
@@ -121,7 +121,7 @@ public class UserTests
     public void UpdateLastLogin_ShouldSetLastLoginAt()
     {
         // Arrange
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
 
         // Act
         user.UpdateLastLogin();
@@ -132,41 +132,41 @@ public class UserTests
     }
 
     [Fact]
-    public void User_SetUsername_UpdatesUsername_WhenValid()
+    public void User_SetDisplayName_UpdatesDisplayName_WhenValid()
     {
         // Arrange
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
-        var newUsername = "NewUser_123";
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
+        var newDisplayName = "NewUser_123";
 
         // Act
-        user.SetUsername(newUsername);
+        user.SetDisplayName(newDisplayName);
 
         // Assert
-        user.Username.Should().Be(newUsername);
+        user.DisplayName.Should().Be(newDisplayName);
     }
 
     [Fact]
-    public void User_SetUsername_ThrowsException_WhenInvalidFormat()
+    public void User_SetDisplayName_ThrowsException_WhenInvalidFormat()
     {
         // Arrange
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
 
         // Act
-        var act = () => user.SetUsername("ab"); // too short
+        var act = () => user.SetDisplayName("ab"); // too short
 
         // Assert
         act.Should().Throw<ArgumentException>()
-            .WithMessage("*Username*");
+            .WithMessage("*Display name*");
     }
 
     [Fact]
-    public void User_SetUsername_ThrowsException_WhenContainsInvalidChars()
+    public void User_SetDisplayName_ThrowsException_WhenContainsInvalidChars()
     {
         // Arrange
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
 
         // Act
-        var act = () => user.SetUsername("user@name");
+        var act = () => user.SetDisplayName("user@name");
 
         // Assert
         act.Should().Throw<ArgumentException>()
@@ -177,7 +177,7 @@ public class UserTests
     public void User_SetAvatar_UpdatesAvatar()
     {
         // Arrange
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
         var avatar = "🎮";
 
         // Act
@@ -191,7 +191,7 @@ public class UserTests
     public void User_SetAvatar_AllowsNull()
     {
         // Arrange
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
         user.SetAvatar("🎮");
 
         // Act
@@ -202,63 +202,38 @@ public class UserTests
     }
 
     [Fact]
-    public void User_Create_GeneratesRandomUsername()
-    {
-        // Arrange & Act
-        var user1 = User.Create("external-id-1", "test1@example.com", "Test User 1", AuthProvider.Google);
-        var user2 = User.Create("external-id-2", "test2@example.com", "Test User 2", AuthProvider.Google);
-
-        // Assert
-        user1.Username.Should().StartWith("Player_");
-        user2.Username.Should().StartWith("Player_");
-        user1.Username.Should().HaveLength(13); // "Player_" (7) + 6 random chars
-        user2.Username.Should().HaveLength(13);
-        user1.Username.Should().NotBe(user2.Username); // Should be different
-    }
-
-    [Fact]
-    public void User_Create_UsernameIsAlphanumeric()
-    {
-        // Arrange & Act
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
-
-        // Assert
-        user.Username.Should().MatchRegex(@"^[A-Za-z0-9_]+$");
-    }
-
-    [Fact]
     public void User_Create_AvatarIsNull()
     {
         // Arrange & Act
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
 
         // Assert
         user.Avatar.Should().BeNull();
     }
 
     [Fact]
-    public void User_SetUsername_UpdatesLastUsernameChangeAt()
+    public void User_SetDisplayName_UpdatesLastDisplayNameChangeAt()
     {
         // Arrange
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
-        user.LastUsernameChangeAt.Should().BeNull(); // Should be null initially
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
+        user.LastDisplayNameChangeAt.Should().BeNull(); // Should be null initially
 
         // Act
-        user.SetUsername("NewUser_123");
+        user.SetDisplayName("NewUser_123");
 
         // Assert
-        user.LastUsernameChangeAt.Should().NotBeNull();
-        user.LastUsernameChangeAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+        user.LastDisplayNameChangeAt.Should().NotBeNull();
+        user.LastDisplayNameChangeAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
     }
 
     [Fact]
-    public void User_Create_LastUsernameChangeAtIsNull()
+    public void User_Create_LastDisplayNameChangeAtIsNull()
     {
         // Arrange & Act
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
 
         // Assert
-        user.LastUsernameChangeAt.Should().BeNull();
+        user.LastDisplayNameChangeAt.Should().BeNull();
     }
 
     [Fact]
@@ -267,7 +242,7 @@ public class UserTests
         // Arrange
         var externalId = "google-12345";
         var email = "admin@example.com";
-        var displayName = "Admin User";
+        var displayName = "Admin_User";
         var provider = AuthProvider.Google;
         var role = UserRole.Admin;
 
@@ -282,7 +257,7 @@ public class UserTests
     public void Create_DefaultRole_ShouldBeUser()
     {
         // Arrange & Act
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
 
         // Assert
         user.Role.Should().Be(UserRole.User);
@@ -292,7 +267,7 @@ public class UserTests
     public void SoftDelete_ShouldSetIsDeletedAndTimestamp()
     {
         // Arrange
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
         user.IsDeleted.Should().BeFalse();
         user.DeletedAt.Should().BeNull();
 
@@ -309,7 +284,7 @@ public class UserTests
     public void Create_ShouldHaveIsDeletedFalseByDefault()
     {
         // Arrange & Act
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
 
         // Assert
         user.IsDeleted.Should().BeFalse();
@@ -320,7 +295,7 @@ public class UserTests
     public void SetRole_ShouldUpdateRole()
     {
         // Arrange
-        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        var user = User.Create("external-id", "test@example.com", "Test_User", AuthProvider.Google);
         user.Role.Should().Be(UserRole.User); // Default role
 
         // Act
@@ -334,7 +309,7 @@ public class UserTests
     public void SetRole_ShouldAllowChangingFromAdminToUser()
     {
         // Arrange
-        var user = User.Create("external-id", "admin@example.com", "Admin User", AuthProvider.Google, UserRole.Admin);
+        var user = User.Create("external-id", "admin@example.com", "Admin_User", AuthProvider.Google, UserRole.Admin);
         user.Role.Should().Be(UserRole.Admin);
 
         // Act

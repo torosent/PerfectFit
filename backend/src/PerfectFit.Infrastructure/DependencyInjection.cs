@@ -69,8 +69,8 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(5); // Reasonable timeout for external API
         });
 
-        // Register username validation service
-        services.AddScoped<IUsernameValidationService, UsernameValidationService>();
+        // Register display name validation service
+        services.AddScoped<IDisplayNameValidationService, DisplayNameValidationService>();
 
         return services;
     }

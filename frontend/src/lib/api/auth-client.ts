@@ -165,19 +165,21 @@ export function getAuthHeaders(token?: string | null): HeadersInit {
  * @param email - User's email address
  * @param password - User's password
  * @param displayName - User's display name
+ * @param avatar - Optional emoji avatar
  * @returns Registration result
  */
 export async function register(
   email: string,
   password: string,
-  displayName: string
+  displayName: string,
+  avatar?: string
 ): Promise<RegisterResponse> {
   const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ email, password, displayName }),
+    body: JSON.stringify({ email, password, displayName, avatar }),
   });
 
   const data = await response.json();

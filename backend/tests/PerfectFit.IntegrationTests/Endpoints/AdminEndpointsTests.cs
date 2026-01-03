@@ -25,19 +25,19 @@ public class AdminEndpointsTests
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Create admin user
-        var adminUser = User.Create("admin-ext-1", "admin@test.com", "Admin User", AuthProvider.Google, UserRole.Admin);
+        var adminUser = User.Create("admin-ext-1", "admin@test.com", "Admin User", AuthProvider.Microsoft, UserRole.Admin);
         db.Users.Add(adminUser);
         await db.SaveChangesAsync();
 
         // Create regular users
         for (int i = 0; i < 5; i++)
         {
-            var user = User.Create($"user-ext-{i}", $"user{i}@test.com", $"User {i}", AuthProvider.Google);
+            var user = User.Create($"user-ext-{i}", $"user{i}@test.com", $"User {i}", AuthProvider.Microsoft);
             db.Users.Add(user);
         }
         await db.SaveChangesAsync();
 
-        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "google", UserRole.Admin);
+        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "microsoft", UserRole.Admin);
 
         // Act
         var response = await client.GetAsync("/api/admin/users?page=1&pageSize=10");
@@ -62,11 +62,11 @@ public class AdminEndpointsTests
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Create regular user
-        var regularUser = User.Create("regular-ext-1", "regular@test.com", "Regular User", AuthProvider.Google);
+        var regularUser = User.Create("regular-ext-1", "regular@test.com", "Regular User", AuthProvider.Microsoft);
         db.Users.Add(regularUser);
         await db.SaveChangesAsync();
 
-        var client = factory.CreateAuthenticatedClient(regularUser.Id, regularUser.DisplayName, "google", UserRole.User);
+        var client = factory.CreateAuthenticatedClient(regularUser.Id, regularUser.DisplayName, "microsoft", UserRole.User);
 
         // Act
         var response = await client.GetAsync("/api/admin/users");
@@ -84,7 +84,7 @@ public class AdminEndpointsTests
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Create admin user
-        var adminUser = User.Create("admin-ext-2", "admin2@test.com", "Admin User", AuthProvider.Google, UserRole.Admin);
+        var adminUser = User.Create("admin-ext-2", "admin2@test.com", "Admin User", AuthProvider.Microsoft, UserRole.Admin);
         db.Users.Add(adminUser);
         await db.SaveChangesAsync();
 
@@ -95,7 +95,7 @@ public class AdminEndpointsTests
         db.Users.Add(targetUser);
         await db.SaveChangesAsync();
 
-        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "google", UserRole.Admin);
+        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "microsoft", UserRole.Admin);
 
         // Act
         var response = await client.GetAsync($"/api/admin/users/{targetUser.Id}");
@@ -122,11 +122,11 @@ public class AdminEndpointsTests
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Create admin user
-        var adminUser = User.Create("admin-ext-3", "admin3@test.com", "Admin User", AuthProvider.Google, UserRole.Admin);
+        var adminUser = User.Create("admin-ext-3", "admin3@test.com", "Admin User", AuthProvider.Microsoft, UserRole.Admin);
         db.Users.Add(adminUser);
         await db.SaveChangesAsync();
 
-        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "google", UserRole.Admin);
+        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "microsoft", UserRole.Admin);
 
         // Act
         var response = await client.GetAsync("/api/admin/users/99999");
@@ -144,16 +144,16 @@ public class AdminEndpointsTests
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Create admin user
-        var adminUser = User.Create("admin-ext-4", "admin4@test.com", "Admin User", AuthProvider.Google, UserRole.Admin);
+        var adminUser = User.Create("admin-ext-4", "admin4@test.com", "Admin User", AuthProvider.Microsoft, UserRole.Admin);
         db.Users.Add(adminUser);
         await db.SaveChangesAsync();
 
         // Create target user to delete
-        var targetUser = User.Create("target-ext-2", "target2@test.com", "Target User", AuthProvider.Google);
+        var targetUser = User.Create("target-ext-2", "target2@test.com", "Target User", AuthProvider.Microsoft);
         db.Users.Add(targetUser);
         await db.SaveChangesAsync();
 
-        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "google", UserRole.Admin);
+        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "microsoft", UserRole.Admin);
 
         // Act
         var response = await client.DeleteAsync($"/api/admin/users/{targetUser.Id}");
@@ -185,11 +185,11 @@ public class AdminEndpointsTests
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Create admin user
-        var adminUser = User.Create("admin-ext-5", "admin5@test.com", "Admin User", AuthProvider.Google, UserRole.Admin);
+        var adminUser = User.Create("admin-ext-5", "admin5@test.com", "Admin User", AuthProvider.Microsoft, UserRole.Admin);
         db.Users.Add(adminUser);
         await db.SaveChangesAsync();
 
-        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "google", UserRole.Admin);
+        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "microsoft", UserRole.Admin);
 
         // Act - Admin tries to delete themselves
         var response = await client.DeleteAsync($"/api/admin/users/{adminUser.Id}");
@@ -211,7 +211,7 @@ public class AdminEndpointsTests
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Create admin user
-        var adminUser = User.Create("admin-ext-6", "admin6@test.com", "Admin User", AuthProvider.Google, UserRole.Admin);
+        var adminUser = User.Create("admin-ext-6", "admin6@test.com", "Admin User", AuthProvider.Microsoft, UserRole.Admin);
         db.Users.Add(adminUser);
         await db.SaveChangesAsync();
 
@@ -223,11 +223,11 @@ public class AdminEndpointsTests
         }
 
         // Create regular user (should not be deleted)
-        var regularUser = User.Create("regular-ext-2", "regular2@test.com", "Regular User", AuthProvider.Google);
+        var regularUser = User.Create("regular-ext-2", "regular2@test.com", "Regular User", AuthProvider.Microsoft);
         db.Users.Add(regularUser);
         await db.SaveChangesAsync();
 
-        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "google", UserRole.Admin);
+        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "microsoft", UserRole.Admin);
 
         // Act
         var response = await client.DeleteAsync("/api/admin/users/bulk/guests");
@@ -265,7 +265,7 @@ public class AdminEndpointsTests
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Create admin user
-        var adminUser = User.Create("admin-ext-7", "admin7@test.com", "Admin User", AuthProvider.Google, UserRole.Admin);
+        var adminUser = User.Create("admin-ext-7", "admin7@test.com", "Admin User", AuthProvider.Microsoft, UserRole.Admin);
         db.Users.Add(adminUser);
         await db.SaveChangesAsync();
 
@@ -275,7 +275,7 @@ public class AdminEndpointsTests
         db.AdminAuditLogs.AddRange(log1, log2);
         await db.SaveChangesAsync();
 
-        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "google", UserRole.Admin);
+        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "microsoft", UserRole.Admin);
 
         // Act
         var response = await client.GetAsync("/api/admin/audit-logs?page=1&pageSize=10");
@@ -312,11 +312,11 @@ public class AdminEndpointsTests
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
         // Create admin user
-        var adminUser = User.Create("admin-ext-8", "admin8@test.com", "Admin User", AuthProvider.Google, UserRole.Admin);
+        var adminUser = User.Create("admin-ext-8", "admin8@test.com", "Admin User", AuthProvider.Microsoft, UserRole.Admin);
         db.Users.Add(adminUser);
         await db.SaveChangesAsync();
 
-        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "google", UserRole.Admin);
+        var client = factory.CreateAuthenticatedClient(adminUser.Id, adminUser.DisplayName, "microsoft", UserRole.Admin);
 
         // Act
         var response = await client.DeleteAsync("/api/admin/users/99999");

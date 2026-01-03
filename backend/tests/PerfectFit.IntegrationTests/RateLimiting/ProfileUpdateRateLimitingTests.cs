@@ -18,7 +18,7 @@ public class ProfileUpdateRateLimitingTests
         // Arrange
         await using var factory = new CustomWebApplicationFactory();
         var client = factory.CreateAuthenticatedClient(userId: 100, displayName: "TestUser", provider: "Guest");
-        var request = new UpdateProfileRequest(Username: "validuser", Avatar: "🎮");
+        var request = new UpdateProfileRequest(DisplayName: "validuser", Avatar: "🎮");
 
         // Act - Single request should succeed
         var response = await client.PutAsJsonAsync("/api/auth/profile", request);
@@ -38,7 +38,7 @@ public class ProfileUpdateRateLimitingTests
         // Use a unique user ID to avoid rate limit sharing with other tests
         var uniqueUserId = Random.Shared.Next(10000, 99999);
         var client = factory.CreateAuthenticatedClient(userId: uniqueUserId, displayName: "RateLimitTestUser", provider: "Guest");
-        var request = new UpdateProfileRequest(Username: "ratelimituser", Avatar: "🚀");
+        var request = new UpdateProfileRequest(DisplayName: "ratelimituser", Avatar: "🚀");
 
         // Act - Make 11 requests (limit is 10 per minute)
         var responses = new List<HttpResponseMessage>();
@@ -69,7 +69,7 @@ public class ProfileUpdateRateLimitingTests
         var userId2 = Random.Shared.Next(30000, 39999);
         var client1 = factory.CreateAuthenticatedClient(userId: userId1, displayName: "User1", provider: "Guest");
         var client2 = factory.CreateAuthenticatedClient(userId: userId2, displayName: "User2", provider: "Guest");
-        var request = new UpdateProfileRequest(Username: "testuser", Avatar: "🎯");
+        var request = new UpdateProfileRequest(DisplayName: "testuser", Avatar: "🎯");
 
         // Act - Use up client1's rate limit
         for (int i = 0; i < 10; i++)

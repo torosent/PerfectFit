@@ -145,7 +145,7 @@ public class LeaderboardEndpointsTests
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var user = User.Create("ext-stats", "stats@test.com", "Stats User", AuthProvider.Google);
+        var user = User.Create("ext-stats", "stats@test.com", "Stats User", AuthProvider.Microsoft);
         user.IncrementGamesPlayed();
         user.IncrementGamesPlayed();
         user.UpdateHighScore(500);
@@ -153,7 +153,11 @@ public class LeaderboardEndpointsTests
         await db.SaveChangesAsync();
 
         var session = GameSession.Create(user.Id);
-        session.AddScore(500, 20);
+        for (int i = 0; i < 20; i++)
+        {
+            session.RecordMove(pieceIndex: i, row: 0, col: i, pointsEarned: 25, linesCleared: 1);
+            session.AddScore(25, 1);
+        }
         session.UpdateCombo(5);
         session.EndGame();
         db.GameSessions.Add(session);
@@ -164,7 +168,7 @@ public class LeaderboardEndpointsTests
         await db.SaveChangesAsync();
 
         // Create authenticated client
-        var client = factory.CreateAuthenticatedClient(user.Id, user.DisplayName, "google");
+        var client = factory.CreateAuthenticatedClient(user.Id, user.DisplayName, "microsoft");
 
         // Act
         var response = await client.GetAsync("/api/leaderboard/me");
@@ -205,18 +209,28 @@ public class LeaderboardEndpointsTests
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var user = User.Create("ext-submit", "submit@test.com", "Submit User", AuthProvider.Google);
+        var user = User.Create("ext-submit", "submit@test.com", "Submit User", AuthProvider.Microsoft);
         db.Users.Add(user);
         await db.SaveChangesAsync();
 
         var session = GameSession.Create(user.Id);
-        session.AddScore(300, 15);
+        // Use RecordMove to increment MoveCount AND AddScore to update Score/LinesCleared
+        // Both are required for anti-cheat validation
+        for (int i = 0; i < 15; i++)
+        {
+            session.RecordMove(pieceIndex: i, row: 0, col: i, pointsEarned: 20, linesCleared: 1);
+            session.AddScore(20, 1);
+        }
         session.UpdateCombo(3);
         session.EndGame();
         db.GameSessions.Add(session);
         await db.SaveChangesAsync();
 
-        var client = factory.CreateAuthenticatedClient(user.Id, user.DisplayName, "google");
+        // Backdate StartedAt to pass minimum game duration check (5 seconds)
+        db.Entry(session).Property("StartedAt").CurrentValue = DateTime.UtcNow.AddSeconds(-10);
+        await db.SaveChangesAsync();
+
+        var client = factory.CreateAuthenticatedClient(user.Id, user.DisplayName, "microsoft");
         var request = new SubmitScoreRequestDto(session.Id);
 
         // Act
@@ -229,7 +243,7 @@ public class LeaderboardEndpointsTests
         result.Should().NotBeNull();
         result!.Success.Should().BeTrue();
         result.Entry.Should().NotBeNull();
-        result.Entry!.Score.Should().Be(300);
+        result.Entry!.Score.Should().Be(300); // 15 moves * 20 points each
         result.IsNewHighScore.Should().BeTrue();
         result.NewRank.Should().BeGreaterThan(0);
     }
@@ -243,11 +257,11 @@ public class LeaderboardEndpointsTests
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var user = User.Create("ext-invalid", "invalid@test.com", "Invalid User", AuthProvider.Google);
+        var user = User.Create("ext-invalid", "invalid@test.com", "Invalid User", AuthProvider.Microsoft);
         db.Users.Add(user);
         await db.SaveChangesAsync();
 
-        var client = factory.CreateAuthenticatedClient(user.Id, user.DisplayName, "google");
+        var client = factory.CreateAuthenticatedClient(user.Id, user.DisplayName, "microsoft");
         var request = new SubmitScoreRequestDto(Guid.NewGuid()); // Non-existent game
 
         // Act
@@ -276,7 +290,10 @@ public class LeaderboardEndpointsTests
         await db.SaveChangesAsync();
 
         var session = GameSession.Create(guestUser.Id);
-        session.AddScore(100, 5);
+        for (int i = 0; i < 5; i++)
+        {
+            session.RecordMove(pieceIndex: i, row: 0, col: i, pointsEarned: 20, linesCleared: 1);
+        }
         session.EndGame();
         db.GameSessions.Add(session);
         await db.SaveChangesAsync();
@@ -305,17 +322,20 @@ public class LeaderboardEndpointsTests
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var user = User.Create("ext-notended", "notended@test.com", "NotEnded User", AuthProvider.Google);
+        var user = User.Create("ext-notended", "notended@test.com", "NotEnded User", AuthProvider.Microsoft);
         db.Users.Add(user);
         await db.SaveChangesAsync();
 
         var session = GameSession.Create(user.Id);
-        session.AddScore(100, 5);
+        for (int i = 0; i < 5; i++)
+        {
+            session.RecordMove(pieceIndex: i, row: 0, col: i, pointsEarned: 20, linesCleared: 1);
+        }
         // NOT calling EndGame()
         db.GameSessions.Add(session);
         await db.SaveChangesAsync();
 
-        var client = factory.CreateAuthenticatedClient(user.Id, user.DisplayName, "google");
+        var client = factory.CreateAuthenticatedClient(user.Id, user.DisplayName, "microsoft");
         var request = new SubmitScoreRequestDto(session.Id);
 
         // Act
@@ -339,12 +359,15 @@ public class LeaderboardEndpointsTests
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var user = User.Create("ext-dup", "dup@test.com", "Dup User", AuthProvider.Google);
+        var user = User.Create("ext-dup", "dup@test.com", "Dup User", AuthProvider.Microsoft);
         db.Users.Add(user);
         await db.SaveChangesAsync();
 
         var session = GameSession.Create(user.Id);
-        session.AddScore(200, 10);
+        for (int i = 0; i < 10; i++)
+        {
+            session.RecordMove(pieceIndex: i, row: 0, col: i, pointsEarned: 20, linesCleared: 1);
+        }
         session.EndGame();
         db.GameSessions.Add(session);
         await db.SaveChangesAsync();
@@ -354,7 +377,7 @@ public class LeaderboardEndpointsTests
         db.LeaderboardEntries.Add(existingEntry);
         await db.SaveChangesAsync();
 
-        var client = factory.CreateAuthenticatedClient(user.Id, user.DisplayName, "google");
+        var client = factory.CreateAuthenticatedClient(user.Id, user.DisplayName, "microsoft");
         var request = new SubmitScoreRequestDto(session.Id);
 
         // Act
@@ -378,19 +401,22 @@ public class LeaderboardEndpointsTests
         using var scope = factory.Services.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        var user1 = User.Create("ext-owner", "owner@test.com", "Owner User", AuthProvider.Google);
-        var user2 = User.Create("ext-other", "other@test.com", "Other User", AuthProvider.Google);
+        var user1 = User.Create("ext-owner", "owner@test.com", "Owner User", AuthProvider.Microsoft);
+        var user2 = User.Create("ext-other", "other@test.com", "Other User", AuthProvider.Microsoft);
         db.Users.AddRange(user1, user2);
         await db.SaveChangesAsync();
 
         var session = GameSession.Create(user1.Id); // Owned by user1
-        session.AddScore(200, 10);
+        for (int i = 0; i < 10; i++)
+        {
+            session.RecordMove(pieceIndex: i, row: 0, col: i, pointsEarned: 20, linesCleared: 1);
+        }
         session.EndGame();
         db.GameSessions.Add(session);
         await db.SaveChangesAsync();
 
         // user2 tries to submit user1's game
-        var client = factory.CreateAuthenticatedClient(user2.Id, user2.DisplayName, "google");
+        var client = factory.CreateAuthenticatedClient(user2.Id, user2.DisplayName, "microsoft");
         var request = new SubmitScoreRequestDto(session.Id);
 
         // Act

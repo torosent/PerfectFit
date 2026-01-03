@@ -56,7 +56,6 @@ describe('Auth Store - Local Auth Methods', () => {
       const mockUser = {
         id: 'user-123',
         displayName: 'Test User',
-        username: 'testuser',
         email: 'test@example.com',
         provider: 'local' as const,
         highScore: 0,
@@ -136,7 +135,6 @@ describe('Auth Store - Local Auth Methods', () => {
         user: {
           id: 'user-123',
           displayName: 'Test User',
-          username: 'testuser',
           email: 'test@example.com',
           provider: 'local',
           highScore: 0,
@@ -171,7 +169,8 @@ describe('Auth Store - Local Auth Methods', () => {
       expect(mockRegister).toHaveBeenCalledWith(
         'newuser@example.com',
         'securePass123!',
-        'New User'
+        'New User',
+        undefined
       );
     });
 

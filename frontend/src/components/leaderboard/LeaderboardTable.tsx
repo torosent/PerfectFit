@@ -57,7 +57,7 @@ function getInitials(displayName: string): string {
 /**
  * Get background color based on user id (consistent per user)
  */
-function getAvatarColor(userId: string): string {
+function getAvatarColor(identifier: string | undefined): string {
   const colors = [
     '#14b8a6', // teal
     '#06b6d4', // cyan
@@ -69,10 +69,15 @@ function getAvatarColor(userId: string): string {
     '#f43f5e', // rose
   ];
   
-  // Simple hash based on user id
+  // Handle undefined/null identifiers
+  if (!identifier) {
+    return colors[0];
+  }
+  
+  // Simple hash based on identifier (displayName)
   let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+  for (let i = 0; i < identifier.length; i++) {
+    hash = ((hash << 5) - hash) + identifier.charCodeAt(i);
     hash = hash & hash;
   }
   
@@ -134,11 +139,11 @@ function LeaderboardTableComponent({
   const processedEntries = useMemo(() => {
     return entries.map((entry) => ({
       ...entry,
-      isCurrentUser: entry.userId === currentUserId,
+      isCurrentUser: entry.displayName === currentUserId, // Compare by displayName since userId is not returned
       formattedScore: formatNumber(entry.score),
       formattedTime: formatRelativeTime(entry.achievedAt),
       initials: getInitials(entry.displayName),
-      avatarColor: getAvatarColor(entry.userId),
+      avatarColor: getAvatarColor(entry.displayName),
     }));
   }, [entries, currentUserId]);
 

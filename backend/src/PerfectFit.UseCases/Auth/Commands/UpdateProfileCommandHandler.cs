@@ -9,17 +9,17 @@ namespace PerfectFit.UseCases.Auth.Commands;
 /// </summary>
 public class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand, UpdateProfileResult>
 {
-    private static readonly TimeSpan UsernameCooldownPeriod = TimeSpan.FromDays(7);
+    private static readonly TimeSpan DisplayNameCooldownPeriod = TimeSpan.FromDays(7);
 
     private readonly IUserRepository _userRepository;
-    private readonly IUsernameValidationService _usernameValidationService;
+    private readonly IDisplayNameValidationService _displayNameValidationService;
 
     public UpdateProfileCommandHandler(
         IUserRepository userRepository,
-        IUsernameValidationService usernameValidationService)
+        IDisplayNameValidationService displayNameValidationService)
     {
         _userRepository = userRepository;
-        _usernameValidationService = usernameValidationService;
+        _displayNameValidationService = displayNameValidationService;
     }
 
     public async Task<UpdateProfileResult> Handle(UpdateProfileCommand request, CancellationToken cancellationToken)
@@ -39,41 +39,41 @@ public class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand,
 
         var hasChanges = false;
 
-        // Handle username update
-        if (!string.IsNullOrEmpty(request.Username))
+        // Handle display name update
+        if (!string.IsNullOrEmpty(request.DisplayName))
         {
-            // Username cooldown check (only if user has changed username before)
-            if (user.LastUsernameChangeAt.HasValue)
+            // Display name cooldown check (only if user has changed display name before)
+            if (user.LastDisplayNameChangeAt.HasValue)
             {
-                var timeSinceLastChange = DateTime.UtcNow - user.LastUsernameChangeAt.Value;
-                if (timeSinceLastChange < UsernameCooldownPeriod)
+                var timeSinceLastChange = DateTime.UtcNow - user.LastDisplayNameChangeAt.Value;
+                if (timeSinceLastChange < DisplayNameCooldownPeriod)
                 {
-                    var remainingTime = UsernameCooldownPeriod - timeSinceLastChange;
+                    var remainingTime = DisplayNameCooldownPeriod - timeSinceLastChange;
                     return UpdateProfileResult.CooldownActive(remainingTime);
                 }
             }
 
-            // Validate username (format + profanity)
-            var validationResult = await _usernameValidationService.ValidateAsync(request.Username, cancellationToken);
+            // Validate display name (format + profanity)
+            var validationResult = await _displayNameValidationService.ValidateAsync(request.DisplayName, cancellationToken);
             if (!validationResult.IsValid)
             {
-                if (validationResult.SuggestedUsername is not null)
+                if (validationResult.SuggestedDisplayName is not null)
                 {
                     return UpdateProfileResult.FailedWithSuggestion(
                         validationResult.ErrorMessage!,
-                        validationResult.SuggestedUsername);
+                        validationResult.SuggestedDisplayName);
                 }
                 return UpdateProfileResult.Failed(validationResult.ErrorMessage!);
             }
 
             // Check uniqueness (excluding current user)
-            var isTaken = await _userRepository.IsUsernameTakenAsync(request.Username, request.UserId, cancellationToken);
+            var isTaken = await _userRepository.IsDisplayNameTakenAsync(request.DisplayName, request.UserId, cancellationToken);
             if (isTaken)
             {
-                return UpdateProfileResult.Failed("Username is already taken.");
+                return UpdateProfileResult.Failed("Display name is already taken.");
             }
 
-            user.SetUsername(request.Username);
+            user.SetDisplayName(request.DisplayName);
             hasChanges = true;
         }
 
@@ -92,6 +92,6 @@ public class UpdateProfileCommandHandler : IRequestHandler<UpdateProfileCommand,
             await _userRepository.UpdateAsync(user, cancellationToken);
         }
 
-        return UpdateProfileResult.Succeeded(new UserProfileDto(user.Id, user.Username, user.Avatar));
+        return UpdateProfileResult.Succeeded(new UserProfileDto(user.Id, user.DisplayName, user.Avatar));
     }
 }

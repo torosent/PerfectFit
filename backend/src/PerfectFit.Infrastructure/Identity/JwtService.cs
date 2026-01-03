@@ -53,6 +53,11 @@ public class JwtService : IJwtService
             claims.Add(new Claim(ClaimTypes.Email, user.Email));
         }
 
+        if (!string.IsNullOrEmpty(user.Avatar))
+        {
+            claims.Add(new Claim("avatar", user.Avatar));
+        }
+
         var token = new JwtSecurityToken(
             issuer: _settings.Issuer,
             audience: _settings.Audience,

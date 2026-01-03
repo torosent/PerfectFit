@@ -9,14 +9,13 @@ public class User
     public string ExternalId { get; private set; } = string.Empty;
     public string? Email { get; private set; }
     public string DisplayName { get; private set; } = string.Empty;
-    public string Username { get; private set; } = string.Empty;
     public string? Avatar { get; private set; }
     public AuthProvider Provider { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime? LastLoginAt { get; private set; }
     public int HighScore { get; private set; }
     public int GamesPlayed { get; private set; }
-    public DateTime? LastUsernameChangeAt { get; private set; }
+    public DateTime? LastDisplayNameChangeAt { get; private set; }
     public UserRole Role { get; private set; }
     public bool IsDeleted { get; private set; }
     public DateTime? DeletedAt { get; private set; }
@@ -43,7 +42,6 @@ public class User
             ExternalId = externalId,
             Email = email,
             DisplayName = displayName,
-            Username = UsernameValidator.GenerateRandomUsername(),
             Avatar = null,
             Provider = provider,
             CreatedAt = DateTime.UtcNow,
@@ -57,21 +55,21 @@ public class User
     }
 
     /// <summary>
-    /// Sets the username directly (use after async validation).
+    /// Sets the display name directly (use after async validation).
     /// </summary>
-    /// <param name="username">The new username to set (must be pre-validated).</param>
-    /// <exception cref="ArgumentException">Thrown when username format is invalid.</exception>
-    public void SetUsername(string username)
+    /// <param name="displayName">The new display name to set (must be pre-validated).</param>
+    /// <exception cref="ArgumentException">Thrown when display name format is invalid.</exception>
+    public void SetDisplayName(string displayName)
     {
-        // Only validate format here - profanity check should be done via IUsernameValidationService before calling this
-        var formatResult = UsernameValidator.ValidateFormat(username);
+        // Only validate format here - profanity check should be done via IDisplayNameValidationService before calling this
+        var formatResult = DisplayNameValidator.ValidateFormat(displayName);
         if (!formatResult.IsValid)
         {
-            throw new ArgumentException($"Username validation failed: {formatResult.ErrorMessage}", nameof(username));
+            throw new ArgumentException($"Display name validation failed: {formatResult.ErrorMessage}", nameof(displayName));
         }
 
-        Username = username;
-        LastUsernameChangeAt = DateTime.UtcNow;
+        DisplayName = displayName;
+        LastDisplayNameChangeAt = DateTime.UtcNow;
     }
 
     /// <summary>

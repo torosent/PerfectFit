@@ -46,10 +46,10 @@ public class UserRepository : IUserRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task<bool> IsUsernameTakenAsync(string username, int excludeUserId, CancellationToken cancellationToken = default)
+    public async Task<bool> IsDisplayNameTakenAsync(string displayName, int excludeUserId, CancellationToken cancellationToken = default)
     {
         return await _context.Users
-            .AnyAsync(u => u.Username == username && u.Id != excludeUserId, cancellationToken);
+            .AnyAsync(u => u.DisplayName == displayName && u.Id != excludeUserId, cancellationToken);
     }
 
     public async Task<IEnumerable<User>> GetAllAsync(int page, int pageSize, CancellationToken cancellationToken = default)

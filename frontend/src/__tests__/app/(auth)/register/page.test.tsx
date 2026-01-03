@@ -336,7 +336,8 @@ describe('RegisterPage', () => {
         expect(mockLocalRegister).toHaveBeenCalledWith(
           'test@example.com',
           'Password1',
-          'Test User'
+          'Test User',
+          undefined
         );
       });
     });

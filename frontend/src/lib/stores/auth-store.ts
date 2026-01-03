@@ -30,7 +30,7 @@ export interface AuthActions {
   loginAsGuest: () => Promise<void>;
   clearError: () => void;
   localLogin: (email: string, password: string) => Promise<void>;
-  localRegister: (email: string, password: string, displayName: string) => Promise<RegisterResponse>;
+  localRegister: (email: string, password: string, displayName: string, avatar?: string) => Promise<RegisterResponse>;
 }
 
 /**
@@ -226,11 +226,11 @@ export const useAuthStore = create<AuthStore>()(
       /**
        * Register a new user with email and password
        */
-      localRegister: async (email: string, password: string, displayName: string): Promise<RegisterResponse> => {
+      localRegister: async (email: string, password: string, displayName: string, avatar?: string): Promise<RegisterResponse> => {
         set({ isLoading: true, error: null });
 
         try {
-          const response = await authClient.register(email, password, displayName);
+          const response = await authClient.register(email, password, displayName, avatar);
           set({ isLoading: false });
           return response;
         } catch (err) {

@@ -55,7 +55,7 @@ public class GetUserStatsQueryHandler : IRequestHandler<GetUserStatsQuery, UserS
         {
             bestGame = new LeaderboardEntryResult(
                 Rank: rank,
-                DisplayName: user.Username,
+                DisplayName: user.DisplayName,
                 Avatar: user.Avatar,
                 Score: bestEntry.Score,
                 LinesCleared: bestEntry.LinesCleared,
