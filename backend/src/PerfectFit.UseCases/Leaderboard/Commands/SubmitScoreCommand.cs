@@ -115,7 +115,8 @@ public class SubmitScoreCommandHandler : IRequestHandler<SubmitScoreCommand, Sub
 
         var entryResult = new LeaderboardEntryResult(
             Rank: newRank,
-            DisplayName: user.DisplayName,
+            DisplayName: user.Username,
+            Avatar: user.Avatar,
             Score: entry.Score,
             LinesCleared: entry.LinesCleared,
             MaxCombo: entry.MaxCombo,

@@ -56,6 +56,7 @@ public static class LeaderboardEndpoints
         var dtos = results.Select(r => new LeaderboardEntryDto(
             Rank: r.Rank,
             DisplayName: r.DisplayName,
+            Avatar: r.Avatar,
             Score: r.Score,
             LinesCleared: r.LinesCleared,
             MaxCombo: r.MaxCombo,
@@ -92,6 +93,7 @@ public static class LeaderboardEndpoints
             BestGame: result.BestGame is null ? null : new LeaderboardEntryDto(
                 Rank: result.BestGame.Rank,
                 DisplayName: result.BestGame.DisplayName,
+                Avatar: result.BestGame.Avatar,
                 Score: result.BestGame.Score,
                 LinesCleared: result.BestGame.LinesCleared,
                 MaxCombo: result.BestGame.MaxCombo,
@@ -151,6 +153,7 @@ public static class LeaderboardEndpoints
             Entry: result.Entry is null ? null : new LeaderboardEntryDto(
                 Rank: result.Entry.Rank,
                 DisplayName: result.Entry.DisplayName,
+                Avatar: result.Entry.Avatar,
                 Score: result.Entry.Score,
                 LinesCleared: result.Entry.LinesCleared,
                 MaxCombo: result.Entry.MaxCombo,

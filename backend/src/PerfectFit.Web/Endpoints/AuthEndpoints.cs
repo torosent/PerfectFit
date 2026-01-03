@@ -48,6 +48,12 @@ public static class AuthEndpoints
         group.MapPost("/guest", CreateGuestSession)
             .WithName("CreateGuestSession")
             .WithDescription("Creates a guest user session");
+
+        // PUT /api/auth/profile - Update user profile
+        group.MapPut("/profile", UpdateProfile)
+            .RequireAuthorization()
+            .WithName("UpdateProfile")
+            .WithDescription("Updates user profile (username and/or avatar)");
     }
 
     private static IResult InitiateOAuth(
@@ -162,6 +168,8 @@ public static class AuthEndpoints
             User: new UserDto(
                 Id: result.User.Id,
                 DisplayName: result.User.DisplayName,
+                Username: result.User.Username,
+                Avatar: result.User.Avatar,
                 Email: result.User.Email,
                 Provider: result.User.Provider.ToString(),
                 HighScore: result.User.HighScore,
@@ -214,12 +222,48 @@ public static class AuthEndpoints
             User: new UserDto(
                 Id: result.User.Id,
                 DisplayName: result.User.DisplayName,
+                Username: result.User.Username,
+                Avatar: result.User.Avatar,
                 Email: result.User.Email,
                 Provider: result.User.Provider.ToString(),
                 HighScore: result.User.HighScore,
                 GamesPlayed: result.User.GamesPlayed
             )
         ));
+    }
+
+    private static async Task<IResult> UpdateProfile(
+        UpdateProfileRequest request,
+        ClaimsPrincipal user,
+        IMediator mediator,
+        CancellationToken cancellationToken)
+    {
+        var userIdClaim = user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+        if (!int.TryParse(userIdClaim, out var userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        var command = new UpdateProfileCommand(userId, request.Username, request.Avatar);
+        var result = await mediator.Send(command, cancellationToken);
+
+        if (!result.Success)
+        {
+            return Results.BadRequest(new UpdateProfileResponse(
+                Success: false,
+                ErrorMessage: result.ErrorMessage,
+                SuggestedUsername: result.SuggestedUsername,
+                Profile: null));
+        }
+
+        return Results.Ok(new UpdateProfileResponse(
+            Success: true,
+            ErrorMessage: null,
+            SuggestedUsername: null,
+            Profile: result.UpdatedProfile is null ? null : new UserProfileResponse(
+                Id: result.UpdatedProfile.Id,
+                Username: result.UpdatedProfile.Username,
+                Avatar: result.UpdatedProfile.Avatar)));
     }
 
     private static AuthProvider? ParseProvider(string provider)

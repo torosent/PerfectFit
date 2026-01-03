@@ -16,6 +16,7 @@ public record GetTopScoresQuery(int Count = 100) : IRequest<List<LeaderboardEntr
 public record LeaderboardEntryResult(
     int Rank,
     string DisplayName,
+    string? Avatar,
     int Score,
     int LinesCleared,
     int MaxCombo,
@@ -46,7 +47,8 @@ public class GetTopScoresQueryHandler : IRequestHandler<GetTopScoresQuery, List<
         {
             results.Add(new LeaderboardEntryResult(
                 Rank: rank++,
-                DisplayName: entry.User?.DisplayName ?? "Unknown",
+                DisplayName: entry.User?.Username ?? "Unknown",
+                Avatar: entry.User?.Avatar,
                 Score: entry.Score,
                 LinesCleared: entry.LinesCleared,
                 MaxCombo: entry.MaxCombo,

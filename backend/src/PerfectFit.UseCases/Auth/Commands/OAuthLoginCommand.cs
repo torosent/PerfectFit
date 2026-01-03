@@ -31,6 +31,8 @@ public record UserResult(
     string ExternalId,
     string? Email,
     string DisplayName,
+    string Username,
+    string? Avatar,
     AuthProvider Provider,
     int HighScore,
     int GamesPlayed
@@ -87,6 +89,8 @@ public class OAuthLoginCommandHandler : IRequestHandler<OAuthLoginCommand, OAuth
                 ExternalId: user.ExternalId,
                 Email: user.Email,
                 DisplayName: user.DisplayName,
+                Username: user.Username,
+                Avatar: user.Avatar,
                 Provider: user.Provider,
                 HighScore: user.HighScore,
                 GamesPlayed: user.GamesPlayed

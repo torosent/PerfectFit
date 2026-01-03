@@ -6,6 +6,7 @@ namespace PerfectFit.Web.DTOs;
 public record LeaderboardEntryDto(
     int Rank,
     string DisplayName,
+    string? Avatar,
     int Score,
     int LinesCleared,
     int MaxCombo,
