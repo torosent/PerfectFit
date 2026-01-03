@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Enable standalone output for Docker deployments
+  output: process.env.BUILD_STANDALONE === 'true' ? 'standalone' : undefined,
+  
   async headers() {
     return [
       {

@@ -1,6 +1,6 @@
 # Backend Configuration
 
-The backend uses ASP.NET Core configuration system with support for JSON files, environment variables, and user secrets.
+The backend uses ASP.NET Core 10 configuration system with support for JSON files, environment variables, and user secrets.
 
 ## Configuration Files
 

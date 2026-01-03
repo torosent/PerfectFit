@@ -19,7 +19,7 @@
 ┌─────────────────────────────────────────────────────────────────┐
 │                        API Layer                                 │
 │  ┌─────────────────────────────────────────────────────────┐   │
-│  │               ASP.NET Core Minimal API                    │   │
+│  │               ASP.NET Core 10 Minimal API                 │   │
 │  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │   │
 │  │  │  Game    │  │   Auth   │  │  Leader  │  │  Health  │ │   │
 │  │  │Endpoints │  │Endpoints │  │  board   │  │  Check   │ │   │
@@ -399,3 +399,71 @@ Client Move Request → Rate Limit Check → Input Validation →
 Score Submit → Duration Check → Move Count Check → 
     → Score Plausibility → Leaderboard Entry
 ```
+
+## Deployment Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     Production Deployment                        │
+│                                                                 │
+│  Option 1: Azure Container Apps                                 │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │                   Azure Container Apps                    │   │
+│  │  ┌──────────────────┐    ┌──────────────────────────┐   │   │
+│  │  │ perfectfit-web   │    │   perfectfit-api          │   │   │
+│  │  │ (Next.js 16)     │───▶│   (ASP.NET Core 10)       │   │   │
+│  │  │ Port: 3000       │    │   Port: 8080              │   │   │
+│  │  └──────────────────┘    └──────────────────────────┘   │   │
+│  │           │                           │                  │   │
+│  │           │              ┌────────────▼────────────┐    │   │
+│  │           │              │  Azure PostgreSQL       │    │   │
+│  │           │              │  (Flexible Server)      │    │   │
+│  │           │              └─────────────────────────┘    │   │
+│  └───────────┼──────────────────────────────────────────────┘   │
+│              │                                                  │
+│  ┌───────────▼──────────────────────────────────────────────┐  │
+│  │              Azure Container Registry                     │  │
+│  │  perfectfitacr.azurecr.io/perfectfit-web:latest          │  │
+│  │  perfectfitacr.azurecr.io/perfectfit-api:latest          │  │
+│  └──────────────────────────────────────────────────────────┘  │
+│                                                                 │
+│  Option 2: Cloudflare Pages + Azure Container Apps             │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  ┌───────────────────┐    ┌─────────────────────────┐   │   │
+│  │  │ Cloudflare Pages  │    │ Azure Container Apps    │   │   │
+│  │  │ (Edge Network)    │───▶│ (perfectfit-api)        │   │   │
+│  │  │ Global CDN        │    │ Auto-scaling Backend    │   │   │
+│  │  └───────────────────┘    └─────────────────────────┘   │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                                                                 │
+│  Option 3: Self-Hosted Docker Compose                          │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  ┌──────────┐  ┌──────────┐  ┌────────────────────┐    │   │
+│  │  │ Frontend │  │ Backend  │  │     PostgreSQL     │    │   │
+│  │  │  :3000   │─▶│  :8080   │─▶│       :5432        │    │   │
+│  │  └──────────┘  └──────────┘  └────────────────────┘    │   │
+│  └─────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Container Configuration
+
+| Container | Base Image | Port | Health Check |
+|-----------|-----------|------|--------------|
+| Frontend | node:22-alpine | 3000 | GET / |
+| Backend | mcr.microsoft.com/dotnet/aspnet:10.0 | 8080 | GET /health |
+| PostgreSQL | postgres:16 | 5432 | pg_isready |
+
+### CI/CD Pipeline
+
+```
+┌─────────┐    ┌─────────────┐    ┌──────────────┐    ┌─────────────┐
+│  Push   │───▶│   GitHub    │───▶│  Build &     │───▶│  Deploy to  │
+│  Code   │    │   Actions   │    │  Push Images │    │  Container  │
+└─────────┘    └─────────────┘    └──────────────┘    │    Apps     │
+                                                       └─────────────┘
+```
+
+**Workflows:**
+- `.github/workflows/deploy-azure.yml` - Full stack to Azure Container Apps
+- `.github/workflows/deploy-cloudflare.yml` - Frontend to Cloudflare Pages

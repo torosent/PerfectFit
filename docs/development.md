@@ -2,9 +2,9 @@
 
 ## Prerequisites
 
-- **Node.js** 18+ ([Download](https://nodejs.org/))
-- **.NET 9 SDK** ([Download](https://dotnet.microsoft.com/download))
-- **Docker** (for PostgreSQL) ([Download](https://docker.com/))
+- **Node.js** 22+ ([Download](https://nodejs.org/))
+- **.NET 10 SDK** ([Download](https://dotnet.microsoft.com/download))
+- **Docker** (for PostgreSQL and full-stack development) ([Download](https://docker.com/))
 - **Git** ([Download](https://git-scm.com/))
 
 ## Initial Setup
@@ -16,15 +16,23 @@ git clone https://github.com/your-org/perfectfit.git
 cd perfectfit
 ```
 
-### 2. Start the Database
+### 2. Start the Database (or Full Stack)
 
 ```bash
-# Start PostgreSQL container
+# Start PostgreSQL only
+docker compose up -d postgres
+
+# Or start the full stack (PostgreSQL + Backend + Frontend)
 docker compose up -d
 
-# Verify it's running
+# Verify services are running
 docker compose ps
 ```
+
+**Full Stack URLs:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8080
+- PostgreSQL: localhost:5432
 
 ### 3. Configure Backend
 
@@ -50,7 +58,7 @@ dotnet run --project src/PerfectFit.Web
 ```
 
 Backend will be available at:
-- API: http://localhost:5050
+- API: http://localhost:5050 (local dev) or http://localhost:8080 (Docker)
 - Swagger: http://localhost:5050/swagger
 
 ### 5. Start the Frontend

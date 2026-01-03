@@ -1,0 +1,38 @@
+# Build results
+**/bin/
+**/obj/
+**/out/
+
+# IDE and editor files
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet packages
+**/packages/
+*.nupkg
+
+# Test results
+**/TestResults/
+**/coverage/
+
+# Misc
+*.log
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore
+
+# Docker
+**/Dockerfile*
+**/.dockerignore
+
+# Documentation
+*.md

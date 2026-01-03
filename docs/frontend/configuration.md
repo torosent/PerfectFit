@@ -20,6 +20,7 @@ NEXT_PUBLIC_ENABLE_DEBUG=true
 | `NEXT_PUBLIC_API_URL` | No | `http://localhost:5050` | Backend API base URL |
 | `NEXT_PUBLIC_ENABLE_ANALYTICS` | No | `false` | Enable analytics tracking |
 | `NEXT_PUBLIC_ENABLE_DEBUG` | No | `false` | Enable debug features |
+| `BUILD_STANDALONE` | No | `false` | Enable standalone output for Docker builds |
 
 **Note**: Variables prefixed with `NEXT_PUBLIC_` are exposed to the browser.
 
@@ -33,6 +34,9 @@ NEXT_PUBLIC_ENABLE_DEBUG=true
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  // Enable standalone output for Docker deployments
+  output: process.env.BUILD_STANDALONE === 'true' ? 'standalone' : undefined,
+  
   async headers() {
     return [
       {
@@ -343,7 +347,22 @@ Install the [React Developer Tools](https://react.dev/learn/react-developer-tool
 
 ## Deployment Configuration
 
-### Vercel (Recommended)
+### Docker (Recommended)
+
+The frontend includes a production-ready Dockerfile with multi-stage build:
+
+```bash
+# Build with API URL
+docker build --build-arg NEXT_PUBLIC_API_URL=https://api.perfectfit.com \
+  -t perfectfit-web:latest .
+
+# Run container
+docker run -p 3000:3000 perfectfit-web:latest
+```
+
+See [Deployment Guide](../deployment.md) for full deployment instructions.
+
+### Vercel
 
 ```json
 // vercel.json
@@ -358,19 +377,27 @@ Install the [React Developer Tools](https://react.dev/learn/react-developer-tool
 }
 ```
 
-### Docker
+### Cloudflare Pages
 
-```dockerfile
-FROM node:18-alpine
+Use the provided deployment script:
 
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
+```bash
+./deploy/cloudflare/deploy-cloudflare-pages.sh production
+```
 
-EXPOSE 3000
-CMD ["npm", "start"]
+Or deploy manually:
+
+```bash
+npm run build
+wrangler pages deploy out --project-name perfectfit-web
+```
+
+### Azure Container Apps
+
+Use the provided deployment script:
+
+```bash
+./deploy/azure/deploy-container-apps.sh production
 ```
 
 ### Static Export

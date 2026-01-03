@@ -3,55 +3,204 @@
 ## Overview
 
 PerfectFit consists of three deployable components:
-1. **Frontend** - Next.js application
-2. **Backend** - ASP.NET Core API
-3. **Database** - PostgreSQL
+1. **Frontend** - Next.js 16 application
+2. **Backend** - ASP.NET Core 10 API
+3. **Database** - PostgreSQL 16
+
+---
+
+## Quick Start
+
+### Local Development with Docker Compose
+
+Run the entire stack locally:
+
+```bash
+# From project root
+docker compose up -d
+
+# Services:
+# - Frontend: http://localhost:3000
+# - Backend: http://localhost:8080
+# - PostgreSQL: localhost:5432
+```
+
+Stop services:
+```bash
+docker compose down
+```
 
 ---
 
 ## Deployment Options
 
-### Option 1: Docker Compose (Recommended for Self-Hosting)
+### Option 1: Azure Container Apps (Recommended for Production)
 
-Complete deployment with all services:
+Full containerized deployment with automatic scaling, managed TLS, and integrated monitoring.
+
+#### Prerequisites
+- Azure CLI installed and logged in (\`az login\`)
+- Docker installed
+- Azure subscription
+
+#### Automated Deployment
+
+```bash
+# Set configuration
+export RESOURCE_GROUP=perfectfit-rg
+export LOCATION=eastus
+export ACR_NAME=perfectfitacr
+
+# Run deployment script
+./deploy/azure/deploy-container-apps.sh production
+```
+
+#### Manual Deployment Steps
+
+1. **Create Azure Resources**
+   ```bash
+   # Create resource group
+   az group create --name perfectfit-rg --location eastus
+   
+   # Create Container Registry
+   az acr create --resource-group perfectfit-rg --name perfectfitacr --sku Basic --admin-enabled true
+   
+   # Create Container Apps Environment
+   az containerapp env create --name perfectfit-env --resource-group perfectfit-rg --location eastus
+   ```
+
+2. **Build and Push Imdocker
+   ```bash
+   # Login to ACR
+   az acr login --name perfectfitacr
+   
+   # Build and push backend
+   cd backend
+   docker build -t perfectfitacr.azurecr.io/perfectfit-api:latest .
+   docker push perfectfitacr.azurecr.io/perfectfit-api:latest
+   
+   # Build and push frontend
+   cd ../frontend
+   docker build --build-arg NEXT_PUBLIC_API_URL=https://perfectfit-api.eastus.azurecontainerapps.io \
+     -t perfectfitacr.azurecr.io/perfectfit-web:latest .
+   docker push perfectfitacr.azurecr.io/perfectfit-web:latest
+   ```
+
+3. **Deploy Container Apps**
+   ```bash
+   # Get ACR credentials
+   ACR_PASSWORD=$(az acr credential show --name perfectfitacr --query "passwords[0].value" -o tsv)
+   
+   # Deploy backend
+   az acr create --resource-g    --name perfectfit-api \
+     --resource-group perfectfit-rg \
+     --environment perfectfit-env \
+     --image perfectfitacr.azurecr.io/perfectfit-api:latest \
+     --registry-server perfectfitacr.azurecr.io \
+     --registry-username perfectfitacr \
+     --registry-password "$ACR_PASSWORD" \
+     --target-port 8080 \
+     --ingress external \
+     --min-replicas 1 \
+     --max-replicas 10
+   
+   # Deploy frontend
+   az containerapp create \
+     --name perfectfit-web \
+     --resource-group perfectfit-rg \
+     --environment perfectfit-env \
+     --image perfectfitacr.azurecr.io/perfectfit-web:latest \
+     --registry-server perfectfitacr.azurecr.io \
+     --registry-username perfectfitacr \
+     --registry-password "$ACR_PASSWORD" \
+     --target-port 3000 \
+     --ingress external \
+     --min-replicas 1 \
+     --max-replicas 10
+   ```
+
+#### Infrastructure as Code (Bicep)
+
+Deploy using Azure Bicep templates:
+
+```bash
+az deployment group create \
+  --resource-group perfectfit-rg \
+  --template-file deploy/azure/bicep/main.bicep \
+  --parameters environment=production \
+               backendImage=perfectfitacr.azurecr.io/perfectfit-api:latest \
+               frontendImage=perfectfitacr.azurecr.io/perfectfit-web:latest \
+               dbConnectionString="Host=...;Database=perfectfit;..."
+```
+
+---
+
+### Option 2: Cloudflare Pages (Frontend Only)
+
+Deploy the frontend to Cloudflare's edge network for optimal global performance. Requires separate backend hosting.
+
+#### Prerequisites
+- Cloudflare account
+- Wrangler CLI installed (\`npm install -g wrangler\`)
+- API token with Pages permissions
+
+#### Automated Deployment
+
+```bash
+# Set credentials
+export CLOUDFLARE_API_TOKEN=your_token
+export CLOUDFLARE_ACCOUNT_ID=your_account_id
+export NEXT_PUBLIC_API_URL=https://your-backend-api.com
+
+# Run deployment
+./deploy/cloudflare/deploy-cloudflare-pages.sh production
+```
+
+#### Manual Deployment
+
+```bash
+cd frontend
+
+# Install dependencies and build
+npm ci
+NEXT_PUBLIC_API_URL=https://your-backend-api.com npm run build
+
+# Deploy to Cloudflare Pages
+wrangler pages deploy out --project-name perfectfit-web
+```
+
+#### Cloudflare Pages Configuration
+
+The project includes a \`wrangler.toml\` configuration at \`deploy/cloudflare/wrangler.toml\`:
+
+```toml
+name = "perfectfit-web"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = ".next"
+
+[vars]
+NODE_VERSION = "22"
+```
+
+---
+
+### Option 3: Docker Compose (Self-Hosted)
+
+Complete deployment with all services on a single server or VM.
+
+#### Production Docker Compose
 
 ```yaml
 # docker-compose.production.yml
 version: '3.8'
 
 services:
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://api:5050
-    depends_on:
-      - backend
-
-  backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile
-    ports:
-      - "5050:5050"
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Production
-      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=perfectfit;Username=perfectfit;Password=${DB_PASSWORD}
-      - Jwt__Secret=${JWT_SECRET}
-      - Cors__AllowedOrigins__0=http://localhost:3000
-    depends_on:
-      postgres:
-        condition: service_healthy
-
   postgres:
     image: postgres:16
     environment:
-      - POSTGRES_DB=perfectfit
-      - POSTGRES_USER=perfectfit
-      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      POSTGRES_DB: perfectfit
+      POSTGRES_USER: perfectfit
+      POSTGRES_PASSWORD: \${DB_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -59,6 +208,35 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__DefaultConnection=Host=postgres;Database=perfectfit;Username=perfectfit;Password=\${DB_PASSWORD}
+      - Jwt__Secret=\${JWT_SECRET}
+      - CORS__AllowedOrigins=https://your-domain.com
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=https://api.your-domain.com
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
 
 volumes:
   postgres_data:
@@ -66,49 +244,11 @@ volumes:
 
 **Deploy:**
 ```bash
-# Set environment variables
 export DB_PASSWORD=your-secure-password
 export JWT_SECRET=your-jwt-secret-at-least-32-characters
 
-# Deploy
 docker compose -f docker-compose.production.yml up -d
 ```
-
-### Option 2: Cloud Platform Deployment
-
-#### Frontend on Vercel
-
-1. Connect GitHub repository to Vercel
-2. Configure build settings:
-   - Framework: Next.js
-   - Build Command: `npm run build`
-   - Output Directory: `.next`
-3. Add environment variables:
-   ```
-   NEXT_PUBLIC_API_URL=https://api.perfectfit.com
-   ```
-4. Deploy
-
-#### Backend on Azure App Service
-
-1. Create Azure App Service (Linux, .NET 9)
-2. Configure deployment:
-   ```bash
-   az webapp up --name perfectfit-api --resource-group perfectfit-rg
-   ```
-3. Configure settings:
-   ```bash
-   az webapp config appsettings set --name perfectfit-api \
-     --settings \
-     ConnectionStrings__DefaultConnection="your-connection-string" \
-     Jwt__Secret="your-jwt-secret"
-   ```
-
-#### Database on Azure PostgreSQL
-
-1. Create Azure Database for PostgreSQL
-2. Configure firewall rules
-3. Update connection string in App Service
 
 ---
 
@@ -116,102 +256,181 @@ docker compose -f docker-compose.production.yml up -d
 
 ### Backend Dockerfile
 
+The backend uses a multi-stage build optimized for .NET 10:
+
 ```dockerfile
 # backend/Dockerfile
-FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
-# Copy csproj files and restore
-COPY src/PerfectFit.Core/*.csproj ./PerfectFit.Core/
-COPY src/PerfectFit.UseCases/*.csproj ./PerfectFit.UseCases/
-COPY src/PerfectFit.Infrastructure/*.csproj ./PerfectFit.Infrastructure/
-COPY src/PerfectFit.Web/*.csproj ./PerfectFit.Web/
-RUN dotnet restore PerfectFit.Web/PerfectFit.Web.csproj
+# Copy solution and project files for layer caching
+COPY PerfectFit.sln ./
+COPY src/PerfectFit.Core/PerfectFit.Core.csproj ./src/PerfectFit.Core/
+COPY src/PerfectFit.UseCases/PerfectFit.UseCases.csproj ./src/PerfectFit.UseCases/
+COPY src/PerfectFit.Infrastructure/PerfectFit.Infrastructure.csproj ./src/PerfectFit.Infrastructure/
+COPY src/PerfectFit.Web/PerfectFit.Web.csproj ./src/PerfectFit.Web/
 
-# Copy source and build
-COPY src/ .
-RUN dotnet publish PerfectFit.Web/PerfectFit.Web.csproj -c Release -o /app
+RUN dotnet restore
 
-# Runtime image
-FROM mcr.microsoft.com/dotnet/aspnet:9.0
+COPY src/ ./src/
+RUN dotnet publish src/PerfectFit.Web/PerfectFit.Web.csproj -c Release -o /app/publish /p:UseAppHost=false
+
+FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS final
 WORKDIR /app
-COPY --from=build /app .
 
-ENV ASPNETCORE_URLS=http://+:5050
-EXPOSE 5050
+RUN adduser --disabled-password --gecos "" --uid 1000 appuser
+COPY --from=publish /app/publish .
+RUN chown -R appuser:appuser /app
+USER appuser
+
+EXPOSE 8080
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
+
+HEALTHCHECK --interval=30s 
+```dockerfile
+# backend/Dockerfile
+FROM mcr.microsoft.com --no-verbose --tries=1 --spider http://localhost:8080/health || exit 1
 
 ENTRYPOINT ["dotnet", "PerfectFit.Web.dll"]
 ```
 
 ### Frontend Dockerfile
 
+The frontend uses a multi-stage build with standalone output for optimal size:
+
 ```dockerfile
 # frontend/Dockerfile
-FROM node:18-alpine AS builder
+FROM node:22-alpine AS builder
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json package-lock.json* ./
 RUN npm ci
 
 COPY . .
+
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=\${NEXT_PUBLIC_API_URL}
+ENV BUILD_STANDALONE=true
+
 RUN npm run build
 
-# Production image
-FROM node:18-alpine AS runner
+FROM node:22-alpine AS runner
 WORKDIR /app
 
-ENV NODE_ENV=production
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
 
-# Copy necessary files
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/.next ./.next
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+
+RUN chown -R nextjs:nodejs /app
+USER nextjs
 
 EXPOSE 3000
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
-CMD ["npm", "start"]
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/ || exit 1
+
+CMD ["node", "server.js"]
 ```
+
+---
+
+## CI/CD with GitHub Actions
+
+### Azure Container Apps Workflow
+
+The project includes a GitHub Actions workflow at \`.github/workflows/deploy-azure.yml\`:
+
+**Triggers:**
+- Push to \`main\` or \`release/*\` branches
+- Manual workflow dispatch
+
+**Workflow Steps:**
+1. Build and push Docker images to ACR
+2. Deploy backend Container App
+3. Deploy frontend Container App
+4. Configure CORS settings
+
+**Required Secrets:**
+| Secret | Description |
+|--------|-------------|
+| \`AZURE_CREDENTIALS\` | Azure service principal credentials (JSON) |
+| \`API_URL\` | Backend API URL for frontend build |
+
+**Create Azure Service Principal:**
+```bash
+az ad sp create-for-rbac --name "perfectfit-github-actions" \
+  --role contributor \
+  --scopes /subscriptions/{subscription-id}/resourceGroups/perfectfit-rg \
+  --sdk-auth
+```
+
+### Cloudflare Pages Workflow
+
+The project includes a workflow at \`.github/workflows/deploy-cloudflare.yml\`:
+
+**Triggers:**
+- Push to \`main\` (when frontend files change)
+- Manual workflow dispatch
+
+**Required Secrets:**
+| Secret | Description |
+|--------|-------------|
+| \`CLOUDFLARE_API_TOKEN\` | Cloudflare API token |
+| \`CLOUDFLARE_ACCOUNT_ID\` | Cloudflare account ID |
+| \`NEXT_PUBLIC_API_URL\` | Backend API URL |
 
 ---
 
 ## Environment Configuration
 
-### Production Environment Variables
-
-#### Backend
+### Backend Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `ASPNETCORE_ENVIRONMENT` | Yes | Set to `Production` |
-| `ConnectionStrings__DefaultConnection` | Yes | PostgreSQL connection string |
-| `Jwt__Secret` | Yes | JWT signing key (32+ chars) |
-| `Jwt__Issuer` | No | JWT issuer (default: PerfectFit) |
-| `Jwt__Audience` | No | JWT audience (default: PerfectFit) |
-| `Cors__AllowedOrigins__0` | Yes | Frontend URL |
-| `OAuth__Google__ClientId` | No | Google OAuth client ID |
-| `OAuth__Google__ClientSecret` | No | Google OAuth client secret |
-| `OAuth__Microsoft__ClientId` | No | Microsoft OAuth client ID |
-| `OAuth__Microsoft__ClientSecret` | No | Microsoft OAuth client secret |
+| \`ASPNETCORE_ENVIRONMENT\` | Yes | \`Production\`, \`Staging\`, or \`Development\` |
+| \`ConnectionStrings__DefaultConnection\` | Yes | PostgreSQL connection string |
+| \`Jwt__Secret\` | Yes | JWT signing key (32+ characters) |
+| \`Jwt__Issuer\` | No | JWT issuer (default: PerfectFit) |
+| \`Jwt__Audience\` | No | JWT audience (default: PerfectFit) |
+| \`CORS__AllowedOrigins\` | Yes | Frontend URL(s), comma-separated |
+| \`OAuth__Google__ClientId\` | No | Google OAuth client ID |
+| \`OAuth__Google__ClientSecret\` | No | Google OAuth client secret |
+| \`OAuth__Microsoft__ClientId\` | No | Microsoft OAuth client ID |
+| \`OAuth__Microsoft__ClientSecret\` | No | Microsoft OAuth client secret |
 
-#### Frontend
+### Frontend Environment Variables
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `NEXT_PUBLIC_API_URL` | Yes | Backend API URL |
+| \`NEXT_PUBLIC_API_URL\` | Yes | Backend API URL |
+| \`BUILD_STANDALONE\` | No | Set to \`true\` for Docker builds |
 
 ---
 
 ## SSL/TLS Configuration
 
-### Using Let's Encrypt with Nginx
+### Azure Container Apps
+TLS is automatically configured with managed certificates.
+
+### Cloudflare Pages
+TLS is automatically configured at the edge.
+
+### Self-Hosted with Nginx
 
 ```nginx
-# /etc/nginx/sites-available/perfectfit
 server {
     listen 80;
     server_name perfectfit.com www.perfectfit.com;
-    return 301 https://$server_name$request_uri;
+    return 301 https://\$server_name\$request_uri;
 }
 
 server {
@@ -225,124 +444,96 @@ server {
     location / {
         proxy_pass http://localhost:3000;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Upgrade \$http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
+        proxy_set_header Host \$host;
+        proxy_cache_bypass \$http_upgrade;
     }
 
     # Backend API
     location /api {
-        proxy_pass http://localhost:5050;
+        proxy_pass http://localhost:8080;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 }
 ```
 
 ---
 
-## Database Migrations
+## Database Management
 
-### Apply Migrations in Production
+### Migrations
 
 ```bash
 # Generate migration script
-dotnet ef migrations script -i -o migrate.sql
+cd backend
+dotnet ef migrations script -i -o migrate.sql --project src/PerfectFit.Infrastructure
 
 # Apply using psql
 psql -h your-host -U perfectfit -d perfectfit -f migrate.sql
 ```
 
-### Or apply via application (not recommended for production)
+### Backup & Recovery
 
-```csharp
-// Only in controlled environments
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    db.Database.Migrate();
-}
+```bash
+# Backup
+pg_dump -h localhost -U perfectfit perfectfit > backup_\$(date +%Y%m%d).sql
+
+# Restore
+psql -h localhost -U perfectfit perfectfit < backup_20260102.sql
+```
+
+### Automated Backups (cron)
+
+```bash
+# /etc/cron.d/perfectfit-backup
+0 2 * * * pg_dump -h localhost -U perfectfit perfectfit | gzip > /backups/perfectfit_\$(date +\%Y\%m\%d).sql.gz
 ```
 
 ---
 
 ## Health Checks
 
-### Backend Health Endpoint
+### Endpoints
 
-```
-GET /health
-```
-
-Returns `200 OK` when healthy.
+| Service | Endpoint | Port |
+|---------|----------|------|
+| Backend | \`/health\` | 8080 |
+| Frontend | \`/\` | 3000 |
+| PostgreSQL | \`pg_isready\` | 5432 |
 
 ### Docker Health Check
 
-```yaml
-healthcheck:
-  test: ["CMD", "curl", "-f", "http://localhost:5050/health"]
-  interval: 30s
-  timeout: 10s
-  retries: 3
-```
-
----
-
-## Monitoring & Logging
-
-### Application Insights (Azure)
-
-```csharp
-// Program.cs
-builder.Services.AddApplicationInsightsTelemetry();
-```
-
-### Structured Logging
-
-Configure Serilog for production:
-
-```json
-{
-  "Serilog": {
-    "MinimumLevel": "Information",
-    "WriteTo": [
-      { "Name": "Console" },
-      {
-        "Name": "File",
-        "Args": { "path": "/var/log/perfectfit/log-.txt", "rollingInterval": "Day" }
-      }
-    ]
-  }
-}
-```
+Health checks are built into both Dockerfiles and trigger automatically.
 
 ---
 
 ## Scaling
 
-### Horizontal Scaling
+### Azure Container Apps
+Configure in Azure Portal or via CLI:
+```bash
+az containerapp upd
+```bash
+# Gerfectfit-api \
+  --resource-group perfectfit-rg \
+  --min-replicas 2 \
+  --max-replicas 20
+```
 
-The backend is stateless and can be scaled horizontally:
-
+### Docker Compose
 ```yaml
-# docker-compose.scale.yml
 services:
   backend:
     deploy:
       replicas: 3
 ```
 
-### Load Balancing
-
-Use Nginx or cloud load balancers to distribute traffic.
-
 ### Database Connection Pooling
-
-Configure connection pooling in the connection string:
 
 ```
 Host=...;Pooling=true;MinPoolSize=5;MaxPoolSize=100
@@ -350,25 +541,31 @@ Host=...;Pooling=true;MinPoolSize=5;MaxPoolSize=100
 
 ---
 
-## Backup & Recovery
+## Monitoring & Logging
 
-### Database Backup
+### Azure Container Apps
+- Built-in metrics in Azure Portal
+- Application Insights integration available
 
-```bash
-# Backup
-pg_dump -h localhost -U perfectfit perfectfit > backup_$(date +%Y%m%d).sql
+### Application Insights
 
-# Restore
-psql -h localhost -U perfectfit perfectfit < backup_20260102.sql
+```csharp
+// Program.cs
+builder.Services.AddApplicationInsightsTelemetry();
 ```
 
-### Automated Backups
+### Structured Logging (Serilog)
 
-Use cloud provider features or cron jobs:
-
-```bash
-# /etc/cron.d/perfectfit-backup
-0 2 * * * pg_dump -h localhost -U perfectfit perfectfit | gzip > /backups/perfectfit_$(date +\%Y\%m\%d).sql.gz
+```json
+{
+  "Serilog": {
+    "MinimumLevel": "Information",
+    "WriteTo": [
+      { "Name": "Console" },
+      { "Name": "File", "Args": { "path": "/var/log/perfectfit/log-.txt", "rollingInterval": "Day" } }
+    ]
+  }
+}
 ```
 
 ---
@@ -377,11 +574,50 @@ Use cloud provider features or cron jobs:
 
 - [ ] Use HTTPS everywhere
 - [ ] Set strong JWT secret (32+ characters)
-- [ ] Configure CORS properly
+- [ ] Configure CORS properly (specific origins, not \`*\`)
 - [ ] Enable rate limiting
-- [ ] Use database connection encryption
-- [ ] Store secrets in secure vault
-- [ ] Enable security headers
+- [ ] Use database connection encryption (SSL)
+- # Gerfore secrets in secure vault (Azure Key Vault, etc.)
+- [ ] Enable security headers (configured in Next.js)
 - [ ] Regular dependency updates
 - [ ] Database backup strategy
 - [ ] Access logging enabled
+- [ ] Run containers as non-root user (configured in Dockerfiles)
+
+---
+
+## Troubleshooting
+
+### Container Won't Start
+
+```bash
+# Check logs
+docker logs perfectfit-backend
+docker logs perfectfit-frontend
+
+# Azure Container Apps
+az containerapp logs show --name perfectfit-api --resource-group perfectfit-rg
+```
+
+### Database Connection Failed
+
+```bash
+# Verify PostgreSQL is running
+docker compose ps
+pg_isready -h localhost -U perfectfit
+
+# Check connection string format
+Host=<host>;Port=5432;Database=perfectfit;Username=perfectfit;Password=<password>
+```
+
+### CORS Errors
+
+Ensure \`CORS__AllowedOrigins\` includes the exact frontend URL (with protocol).
+
+### Health Check Failing
+
+```bash
+# Test health endpoint manually
+curl http://localhost:8080/health
+curl http://localhost:3000/
+```
