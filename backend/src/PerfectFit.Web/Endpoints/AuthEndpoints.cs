@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
 using PerfectFit.Core.Enums;
 using PerfectFit.Core.Interfaces;
@@ -128,8 +129,8 @@ public static class AuthEndpoints
             return Results.BadRequest(new { error = $"Unsupported OAuth provider: {provider}" });
         }
 
-        // Get the external login info
-        var authenticateResult = await httpContext.AuthenticateAsync();
+        // Get the external login info using the cookie scheme
+        var authenticateResult = await httpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
         if (!authenticateResult.Succeeded || authenticateResult.Principal is null)
         {
@@ -161,11 +162,11 @@ public static class AuthEndpoints
 
         var result = await mediator.Send(command);
 
-        // Get the return URL from authentication properties
-        var returnUrl = authenticateResult.Properties?.Items["returnUrl"] ?? "http://localhost:3000";
-
-        // Redirect to frontend with token
-        var redirectUrl = $"{returnUrl}?token={result.Token}";
+        // Get the frontend base URL from authentication properties or default
+        var frontendBaseUrl = authenticateResult.Properties?.Items["returnUrl"]?.TrimEnd('/') ?? "https://localhost:3000";
+        
+        // Always redirect to the frontend callback page with the token
+        var redirectUrl = $"{frontendBaseUrl}/callback?token={result.Token}";
 
         return Results.Redirect(redirectUrl);
     }
