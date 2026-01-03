@@ -2,6 +2,7 @@ using FluentAssertions;
 using MediatR;
 using Microsoft.Extensions.Options;
 using Moq;
+using PerfectFit.Core.Configuration;
 using PerfectFit.Core.Entities;
 using PerfectFit.Core.Enums;
 using PerfectFit.Core.Interfaces;
@@ -13,13 +14,23 @@ public class OAuthLoginCommandTests
 {
     private readonly Mock<IUserRepository> _userRepositoryMock;
     private readonly Mock<IJwtService> _jwtServiceMock;
+    private readonly Mock<IOptions<AdminSettings>> _adminSettingsMock;
     private readonly OAuthLoginCommandHandler _sut;
 
     public OAuthLoginCommandTests()
     {
         _userRepositoryMock = new Mock<IUserRepository>();
         _jwtServiceMock = new Mock<IJwtService>();
-        _sut = new OAuthLoginCommandHandler(_userRepositoryMock.Object, _jwtServiceMock.Object);
+        _adminSettingsMock = new Mock<IOptions<AdminSettings>>();
+        _adminSettingsMock.Setup(x => x.Value).Returns(new AdminSettings { Emails = new List<string>() });
+        _sut = new OAuthLoginCommandHandler(_userRepositoryMock.Object, _jwtServiceMock.Object, _adminSettingsMock.Object);
+    }
+
+    private OAuthLoginCommandHandler CreateHandlerWithAdminEmails(List<string> adminEmails)
+    {
+        var adminSettingsMock = new Mock<IOptions<AdminSettings>>();
+        adminSettingsMock.Setup(x => x.Value).Returns(new AdminSettings { Emails = adminEmails });
+        return new OAuthLoginCommandHandler(_userRepositoryMock.Object, _jwtServiceMock.Object, adminSettingsMock.Object);
     }
 
     [Fact]
@@ -223,5 +234,176 @@ public class OAuthLoginCommandTests
         // Assert
         result.Should().NotBeNull();
         result.User.Provider.Should().Be(provider);
+    }
+
+    [Fact]
+    public async Task Handle_Should_Set_Admin_Role_For_Configured_Admin_Email_On_New_User()
+    {
+        // Arrange
+        var adminEmail = "admin@test.com";
+        var handler = CreateHandlerWithAdminEmails(new List<string> { adminEmail });
+
+        var command = new OAuthLoginCommand(
+            ExternalId: "google-admin-123",
+            Email: adminEmail,
+            DisplayName: "Admin User",
+            Provider: AuthProvider.Google
+        );
+
+        _userRepositoryMock
+            .Setup(x => x.GetByExternalIdAsync(command.ExternalId, command.Provider, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User?)null);
+
+        User? capturedUser = null;
+        _userRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
+            .Callback<User, CancellationToken>((user, _) => capturedUser = user)
+            .ReturnsAsync((User user, CancellationToken _) => user);
+
+        _jwtServiceMock
+            .Setup(x => x.GenerateToken(It.IsAny<User>()))
+            .Returns("admin-token");
+
+        // Act
+        await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        capturedUser.Should().NotBeNull();
+        capturedUser!.Role.Should().Be(UserRole.Admin);
+    }
+
+    [Fact]
+    public async Task Handle_Should_Set_Admin_Role_CaseInsensitive()
+    {
+        // Arrange
+        var adminEmail = "Admin@Test.Com";
+        var handler = CreateHandlerWithAdminEmails(new List<string> { adminEmail });
+
+        var command = new OAuthLoginCommand(
+            ExternalId: "google-admin-456",
+            Email: "admin@test.com", // Different case
+            DisplayName: "Admin User",
+            Provider: AuthProvider.Google
+        );
+
+        _userRepositoryMock
+            .Setup(x => x.GetByExternalIdAsync(command.ExternalId, command.Provider, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User?)null);
+
+        User? capturedUser = null;
+        _userRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
+            .Callback<User, CancellationToken>((user, _) => capturedUser = user)
+            .ReturnsAsync((User user, CancellationToken _) => user);
+
+        _jwtServiceMock
+            .Setup(x => x.GenerateToken(It.IsAny<User>()))
+            .Returns("admin-token");
+
+        // Act
+        await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        capturedUser.Should().NotBeNull();
+        capturedUser!.Role.Should().Be(UserRole.Admin);
+    }
+
+    [Fact]
+    public async Task Handle_Should_Promote_Existing_User_To_Admin_If_Configured()
+    {
+        // Arrange
+        var adminEmail = "promoted@test.com";
+        var handler = CreateHandlerWithAdminEmails(new List<string> { adminEmail });
+
+        // Existing user with regular role
+        var existingUser = User.Create("google-promote-123", adminEmail, "To Be Promoted", AuthProvider.Google, UserRole.User);
+
+        var command = new OAuthLoginCommand(
+            ExternalId: "google-promote-123",
+            Email: adminEmail,
+            DisplayName: "To Be Promoted",
+            Provider: AuthProvider.Google
+        );
+
+        _userRepositoryMock
+            .Setup(x => x.GetByExternalIdAsync(command.ExternalId, command.Provider, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingUser);
+
+        _jwtServiceMock
+            .Setup(x => x.GenerateToken(It.IsAny<User>()))
+            .Returns("promoted-token");
+
+        // Act
+        await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        existingUser.Role.Should().Be(UserRole.Admin);
+        _userRepositoryMock.Verify(x => x.UpdateAsync(existingUser, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task Handle_Should_Not_Demote_Admin_If_Removed_From_Config()
+    {
+        // Arrange - Handler without any admin emails configured
+        var handler = CreateHandlerWithAdminEmails(new List<string>());
+
+        // Existing admin user whose email is no longer in config
+        var existingAdmin = User.Create("google-demote-123", "was-admin@test.com", "Was Admin", AuthProvider.Google, UserRole.Admin);
+
+        var command = new OAuthLoginCommand(
+            ExternalId: "google-demote-123",
+            Email: "was-admin@test.com",
+            DisplayName: "Was Admin",
+            Provider: AuthProvider.Google
+        );
+
+        _userRepositoryMock
+            .Setup(x => x.GetByExternalIdAsync(command.ExternalId, command.Provider, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(existingAdmin);
+
+        _jwtServiceMock
+            .Setup(x => x.GenerateToken(It.IsAny<User>()))
+            .Returns("still-admin-token");
+
+        // Act
+        await handler.Handle(command, CancellationToken.None);
+
+        // Assert - Should NOT be demoted for safety
+        existingAdmin.Role.Should().Be(UserRole.Admin);
+    }
+
+    [Fact]
+    public async Task Handle_Should_Not_Set_Admin_For_Non_Configured_Email()
+    {
+        // Arrange
+        var handler = CreateHandlerWithAdminEmails(new List<string> { "admin@test.com" });
+
+        var command = new OAuthLoginCommand(
+            ExternalId: "google-regular-123",
+            Email: "regular@test.com", // Not an admin email
+            DisplayName: "Regular User",
+            Provider: AuthProvider.Google
+        );
+
+        _userRepositoryMock
+            .Setup(x => x.GetByExternalIdAsync(command.ExternalId, command.Provider, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((User?)null);
+
+        User? capturedUser = null;
+        _userRepositoryMock
+            .Setup(x => x.AddAsync(It.IsAny<User>(), It.IsAny<CancellationToken>()))
+            .Callback<User, CancellationToken>((user, _) => capturedUser = user)
+            .ReturnsAsync((User user, CancellationToken _) => user);
+
+        _jwtServiceMock
+            .Setup(x => x.GenerateToken(It.IsAny<User>()))
+            .Returns("regular-token");
+
+        // Act
+        await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        capturedUser.Should().NotBeNull();
+        capturedUser!.Role.Should().Be(UserRole.User);
     }
 }

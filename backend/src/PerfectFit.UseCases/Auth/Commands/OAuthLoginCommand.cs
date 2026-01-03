@@ -1,4 +1,6 @@
 using MediatR;
+using Microsoft.Extensions.Options;
+using PerfectFit.Core.Configuration;
 using PerfectFit.Core.Entities;
 using PerfectFit.Core.Enums;
 using PerfectFit.Core.Interfaces;
@@ -45,11 +47,16 @@ public class OAuthLoginCommandHandler : IRequestHandler<OAuthLoginCommand, OAuth
 {
     private readonly IUserRepository _userRepository;
     private readonly IJwtService _jwtService;
+    private readonly AdminSettings _adminSettings;
 
-    public OAuthLoginCommandHandler(IUserRepository userRepository, IJwtService jwtService)
+    public OAuthLoginCommandHandler(
+        IUserRepository userRepository,
+        IJwtService jwtService,
+        IOptions<AdminSettings> adminSettings)
     {
         _userRepository = userRepository;
         _jwtService = jwtService;
+        _adminSettings = adminSettings.Value;
     }
 
     public async Task<OAuthLoginResult> Handle(OAuthLoginCommand request, CancellationToken cancellationToken)
@@ -62,12 +69,17 @@ public class OAuthLoginCommandHandler : IRequestHandler<OAuthLoginCommand, OAuth
 
         if (user is null)
         {
-            // Create new user
+            // Check if this email should be an admin
+            var shouldBeAdmin = !string.IsNullOrEmpty(request.Email) &&
+                _adminSettings.Emails.Any(e => e.Equals(request.Email, StringComparison.OrdinalIgnoreCase));
+
+            // Create new user with appropriate role
             user = User.Create(
                 request.ExternalId,
                 request.Email,
                 request.DisplayName,
-                request.Provider
+                request.Provider,
+                shouldBeAdmin ? UserRole.Admin : UserRole.User
             );
 
             user = await _userRepository.AddAsync(user, cancellationToken);
@@ -76,6 +88,18 @@ public class OAuthLoginCommandHandler : IRequestHandler<OAuthLoginCommand, OAuth
         {
             // Update last login time
             user.UpdateLastLogin();
+
+            // Check if admin status needs to be updated based on config
+            var isConfiguredAdmin = !string.IsNullOrEmpty(user.Email) &&
+                _adminSettings.Emails.Any(e => e.Equals(user.Email, StringComparison.OrdinalIgnoreCase));
+
+            if (isConfiguredAdmin && user.Role != UserRole.Admin)
+            {
+                // Promote user to admin if their email is in the admin list
+                user.SetRole(UserRole.Admin);
+            }
+            // Note: We don't auto-demote users removed from config for safety
+
             await _userRepository.UpdateAsync(user, cancellationToken);
         }
 

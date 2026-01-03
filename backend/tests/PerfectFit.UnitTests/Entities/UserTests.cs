@@ -315,4 +315,32 @@ public class UserTests
         user.IsDeleted.Should().BeFalse();
         user.DeletedAt.Should().BeNull();
     }
+
+    [Fact]
+    public void SetRole_ShouldUpdateRole()
+    {
+        // Arrange
+        var user = User.Create("external-id", "test@example.com", "Test User", AuthProvider.Google);
+        user.Role.Should().Be(UserRole.User); // Default role
+
+        // Act
+        user.SetRole(UserRole.Admin);
+
+        // Assert
+        user.Role.Should().Be(UserRole.Admin);
+    }
+
+    [Fact]
+    public void SetRole_ShouldAllowChangingFromAdminToUser()
+    {
+        // Arrange
+        var user = User.Create("external-id", "admin@example.com", "Admin User", AuthProvider.Google, UserRole.Admin);
+        user.Role.Should().Be(UserRole.Admin);
+
+        // Act
+        user.SetRole(UserRole.User);
+
+        // Assert
+        user.Role.Should().Be(UserRole.User);
+    }
 }

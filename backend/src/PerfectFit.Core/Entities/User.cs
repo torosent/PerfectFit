@@ -100,4 +100,13 @@ public class User
         IsDeleted = true;
         DeletedAt = DateTime.UtcNow;
     }
+
+    /// <summary>
+    /// Sets the user's role.
+    /// </summary>
+    /// <param name="role">The role to assign to the user.</param>
+    public void SetRole(UserRole role)
+    {
+        Role = role;
+    }
 }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.IdentityModel.Tokens;
+using PerfectFit.Core.Configuration;
 using PerfectFit.Infrastructure;
 using PerfectFit.Infrastructure.Identity;
 using PerfectFit.UseCases.Games.Commands;
@@ -20,6 +21,9 @@ builder.Services.Configure<JsonOptions>(options =>
     options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter());
 });
+
+// Configure AdminSettings for admin bootstrap
+builder.Services.Configure<AdminSettings>(builder.Configuration.GetSection(AdminSettings.SectionName));
 
 // Add infrastructure services (DbContext, Repositories, JWT)
 builder.Services.AddInfrastructure(builder.Configuration);
