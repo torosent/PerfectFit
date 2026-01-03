@@ -91,6 +91,14 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.EmailVerificationTokenExpiry)
             .HasColumnName("email_verification_token_expiry");
 
+        builder.Property(u => u.FailedLoginAttempts)
+            .HasColumnName("failed_login_attempts")
+            .HasDefaultValue(0)
+            .IsRequired();
+
+        builder.Property(u => u.LockoutEnd)
+            .HasColumnName("lockout_end");
+
         // Global query filter for soft delete - excludes deleted users by default
         builder.HasQueryFilter(u => !u.IsDeleted);
 

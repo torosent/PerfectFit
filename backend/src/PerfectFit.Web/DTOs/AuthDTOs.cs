@@ -75,7 +75,7 @@ public record RegisterResponse(bool Success, string? Message, string? ErrorMessa
 /// <summary>
 /// Response from login operation.
 /// </summary>
-public record LocalLoginResponse(bool Success, string? Token, UserDto? User, string? ErrorMessage);
+public record LocalLoginResponse(bool Success, string? Token, UserDto? User, string? ErrorMessage, DateTime? LockoutEnd = null);
 
 /// <summary>
 /// Response from email verification operation.

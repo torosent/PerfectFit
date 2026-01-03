@@ -64,11 +64,13 @@ public static class AuthEndpoints
 
         // POST /api/auth/register - Register a new local user
         group.MapPost("/register", Register)
+            .RequireRateLimiting("RegisterRateLimit")
             .WithName("Register")
             .WithDescription("Registers a new user with email and password");
 
         // POST /api/auth/login - Login with email and password
         group.MapPost("/login", Login)
+            .RequireRateLimiting("LoginRateLimit")
             .WithName("Login")
             .WithDescription("Authenticates a user with email and password");
 
@@ -365,7 +367,8 @@ public static class AuthEndpoints
                 Success: false,
                 Token: null,
                 User: null,
-                ErrorMessage: result.ErrorMessage));
+                ErrorMessage: result.ErrorMessage,
+                LockoutEnd: result.LockoutEnd));
         }
 
         return Results.Ok(new LocalLoginResponse(

@@ -24,6 +24,8 @@ public class User
     public bool EmailVerified { get; private set; }
     public string? EmailVerificationToken { get; private set; }
     public DateTime? EmailVerificationTokenExpiry { get; private set; }
+    public int FailedLoginAttempts { get; private set; }
+    public DateTime? LockoutEnd { get; private set; }
 
     // Navigation
     public ICollection<GameSession> GameSessions { get; private set; } = new List<GameSession>();
@@ -153,5 +155,40 @@ public class User
         EmailVerified = true;
         EmailVerificationToken = null;
         EmailVerificationTokenExpiry = null;
+    }
+
+    /// <summary>
+    /// Increments the failed login attempts counter.
+    /// </summary>
+    public void IncrementFailedLoginAttempts()
+    {
+        FailedLoginAttempts++;
+    }
+
+    /// <summary>
+    /// Resets the failed login attempts counter and clears any lockout.
+    /// </summary>
+    public void ResetFailedLoginAttempts()
+    {
+        FailedLoginAttempts = 0;
+        LockoutEnd = null;
+    }
+
+    /// <summary>
+    /// Checks if the user account is currently locked out.
+    /// </summary>
+    /// <returns>True if the account is locked out and the lockout hasn't expired; otherwise, false.</returns>
+    public bool IsLockedOut()
+    {
+        return LockoutEnd.HasValue && LockoutEnd.Value > DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Sets a lockout on the user account until the specified time.
+    /// </summary>
+    /// <param name="until">The UTC time when the lockout expires.</param>
+    public void SetLockout(DateTime until)
+    {
+        LockoutEnd = until;
     }
 }

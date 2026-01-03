@@ -21,7 +21,8 @@ public record LocalLoginResult(
     bool Success,
     string? Token = null,
     UserResult? User = null,
-    string? ErrorMessage = null
+    string? ErrorMessage = null,
+    DateTime? LockoutEnd = null
 );
 
 /// <summary>
@@ -29,6 +30,9 @@ public record LocalLoginResult(
 /// </summary>
 public class LocalLoginCommandHandler : IRequestHandler<LocalLoginCommand, LocalLoginResult>
 {
+    private const int MaxFailedAttempts = 5;
+    private static readonly TimeSpan LockoutDuration = TimeSpan.FromMinutes(15);
+
     private readonly IUserRepository _userRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IJwtService _jwtService;
@@ -68,10 +72,30 @@ public class LocalLoginCommandHandler : IRequestHandler<LocalLoginCommand, Local
             return new LocalLoginResult(false, ErrorMessage: "Invalid email or password.");
         }
 
+        // Check if user is locked out
+        if (user.IsLockedOut())
+        {
+            return new LocalLoginResult(
+                Success: false,
+                ErrorMessage: "Account is locked due to too many failed login attempts. Please try again later.",
+                LockoutEnd: user.LockoutEnd);
+        }
+
         // Verify password
         if (string.IsNullOrEmpty(user.PasswordHash) ||
             !_passwordHasher.VerifyPassword(request.Password, user.PasswordHash))
         {
+            // Increment failed attempts
+            user.IncrementFailedLoginAttempts();
+
+            // Lock account if max attempts reached
+            if (user.FailedLoginAttempts >= MaxFailedAttempts)
+            {
+                user.SetLockout(DateTime.UtcNow.Add(LockoutDuration));
+            }
+
+            await _userRepository.UpdateAsync(user, cancellationToken);
+
             return new LocalLoginResult(false, ErrorMessage: "Invalid email or password.");
         }
 
@@ -80,6 +104,9 @@ public class LocalLoginCommandHandler : IRequestHandler<LocalLoginCommand, Local
         {
             return new LocalLoginResult(false, ErrorMessage: "Please verify your email before logging in.");
         }
+
+        // Reset failed attempts on successful login
+        user.ResetFailedLoginAttempts();
 
         // Update last login time
         user.UpdateLastLogin();
