@@ -75,6 +75,7 @@ export interface UserProfile {
   highScore: number;
   gamesPlayed: number;
   avatar?: string;
+  role?: string;
 }
 
 /**

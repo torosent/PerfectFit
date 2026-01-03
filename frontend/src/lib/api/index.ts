@@ -34,3 +34,12 @@ export {
 export {
   updateProfile,
 } from './profile-client';
+
+export {
+  getUsers,
+  getUser,
+  deleteUser,
+  bulkDeleteGuests,
+  getAuditLogs,
+  AdminApiError,
+} from './admin-client';

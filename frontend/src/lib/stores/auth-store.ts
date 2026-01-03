@@ -199,3 +199,4 @@ export const useIsAuthLoading = () => useAuthStore((state) => state.isLoading);
 export const useIsAuthInitialized = () => useAuthStore((state) => state.isInitialized);
 export const useAuthError = () => useAuthStore((state) => state.error);
 export const useIsGuest = () => useAuthStore((state) => state.user?.provider === 'guest');
+export const useIsAdmin = () => useAuthStore((state) => state.user?.role === 'Admin');
