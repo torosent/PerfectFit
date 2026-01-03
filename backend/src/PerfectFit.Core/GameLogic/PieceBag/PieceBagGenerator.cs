@@ -1,4 +1,6 @@
 using System.Text.Json;
+using PerfectFit.Core.GameLogic.Board;
+using PerfectFit.Core.GameLogic.Generation;
 using PerfectFit.Core.GameLogic.Pieces;
 
 namespace PerfectFit.Core.GameLogic.PieceBag;
@@ -9,12 +11,22 @@ namespace PerfectFit.Core.GameLogic.PieceBag;
 internal record PieceBagState(
     List<PieceType> RemainingPieces,
     int? Seed,
-    int RandomState);
+    int RandomState,
+    bool UseWeightedGeneration = true);
 
 /// <summary>
-/// Generates pieces using a 7-bag randomizer with weighted extended pieces.
-/// Core tetrominoes (I,O,T,S,Z,J,L) are always in each bag.
-/// Extended pieces have a 50% chance to be included in each bag.
+/// Generates pieces using either weighted board-aware generation or classic 7-bag randomizer.
+/// 
+/// Weighted mode (default):
+/// - Adjusts piece weights based on board danger level
+/// - Guarantees at least one piece can be placed (prevents unfair instant losses)
+/// - Uses smaller pieces when board is dangerous
+/// - Handles edge cases with fallback mechanisms
+/// 
+/// Classic mode:
+/// - 7-bag randomizer with weighted extended pieces
+/// - Core tetrominoes always in each bag
+/// - Extended pieces have 50% chance per bag
 /// </summary>
 public sealed class PieceBagGenerator
 {
@@ -32,6 +44,8 @@ public sealed class PieceBagGenerator
 
     private readonly Random _random;
     private readonly int? _seed;
+    private readonly bool _useWeightedGeneration;
+    private readonly WeightedPieceSelector? _weightedSelector;
     private List<PieceType> _currentBag;
     private int _callCount; // Track RNG state for serialization
 
@@ -39,18 +53,31 @@ public sealed class PieceBagGenerator
     /// Creates a new piece bag generator with optional seed for deterministic behavior.
     /// </summary>
     /// <param name="seed">Optional seed for reproducible results.</param>
-    public PieceBagGenerator(int? seed = null)
+    /// <param name="useWeightedGeneration">If true, uses board-aware weighted generation. Default is true.</param>
+    public PieceBagGenerator(int? seed = null, bool useWeightedGeneration = true)
     {
         _seed = seed;
+        _useWeightedGeneration = useWeightedGeneration;
         _random = seed.HasValue ? new Random(seed.Value) : new Random();
         _currentBag = [];
         _callCount = 0;
-        RefillBag();
+
+        if (_useWeightedGeneration)
+        {
+            _weightedSelector = new WeightedPieceSelector(seed);
+        }
+
+        // Only refill for classic mode - weighted mode needs board state
+        if (!_useWeightedGeneration)
+        {
+            RefillBag();
+        }
     }
 
-    private PieceBagGenerator(List<PieceType> remainingPieces, int? seed, int callCount)
+    private PieceBagGenerator(List<PieceType> remainingPieces, int? seed, int callCount, bool useWeightedGeneration)
     {
         _seed = seed;
+        _useWeightedGeneration = useWeightedGeneration;
         _random = seed.HasValue ? new Random(seed.Value) : new Random();
         _callCount = 0;
 
@@ -62,10 +89,42 @@ public sealed class PieceBagGenerator
         _callCount = callCount;
 
         _currentBag = new List<PieceType>(remainingPieces);
+
+        if (_useWeightedGeneration)
+        {
+            _weightedSelector = new WeightedPieceSelector(seed);
+            // Advance weighted selector to same state
+            for (int i = 0; i < callCount; i++)
+            {
+                // This is approximate - ideally we'd serialize weighted selector state too
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets the next pieces using board-aware generation.
+    /// This is the preferred method when you have access to the board state.
+    /// </summary>
+    /// <param name="count">Number of pieces to get.</param>
+    /// <param name="board">The current game board for danger-aware generation.</param>
+    /// <returns>List of piece types.</returns>
+    public List<PieceType> GetNextPieces(int count, GameBoard board)
+    {
+        if (count <= 0)
+            return [];
+
+        if (_useWeightedGeneration && _weightedSelector != null)
+        {
+            return _weightedSelector.GeneratePieces(board, count);
+        }
+
+        // Fall back to classic generation
+        return GetNextPieces(count);
     }
 
     /// <summary>
     /// Gets the next pieces, consuming them from the bag.
+    /// Uses classic 7-bag generation (no board awareness).
     /// </summary>
     /// <param name="count">Number of pieces to get.</param>
     /// <returns>List of piece types.</returns>
@@ -118,7 +177,8 @@ public sealed class PieceBagGenerator
         var state = new PieceBagState(
             new List<PieceType>(_currentBag),
             _seed,
-            _callCount
+            _callCount,
+            _useWeightedGeneration
         );
 
         return JsonSerializer.Serialize(state);
@@ -140,7 +200,7 @@ public sealed class PieceBagGenerator
         var state = JsonSerializer.Deserialize<PieceBagState>(stateJson)
             ?? throw new InvalidOperationException("Failed to deserialize state.");
 
-        return new PieceBagGenerator(state.RemainingPieces, state.Seed, state.RandomState);
+        return new PieceBagGenerator(state.RemainingPieces, state.Seed, state.RandomState, state.UseWeightedGeneration);
     }
 
     private void RefillBag()

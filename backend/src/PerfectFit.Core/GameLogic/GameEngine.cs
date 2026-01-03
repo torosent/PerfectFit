@@ -1,4 +1,5 @@
 using PerfectFit.Core.GameLogic.Board;
+using PerfectFit.Core.GameLogic.Generation;
 using PerfectFit.Core.GameLogic.PieceBag;
 using PerfectFit.Core.GameLogic.Pieces;
 using PerfectFit.Core.GameLogic.Scoring;
@@ -7,6 +8,7 @@ namespace PerfectFit.Core.GameLogic;
 
 /// <summary>
 /// Main game engine that orchestrates all game logic.
+/// Uses board-aware weighted piece generation for fair gameplay.
 /// </summary>
 public sealed class GameEngine
 {
@@ -47,13 +49,19 @@ public sealed class GameEngine
     public IReadOnlyList<PieceType> CurrentPieces => _currentPieces.AsReadOnly();
 
     /// <summary>
+    /// Gets the current board analysis for UI display (danger level, etc).
+    /// </summary>
+    public BoardAnalyzer.BoardAnalysis GetBoardAnalysis() => BoardAnalyzer.Analyze(_board);
+
+    /// <summary>
     /// Creates a new game engine with an optional seed for deterministic behavior.
     /// </summary>
     /// <param name="seed">Optional seed for reproducible games.</param>
-    public GameEngine(int? seed = null)
+    /// <param name="useWeightedGeneration">If true, uses board-aware weighted piece generation. Default is true.</param>
+    public GameEngine(int? seed = null, bool useWeightedGeneration = true)
     {
         _board = new GameBoard();
-        _pieceBag = new PieceBagGenerator(seed);
+        _pieceBag = new PieceBagGenerator(seed, useWeightedGeneration);
         _currentPieces = [];
 
         Score = 0;
@@ -62,7 +70,7 @@ public sealed class GameEngine
         MaxCombo = 0;
         IsGameOver = false;
 
-        // Draw initial pieces
+        // Draw initial pieces (board-aware)
         DrawPieces(PieceHandSize);
     }
 
@@ -225,7 +233,8 @@ public sealed class GameEngine
 
     private void DrawPieces(int count)
     {
-        var newPieces = _pieceBag.GetNextPieces(count);
+        // Use board-aware generation
+        var newPieces = _pieceBag.GetNextPieces(count, _board);
         _currentPieces.AddRange(newPieces);
     }
 
