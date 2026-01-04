@@ -3,16 +3,13 @@ FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
 
 # Copy solution and project files first for better layer caching
-COPY PerfectFit.sln ./
 COPY src/PerfectFit.Core/PerfectFit.Core.csproj ./src/PerfectFit.Core/
 COPY src/PerfectFit.UseCases/PerfectFit.UseCases.csproj ./src/PerfectFit.UseCases/
 COPY src/PerfectFit.Infrastructure/PerfectFit.Infrastructure.csproj ./src/PerfectFit.Infrastructure/
 COPY src/PerfectFit.Web/PerfectFit.Web.csproj ./src/PerfectFit.Web/
-COPY tests/PerfectFit.UnitTests/PerfectFit.UnitTests.csproj ./tests/PerfectFit.UnitTests/
-COPY tests/PerfectFit.IntegrationTests/PerfectFit.IntegrationTests.csproj ./tests/PerfectFit.IntegrationTests/
 
-# Restore dependencies
-RUN dotnet restore
+# Restore dependencies for Web project and its dependencies
+RUN dotnet restore src/PerfectFit.Web/PerfectFit.Web.csproj
 
 # Copy the rest of the source code
 COPY src/ ./src/
