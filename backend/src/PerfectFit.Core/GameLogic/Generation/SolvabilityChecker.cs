@@ -23,7 +23,7 @@ public sealed class SolvabilityChecker
         bool IsSolvable,
         bool AtLeastOneFits,
         bool AllFit,
-        PieceType? BestFirstPiece = null);
+        Piece? BestFirstPiece = null);
 
     /// <summary>
     /// Checks if any permutation of the given pieces can be placed on the board.
@@ -32,7 +32,7 @@ public sealed class SolvabilityChecker
     /// <param name="board">The current game board.</param>
     /// <param name="pieces">The pieces to check (typically 3 pieces).</param>
     /// <returns>Result indicating solvability.</returns>
-    public static SolvabilityResult CheckSolvability(GameBoard board, IReadOnlyList<PieceType> pieces)
+    public static SolvabilityResult CheckSolvability(GameBoard board, IReadOnlyList<Piece> pieces)
     {
         if (pieces.Count == 0)
         {
@@ -40,13 +40,12 @@ public sealed class SolvabilityChecker
         }
 
         // First check: can any single piece fit?
-        var fittingPieces = new List<PieceType>();
-        foreach (var pieceType in pieces)
+        var fittingPieces = new List<Piece>();
+        foreach (var piece in pieces)
         {
-            var piece = Piece.Create(pieceType);
             if (board.CanPlacePieceAnywhere(piece))
             {
-                fittingPieces.Add(pieceType);
+                fittingPieces.Add(piece);
             }
         }
 
@@ -67,7 +66,7 @@ public sealed class SolvabilityChecker
         // Generate unique permutations (handles duplicates)
         var permutations = GenerateUniquePermutations(pieces.ToList());
 
-        PieceType? bestFirstPiece = null;
+        Piece? bestFirstPiece = null;
         int bestFirstPiecePositions = 0;
 
         foreach (var permutation in permutations)
@@ -75,7 +74,7 @@ public sealed class SolvabilityChecker
             if (TryPlaceSequence(board, permutation))
             {
                 // Track the best first piece (one with most flexibility)
-                var firstPiece = Piece.Create(permutation[0]);
+                var firstPiece = permutation[0];
                 int positions = board.GetValidPositions(firstPiece).Count;
                 if (positions > bestFirstPiecePositions)
                 {
@@ -101,11 +100,10 @@ public sealed class SolvabilityChecker
     /// Checks if at least one piece from the set can be placed anywhere.
     /// Fast check without full solvability analysis.
     /// </summary>
-    public static bool AtLeastOneFits(GameBoard board, IReadOnlyList<PieceType> pieces)
+    public static bool AtLeastOneFits(GameBoard board, IReadOnlyList<Piece> pieces)
     {
-        foreach (var pieceType in pieces)
+        foreach (var piece in pieces)
         {
-            var piece = Piece.Create(pieceType);
             if (board.CanPlacePieceAnywhere(piece))
             {
                 return true;
@@ -117,15 +115,14 @@ public sealed class SolvabilityChecker
     /// <summary>
     /// Gets the pieces that can fit on the board.
     /// </summary>
-    public static List<PieceType> GetFittingPieces(GameBoard board, IReadOnlyList<PieceType> pieces)
+    public static List<Piece> GetFittingPieces(GameBoard board, IReadOnlyList<Piece> pieces)
     {
-        var fitting = new List<PieceType>();
-        foreach (var pieceType in pieces)
+        var fitting = new List<Piece>();
+        foreach (var piece in pieces)
         {
-            var piece = Piece.Create(pieceType);
             if (board.CanPlacePieceAnywhere(piece))
             {
-                fitting.Add(pieceType);
+                fitting.Add(piece);
             }
         }
         return fitting;
@@ -135,14 +132,13 @@ public sealed class SolvabilityChecker
     /// Tries to place a sequence of pieces on the board.
     /// Simulates line clears after each placement.
     /// </summary>
-    private static bool TryPlaceSequence(GameBoard originalBoard, IReadOnlyList<PieceType> sequence)
+    private static bool TryPlaceSequence(GameBoard originalBoard, IReadOnlyList<Piece> sequence)
     {
         // Work with a copy of the board
         var boardArray = originalBoard.ToArray();
 
-        foreach (var pieceType in sequence)
+        foreach (var piece in sequence)
         {
-            var piece = Piece.Create(pieceType);
             var tempBoard = GameBoard.FromArray(boardArray);
 
             var positions = GetLimitedPositions(tempBoard, piece);
@@ -262,11 +258,11 @@ public sealed class SolvabilityChecker
     /// <summary>
     /// Generates unique permutations handling duplicate elements.
     /// </summary>
-    private static IEnumerable<List<PieceType>> GenerateUniquePermutations(List<PieceType> items)
+    private static IEnumerable<List<Piece>> GenerateUniquePermutations(List<Piece> items)
     {
         if (items.Count <= 1)
         {
-            yield return new List<PieceType>(items);
+            yield return new List<Piece>(items);
             yield break;
         }
 
@@ -274,7 +270,8 @@ public sealed class SolvabilityChecker
 
         foreach (var perm in GeneratePermutationsRecursive(items, 0))
         {
-            var key = string.Join(",", perm.Select(p => (int)p));
+            // Use Type and Rotation for uniqueness key
+            var key = string.Join(",", perm.Select(p => $"{p.Type}:{p.Rotation}"));
             if (seen.Add(key))
             {
                 yield return perm;
@@ -282,11 +279,11 @@ public sealed class SolvabilityChecker
         }
     }
 
-    private static IEnumerable<List<PieceType>> GeneratePermutationsRecursive(List<PieceType> items, int start)
+    private static IEnumerable<List<Piece>> GeneratePermutationsRecursive(List<Piece> items, int start)
     {
         if (start == items.Count - 1)
         {
-            yield return new List<PieceType>(items);
+            yield return new List<Piece>(items);
             yield break;
         }
 

@@ -8,7 +8,7 @@ using PerfectFit.Core.GameLogic.Pieces;
 /// State for serialization of the weighted piece selector.
 /// </summary>
 internal record WeightedSelectorState(
-    List<PieceType> CurrentPieces,
+    List<PieceInfo> CurrentPieces,
     int? Seed,
     int RandomCallCount,
     List<PieceType> RecentHistory);
@@ -69,8 +69,8 @@ public sealed class WeightedPieceSelector
     /// <param name="board">The current game board.</param>
     /// <param name="linesCleared">Total lines cleared in the game (for progressive difficulty).</param>
     /// <param name="count">Number of pieces to generate (default 3).</param>
-    /// <returns>List of generated piece types.</returns>
-    public List<PieceType> GeneratePieces(GameBoard board, int linesCleared = 0, int count = PieceHandSize)
+    /// <returns>List of generated pieces.</returns>
+    public List<Piece> GeneratePieces(GameBoard board, int linesCleared = 0, int count = PieceHandSize)
     {
         if (count <= 0)
             return [];
@@ -87,16 +87,17 @@ public sealed class WeightedPieceSelector
         // Apply repetition control (reduce weight of recent pieces)
         ApplyRepetitionControl(weights);
 
-        var selectedPieces = new List<PieceType>(count);
+        var selectedPieces = new List<Piece>(count);
         int retries = 0;
 
         while (selectedPieces.Count < count && retries < MaxGenerationRetries)
         {
             // Generate candidate set
-            var candidates = SelectPiecesWeighted(weights, count - selectedPieces.Count);
+            var candidateTypes = SelectPiecesWeighted(weights, count - selectedPieces.Count);
+            var candidates = candidateTypes.Select(t => CreateRandomRotatedPiece(t)).ToList();
 
             // Combine with already selected pieces
-            var testSet = new List<PieceType>(selectedPieces);
+            var testSet = new List<Piece>(selectedPieces);
             testSet.AddRange(candidates);
 
             // Check solvability
@@ -154,10 +155,17 @@ public sealed class WeightedPieceSelector
             {
                 _recentHistory.Dequeue();
             }
-            _recentHistory.Enqueue(piece);
+            _recentHistory.Enqueue(piece.Type);
         }
 
         return selectedPieces;
+    }
+
+    private Piece CreateRandomRotatedPiece(PieceType type)
+    {
+        _randomCallCount++;
+        int rotation = _random.Next(4);
+        return Piece.Create(type, rotation);
     }
 
     private void ApplyProgressiveDifficulty(Dictionary<PieceType, double> weights, int linesCleared)
@@ -204,10 +212,10 @@ public sealed class WeightedPieceSelector
         }
     }
 
-    private void EnsureRescuePiece(List<PieceType> pieces)
+    private void EnsureRescuePiece(List<Piece> pieces)
     {
         // Check if we already have a small piece
-        if (pieces.Any(p => PieceWeights.GetCellCount(p) <= 2))
+        if (pieces.Any(p => PieceWeights.GetCellCount(p.Type) <= 2))
         {
             return;
         }
@@ -218,7 +226,7 @@ public sealed class WeightedPieceSelector
 
         for (int i = 0; i < pieces.Count; i++)
         {
-            var cells = PieceWeights.GetCellCount(pieces[i]);
+            var cells = PieceWeights.GetCellCount(pieces[i].Type);
             if (cells > maxCells)
             {
                 maxCells = cells;
@@ -230,7 +238,8 @@ public sealed class WeightedPieceSelector
         {
             // 50% chance of Dot, 50% chance of Line2
             _randomCallCount++;
-            pieces[largestIndex] = _random.NextDouble() < 0.5 ? PieceType.Dot : PieceType.Line2;
+            var type = _random.NextDouble() < 0.5 ? PieceType.Dot : PieceType.Line2;
+            pieces[largestIndex] = CreateRandomRotatedPiece(type);
         }
     }
 
@@ -278,7 +287,7 @@ public sealed class WeightedPieceSelector
     /// Ensures at least one piece in the set can fit on the board.
     /// Replaces non-fitting pieces with smaller alternatives.
     /// </summary>
-    private List<PieceType> EnsureAtLeastOneFits(GameBoard board, List<PieceType> pieces, Dictionary<PieceType, double> weights)
+    private List<Piece> EnsureAtLeastOneFits(GameBoard board, List<Piece> pieces, Dictionary<PieceType, double> weights)
     {
         var fittingPieces = SolvabilityChecker.GetFittingPieces(board, pieces);
 
@@ -288,11 +297,11 @@ public sealed class WeightedPieceSelector
         }
 
         // Replace the largest piece with a smaller alternative
-        var result = new List<PieceType>(pieces);
+        var result = new List<Piece>(pieces);
 
         // Sort by cell count descending to replace largest first
         var sortedBySize = result
-            .Select((p, i) => (Type: p, Index: i, Size: PieceWeights.GetCellCount(p)))
+            .Select((p, i) => (Piece: p, Index: i, Size: PieceWeights.GetCellCount(p.Type)))
             .OrderByDescending(x => x.Size)
             .ToList();
 
@@ -304,13 +313,17 @@ public sealed class WeightedPieceSelector
                 .OrderBy(p => PieceWeights.GetCellCount(p))
                 .ToList();
 
-            foreach (var smallPiece in smallPieces)
+            foreach (var smallPieceType in smallPieces)
             {
-                var piece = Piece.Create(smallPiece);
-                if (board.CanPlacePieceAnywhere(piece))
+                // Try all rotations
+                for (int r = 0; r < 4; r++)
                 {
-                    result[item.Index] = smallPiece;
-                    return result;
+                    var piece = Piece.Create(smallPieceType, r);
+                    if (board.CanPlacePieceAnywhere(piece))
+                    {
+                        result[item.Index] = piece;
+                        return result;
+                    }
                 }
             }
         }
@@ -322,9 +335,9 @@ public sealed class WeightedPieceSelector
     /// Emergency generation when normal generation fails.
     /// Uses only the smallest pieces.
     /// </summary>
-    private List<PieceType> EmergencyGenerate(GameBoard board, int count)
+    private List<Piece> EmergencyGenerate(GameBoard board, int count)
     {
-        var result = new List<PieceType>(count);
+        var result = new List<Piece>(count);
 
         // Priority order: smallest to largest
         var priorityPieces = new[]
@@ -344,13 +357,17 @@ public sealed class WeightedPieceSelector
         };
 
         // Find pieces that can actually fit
-        var fittingPieces = new List<PieceType>();
+        var fittingPieces = new List<Piece>();
         foreach (var pieceType in priorityPieces)
         {
-            var piece = Piece.Create(pieceType);
-            if (board.CanPlacePieceAnywhere(piece))
+            // Try all rotations
+            for (int r = 0; r < 4; r++)
             {
-                fittingPieces.Add(pieceType);
+                var piece = Piece.Create(pieceType, r);
+                if (board.CanPlacePieceAnywhere(piece))
+                {
+                    fittingPieces.Add(piece);
+                }
             }
         }
 
@@ -369,7 +386,7 @@ public sealed class WeightedPieceSelector
             // Nothing fits - game will end. Generate small pieces anyway.
             for (int i = 0; i < count; i++)
             {
-                result.Add(PieceType.Dot);
+                result.Add(Piece.Create(PieceType.Dot));
             }
         }
 
@@ -380,26 +397,30 @@ public sealed class WeightedPieceSelector
     /// Forces at least one piece in the set to be placeable.
     /// Used as absolute last resort.
     /// </summary>
-    private List<PieceType> ForceOneFittingPiece(GameBoard board, List<PieceType> pieces)
+    private List<Piece> ForceOneFittingPiece(GameBoard board, List<Piece> pieces)
     {
-        var result = new List<PieceType>(pieces);
+        var result = new List<Piece>(pieces);
 
         // Find smallest fitting piece
         foreach (var pieceType in PieceWeights.AllPieceTypes.OrderBy(p => PieceWeights.GetCellCount(p)))
         {
-            var piece = Piece.Create(pieceType);
-            if (board.CanPlacePieceAnywhere(piece))
+            // Try all rotations
+            for (int r = 0; r < 4; r++)
             {
-                // Replace the first piece with this one
-                if (result.Count > 0)
+                var piece = Piece.Create(pieceType, r);
+                if (board.CanPlacePieceAnywhere(piece))
                 {
-                    result[0] = pieceType;
+                    // Replace the first piece with this one
+                    if (result.Count > 0)
+                    {
+                        result[0] = piece;
+                    }
+                    else
+                    {
+                        result.Add(piece);
+                    }
+                    return result;
                 }
-                else
-                {
-                    result.Add(pieceType);
-                }
-                return result;
             }
         }
 
@@ -410,10 +431,11 @@ public sealed class WeightedPieceSelector
     /// <summary>
     /// Serializes the current state for persistence.
     /// </summary>
-    public string SerializeState(List<PieceType> currentPieces)
+    public string SerializeState(List<Piece> currentPieces)
     {
+        var pieceInfos = currentPieces.Select(p => new PieceInfo(p.Type, p.Rotation)).ToList();
         var state = new WeightedSelectorState(
-            CurrentPieces: new List<PieceType>(currentPieces),
+            CurrentPieces: pieceInfos,
             Seed: _seed,
             RandomCallCount: _randomCallCount,
             RecentHistory: _recentHistory.ToList()
@@ -425,7 +447,7 @@ public sealed class WeightedPieceSelector
     /// <summary>
     /// Creates a selector from a serialized state.
     /// </summary>
-    public static (WeightedPieceSelector Selector, List<PieceType> Pieces) FromState(string stateJson)
+    public static (WeightedPieceSelector Selector, List<Piece> Pieces) FromState(string stateJson)
     {
         if (string.IsNullOrEmpty(stateJson))
         {
@@ -436,6 +458,7 @@ public sealed class WeightedPieceSelector
             ?? throw new InvalidOperationException("Failed to deserialize state.");
 
         var selector = new WeightedPieceSelector(state.Seed, state.RandomCallCount, state.RecentHistory);
-        return (selector, new List<PieceType>(state.CurrentPieces));
+        var pieces = state.CurrentPieces.Select(p => Piece.Create(p.Type, p.Rotation)).ToList();
+        return (selector, pieces);
     }
 }

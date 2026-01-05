@@ -16,7 +16,6 @@ public class PieceWeightsTests
         PieceWeights.GetCategory(PieceType.T).Should().Be(PieceWeights.PieceCategory.Standard);
         PieceWeights.GetCategory(PieceType.Line5).Should().Be(PieceWeights.PieceCategory.Large);
         PieceWeights.GetCategory(PieceType.Rect2x3).Should().Be(PieceWeights.PieceCategory.Heavy);
-        PieceWeights.GetCategory(PieceType.Rect3x2).Should().Be(PieceWeights.PieceCategory.Heavy);
         PieceWeights.GetCategory(PieceType.Square3x3).Should().Be(PieceWeights.PieceCategory.Huge);
     }
 
@@ -29,7 +28,6 @@ public class PieceWeightsTests
         PieceWeights.GetCellCount(PieceType.T).Should().Be(4);
         PieceWeights.GetCellCount(PieceType.Line5).Should().Be(5);
         PieceWeights.GetCellCount(PieceType.Rect2x3).Should().Be(6);
-        PieceWeights.GetCellCount(PieceType.Rect3x2).Should().Be(6);
         PieceWeights.GetCellCount(PieceType.Square3x3).Should().Be(9);
     }
 
@@ -232,7 +230,7 @@ public class SolvabilityCheckerTests
     public void CheckSolvability_ReturnsTrue_ForSingleFittingPiece()
     {
         var board = new GameBoard();
-        var pieces = new List<PieceType> { PieceType.T };
+        var pieces = new List<Piece> { Piece.Create(PieceType.T) };
 
         var result = SolvabilityChecker.CheckSolvability(board, pieces);
 
@@ -245,7 +243,7 @@ public class SolvabilityCheckerTests
     public void CheckSolvability_ReturnsTrue_ForMultipleFittingPieces()
     {
         var board = new GameBoard();
-        var pieces = new List<PieceType> { PieceType.T, PieceType.I, PieceType.O };
+        var pieces = new List<Piece> { Piece.Create(PieceType.T), Piece.Create(PieceType.I), Piece.Create(PieceType.O) };
 
         var result = SolvabilityChecker.CheckSolvability(board, pieces);
 
@@ -271,7 +269,7 @@ public class SolvabilityCheckerTests
             }
         }
 
-        var pieces = new List<PieceType> { PieceType.T, PieceType.I, PieceType.O };
+        var pieces = new List<Piece> { Piece.Create(PieceType.T), Piece.Create(PieceType.I), Piece.Create(PieceType.O) };
 
         var result = SolvabilityChecker.CheckSolvability(board, pieces);
 
@@ -291,7 +289,7 @@ public class SolvabilityCheckerTests
         }
 
         // Place pieces that will complete the row and clear it
-        var pieces = new List<PieceType> { PieceType.Dot };
+        var pieces = new List<Piece> { Piece.Create(PieceType.Dot) };
 
         var result = SolvabilityChecker.CheckSolvability(board, pieces);
 
@@ -302,7 +300,7 @@ public class SolvabilityCheckerTests
     public void AtLeastOneFits_ReturnsTrue_WhenOnePieceFits()
     {
         var board = new GameBoard();
-        var pieces = new List<PieceType> { PieceType.Square3x3, PieceType.Dot };
+        var pieces = new List<Piece> { Piece.Create(PieceType.Square3x3), Piece.Create(PieceType.Dot) };
 
         var result = SolvabilityChecker.AtLeastOneFits(board, pieces);
 
@@ -326,18 +324,18 @@ public class SolvabilityCheckerTests
             }
         }
 
-        var pieces = new List<PieceType> { PieceType.Dot, PieceType.Square3x3 };
+        var pieces = new List<Piece> { Piece.Create(PieceType.Dot), Piece.Create(PieceType.Square3x3) };
         var fitting = SolvabilityChecker.GetFittingPieces(board, pieces);
 
         // Dot should fit, Square3x3 likely won't due to fragmentation
-        fitting.Should().Contain(PieceType.Dot);
+        fitting.Should().Contain(p => p.Type == PieceType.Dot);
     }
 
     [Fact]
     public void CheckSolvability_HandlesDuplicatePieces()
     {
         var board = new GameBoard();
-        var pieces = new List<PieceType> { PieceType.Dot, PieceType.Dot, PieceType.Dot };
+        var pieces = new List<Piece> { Piece.Create(PieceType.Dot), Piece.Create(PieceType.Dot), Piece.Create(PieceType.Dot) };
 
         var result = SolvabilityChecker.CheckSolvability(board, pieces);
 
@@ -380,7 +378,8 @@ public class WeightedPieceSelectorTests
         var pieces1 = selector1.GeneratePieces(board, count: 3);
         var pieces2 = selector2.GeneratePieces(board, count: 3);
 
-        pieces1.Should().Equal(pieces2);
+        // Compare Piece objects by value (Type and Rotation)
+        pieces1.Should().BeEquivalentTo(pieces2, options => options.WithStrictOrdering());
     }
 
     [Fact]
@@ -428,7 +427,7 @@ public class WeightedPieceSelectorTests
 
             foreach (var piece in pieces)
             {
-                var cellCount = PieceWeights.GetCellCount(piece);
+                var cellCount = PieceWeights.GetCellCount(piece.Type);
                 if (cellCount <= 2) smallCount++;
                 else if (cellCount >= 5) largeCount++;
             }
@@ -448,6 +447,7 @@ public class WeightedPieceSelectorTests
         var state = selector.SerializeState(pieces);
         var (restoredSelector, restoredPieces) = WeightedPieceSelector.FromState(state);
 
-        restoredPieces.Should().Equal(pieces);
+        // Compare Piece objects by value (Type and Rotation)
+        restoredPieces.Should().BeEquivalentTo(pieces, options => options.WithStrictOrdering());
     }
 }

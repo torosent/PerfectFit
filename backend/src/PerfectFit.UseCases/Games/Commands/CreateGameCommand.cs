@@ -37,7 +37,7 @@ public class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, GameS
 
         // Serialize and update game state
         var boardState = SerializeBoardState(state.BoardGrid);
-        var piecesJson = SerializePieces(state.CurrentPieceTypes);
+        var piecesJson = SerializePieces(state.CurrentPieces);
         session.UpdateBoard(boardState, piecesJson, state.PieceBagState);
 
         // Save to database
@@ -65,10 +65,9 @@ public class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, GameS
         return JsonSerializer.Serialize(new { grid = gridArray });
     }
 
-    private static string SerializePieces(List<PieceType> pieces)
+    private static string SerializePieces(List<PieceInfo> pieces)
     {
-        var pieceStrings = pieces.Select(p => p.ToString()).ToList();
-        return JsonSerializer.Serialize(pieceStrings);
+        return JsonSerializer.Serialize(pieces);
     }
 
     private static GameStateDto MapToDto(GameSession session, GameEngine engine)
@@ -78,7 +77,7 @@ public class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, GameS
         return new GameStateDto(
             Id: session.Id.ToString(),
             Grid: ConvertGrid(state.BoardGrid),
-            CurrentPieces: state.CurrentPieceTypes.Select(MapPieceToDto).ToArray(),
+            CurrentPieces: state.CurrentPieces.Select(MapPieceToDto).ToArray(),
             Score: session.Score,
             Combo: session.Combo,
             Status: session.Status == Core.Enums.GameStatus.Playing
@@ -106,13 +105,13 @@ public class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, GameS
         return result;
     }
 
-    private static PieceDto MapPieceToDto(PieceType pieceType)
+    private static PieceDto MapPieceToDto(PieceInfo pieceInfo)
     {
-        var piece = Piece.Create(pieceType);
+        var piece = Piece.Create(pieceInfo.Type, pieceInfo.Rotation);
         var shape = ConvertShapeToArray(piece.Shape);
 
         return new PieceDto(
-            Type: MapPieceType(pieceType),
+            Type: MapPieceType(pieceInfo.Type),
             Shape: shape,
             Color: piece.Color
         );
@@ -154,7 +153,6 @@ public class CreateGameCommandHandler : IRequestHandler<CreateGameCommand, GameS
         PieceType.Square2x2 => PieceTypeDto.SQUARE_2X2,
         PieceType.Square3x3 => PieceTypeDto.SQUARE_3X3,
         PieceType.Rect2x3 => PieceTypeDto.RECT_2X3,
-        PieceType.Rect3x2 => PieceTypeDto.RECT_3X2,
         _ => throw new ArgumentOutOfRangeException(nameof(pieceType))
     };
 }

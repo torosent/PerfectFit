@@ -25,7 +25,6 @@ public class PieceDefinitionsTests
     [InlineData(PieceType.Square2x2, 4)]
     [InlineData(PieceType.Square3x3, 9)]
     [InlineData(PieceType.Rect2x3, 6)]
-    [InlineData(PieceType.Rect3x2, 6)]
     public void GetShape_Should_Return_Correct_Cell_Count(PieceType type, int expectedCells)
     {
         // Act
@@ -53,7 +52,6 @@ public class PieceDefinitionsTests
     [InlineData(PieceType.Square2x2, 2, 2)]
     [InlineData(PieceType.Square3x3, 3, 3)]
     [InlineData(PieceType.Rect2x3, 2, 3)]
-    [InlineData(PieceType.Rect3x2, 3, 2)]
     public void GetShape_Should_Return_Correct_Dimensions(PieceType type, int expectedRows, int expectedCols)
     {
         // Act
@@ -81,7 +79,6 @@ public class PieceDefinitionsTests
     [InlineData(PieceType.Square2x2, "#CD853F")]
     [InlineData(PieceType.Square3x3, "#8B4513")]
     [InlineData(PieceType.Rect2x3, "#FF69B4")]
-    [InlineData(PieceType.Rect3x2, "#4169E1")]
     public void GetColor_Should_Return_Correct_Hex_Color(PieceType type, string expectedColor)
     {
         // Act

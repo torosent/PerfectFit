@@ -25,6 +25,5 @@ public enum PieceType
     BigCorner,
     Square2x2,
     Square3x3,
-    Rect2x3,
-    Rect3x2
+    Rect2x3
 }

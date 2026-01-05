@@ -46,7 +46,6 @@ public sealed class PieceWeights
         [PieceType.Line5] = PieceCategory.Large,
         [PieceType.BigCorner] = PieceCategory.Large,
         [PieceType.Rect2x3] = PieceCategory.Heavy,
-        [PieceType.Rect3x2] = PieceCategory.Heavy,
         [PieceType.Square3x3] = PieceCategory.Huge
     };
 
@@ -67,7 +66,6 @@ public sealed class PieceWeights
         [PieceType.Line5] = 5,
         [PieceType.BigCorner] = 5,
         [PieceType.Rect2x3] = 6,
-        [PieceType.Rect3x2] = 6,
         [PieceType.Square3x3] = 9
     };
 

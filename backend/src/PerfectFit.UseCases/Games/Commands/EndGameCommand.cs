@@ -51,6 +51,8 @@ public class EndGameCommandHandler : IRequestHandler<EndGameCommand, EndGameResu
         return new EndGameResult(Found: true, GameState: MapToDto(session, engine));
     }
 
+    private record StoredPiece(PieceType Type, int Rotation);
+
     private static GameState DeserializeGameState(Core.Entities.GameSession session)
     {
         // Deserialize board state
@@ -59,12 +61,36 @@ public class EndGameCommandHandler : IRequestHandler<EndGameCommand, EndGameResu
         var grid = DeserializeGrid(gridElement);
 
         // Deserialize pieces
-        var piecesArray = JsonSerializer.Deserialize<string[]>(session.CurrentPieces) ?? [];
-        var pieceTypes = piecesArray.Select(p => Enum.Parse<PieceType>(p)).ToList();
+        var pieces = new List<PieceInfo>();
+        try
+        {
+            // Try new format (array of objects)
+            var storedPieces = JsonSerializer.Deserialize<StoredPiece[]>(session.CurrentPieces);
+            if (storedPieces != null)
+            {
+                pieces = storedPieces.Select(p => new PieceInfo(p.Type, p.Rotation)).ToList();
+            }
+        }
+        catch (JsonException)
+        {
+            // Fallback to old format (array of strings)
+            try 
+            {
+                var pieceTypes = JsonSerializer.Deserialize<string[]>(session.CurrentPieces) ?? [];
+                pieces = pieceTypes.Select(p => Enum.TryParse<PieceType>(p, out var type) 
+                        ? new PieceInfo(type, 0) 
+                        : new PieceInfo(PieceType.Dot, 0)).ToList();
+            }
+            catch
+            {
+                // If all else fails, empty list
+                pieces = [];
+            }
+        }
 
         return new GameState(
             BoardGrid: grid,
-            CurrentPieceTypes: pieceTypes,
+            CurrentPieces: pieces,
             PieceBagState: session.PieceBagState,
             Score: session.Score,
             Combo: session.Combo,
@@ -102,7 +128,7 @@ public class EndGameCommandHandler : IRequestHandler<EndGameCommand, EndGameResu
         return new GameStateDto(
             Id: session.Id.ToString(),
             Grid: ConvertGrid(state.BoardGrid),
-            CurrentPieces: state.CurrentPieceTypes.Select(MapPieceToDto).ToArray(),
+            CurrentPieces: state.CurrentPieces.Select(MapPieceToDto).ToArray(),
             Score: session.Score,
             Combo: session.Combo,
             Status: session.Status == GameStatus.Playing
@@ -130,13 +156,13 @@ public class EndGameCommandHandler : IRequestHandler<EndGameCommand, EndGameResu
         return result;
     }
 
-    private static PieceDto MapPieceToDto(PieceType pieceType)
+    private static PieceDto MapPieceToDto(PieceInfo pieceInfo)
     {
-        var piece = Piece.Create(pieceType);
+        var piece = Piece.Create(pieceInfo.Type, pieceInfo.Rotation);
         var shape = ConvertShapeToArray(piece.Shape);
 
         return new PieceDto(
-            Type: MapPieceType(pieceType),
+            Type: MapPieceType(pieceInfo.Type),
             Shape: shape,
             Color: piece.Color
         );
@@ -178,7 +204,6 @@ public class EndGameCommandHandler : IRequestHandler<EndGameCommand, EndGameResu
         PieceType.Square2x2 => PieceTypeDto.SQUARE_2X2,
         PieceType.Square3x3 => PieceTypeDto.SQUARE_3X3,
         PieceType.Rect2x3 => PieceTypeDto.RECT_2X3,
-        PieceType.Rect3x2 => PieceTypeDto.RECT_3X2,
         _ => throw new ArgumentOutOfRangeException(nameof(pieceType))
     };
 }

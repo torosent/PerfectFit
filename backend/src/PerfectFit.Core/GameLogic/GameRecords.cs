@@ -25,10 +25,17 @@ public record PlacementResult(
     bool NewTurnStarted = false);
 
 /// <summary>
+/// Represents a piece with its type and rotation.
+/// </summary>
+/// <param name="Type">The type of piece.</param>
+/// <param name="Rotation">The rotation (0-3).</param>
+public record PieceInfo(PieceType Type, int Rotation);
+
+/// <summary>
 /// Represents the complete state of a game for persistence.
 /// </summary>
 /// <param name="BoardGrid">The 8x8 board state.</param>
-/// <param name="CurrentPieceTypes">The current 3 pieces available.</param>
+/// <param name="CurrentPieces">The current 3 pieces available.</param>
 /// <param name="PieceBagState">Serialized piece bag generator state.</param>
 /// <param name="Score">Current score.</param>
 /// <param name="Combo">Current combo count.</param>
@@ -36,7 +43,7 @@ public record PlacementResult(
 /// <param name="MaxCombo">Maximum combo achieved.</param>
 public record GameState(
     string?[,] BoardGrid,
-    List<PieceType> CurrentPieceTypes,
+    List<PieceInfo> CurrentPieces,
     string PieceBagState,
     int Score,
     int Combo,

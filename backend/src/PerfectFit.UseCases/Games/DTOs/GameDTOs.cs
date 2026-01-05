@@ -14,7 +14,7 @@ public enum PieceTypeDto
     // Squares
     SQUARE_2X2, SQUARE_3X3,
     // Rectangles
-    RECT_2X3, RECT_3X2
+    RECT_2X3
 }
 
 /// <summary>

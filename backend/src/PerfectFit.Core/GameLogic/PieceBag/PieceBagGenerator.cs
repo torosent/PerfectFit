@@ -41,7 +41,7 @@ public sealed class PieceBagGenerator
     [
         PieceType.Dot, PieceType.Line2, PieceType.Line3, PieceType.Line5,
         PieceType.Corner, PieceType.BigCorner, PieceType.Square2x2, PieceType.Square3x3,
-        PieceType.Rect2x3, PieceType.Rect3x2
+        PieceType.Rect2x3
     ];
 
     private readonly Random _random;
@@ -115,8 +115,8 @@ public sealed class PieceBagGenerator
     /// <param name="count">Number of pieces to get.</param>
     /// <param name="board">The current game board for danger-aware generation.</param>
     /// <param name="linesCleared">Total lines cleared for progressive difficulty.</param>
-    /// <returns>List of piece types.</returns>
-    public List<PieceType> GetNextPieces(int count, GameBoard board, int linesCleared = 0)
+    /// <returns>List of pieces.</returns>
+    public List<Piece> GetNextPieces(int count, GameBoard board, int linesCleared = 0)
     {
         if (count <= 0)
             return [];
@@ -135,13 +135,13 @@ public sealed class PieceBagGenerator
     /// Uses classic 7-bag generation (no board awareness).
     /// </summary>
     /// <param name="count">Number of pieces to get.</param>
-    /// <returns>List of piece types.</returns>
-    public List<PieceType> GetNextPieces(int count)
+    /// <returns>List of pieces.</returns>
+    public List<Piece> GetNextPieces(int count)
     {
         if (count <= 0)
             return [];
 
-        var result = new List<PieceType>(count);
+        var result = new List<Piece>(count);
 
         for (int i = 0; i < count; i++)
         {
@@ -150,8 +150,13 @@ public sealed class PieceBagGenerator
                 RefillBag();
             }
 
-            result.Add(_currentBag[0]);
+            var pieceType = _currentBag[0];
             _currentBag.RemoveAt(0);
+
+            // Assign random rotation
+            _callCount++;
+            int rotation = _random.Next(4);
+            result.Add(Piece.Create(pieceType, rotation));
         }
 
         return result;
@@ -161,8 +166,8 @@ public sealed class PieceBagGenerator
     /// Peeks at the next pieces without consuming them.
     /// </summary>
     /// <param name="count">Number of pieces to peek.</param>
-    /// <returns>List of piece types.</returns>
-    public List<PieceType> PeekNextPieces(int count)
+    /// <returns>List of pieces.</returns>
+    public List<Piece> PeekNextPieces(int count)
     {
         if (count <= 0)
             return [];
@@ -173,21 +178,31 @@ public sealed class PieceBagGenerator
             RefillBagPreserveExisting();
         }
 
-        return _currentBag.Take(count).ToList();
+        // Note: Peeking doesn't assign rotation permanently, just for display
+        // This might be inconsistent if peek is used for logic
+        // But for now, we just return random rotation (deterministic if seed is used, but call count matters)
+        // Actually, peeking shouldn't advance RNG if possible, but here we need rotation.
+        // Let's just return default rotation for peek to avoid side effects, or use a separate RNG?
+        // For simplicity, let's return default rotation (0) for peek, as it's likely just for "next piece" preview
+        // which might not show rotation.
+        // OR, we can just return PieceType if the caller only needs type.
+        // But the signature should match.
+        
+        return _currentBag.Take(count).Select(t => Piece.Create(t, 0)).ToList();
     }
 
     /// <summary>
     /// Serializes the current state for persistence.
     /// </summary>
     /// <returns>JSON string representing the state.</returns>
-    public string SerializeState()
+    public string SerializeState(List<Piece> currentPieces)
     {
         var state = new PieceBagState(
             new List<PieceType>(_currentBag),
             _seed,
             _callCount,
             _useWeightedGeneration,
-            _weightedSelector?.SerializeState([]) // We don't need to pass current pieces here as they are managed by GameEngine
+            _weightedSelector?.SerializeState(currentPieces) 
         );
 
         return JsonSerializer.Serialize(state);

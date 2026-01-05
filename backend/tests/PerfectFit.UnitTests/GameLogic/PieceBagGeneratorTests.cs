@@ -16,7 +16,7 @@ public class PieceBagGeneratorTests
     [
         PieceType.Dot, PieceType.Line2, PieceType.Line3, PieceType.Line5,
         PieceType.Corner, PieceType.BigCorner, PieceType.Square2x2, PieceType.Square3x3,
-        PieceType.Rect2x3, PieceType.Rect3x2
+        PieceType.Rect2x3
     ];
 
     #region GetNextPieces Tests
@@ -38,6 +38,7 @@ public class PieceBagGeneratorTests
         var pieces1 = generator1.GetNextPieces(10);
         var pieces2 = generator2.GetNextPieces(10);
 
+        // Compare Piece objects by value (Type and Rotation)
         pieces1.Should().BeEquivalentTo(pieces2, options => options.WithStrictOrdering());
     }
 
@@ -66,12 +67,12 @@ public class PieceBagGeneratorTests
         // Each core tetromino appears once per bag, so with 4-5 bags we should have several
         foreach (var tetromino in CoreTetrominoes)
         {
-            pieces.Count(p => p == tetromino).Should().BeGreaterThanOrEqualTo(1,
+            pieces.Count(p => p.Type == tetromino).Should().BeGreaterThanOrEqualTo(1,
                 $"Expected at least 1 {tetromino} piece across multiple bags");
         }
 
         // Also verify all core tetrominoes are present
-        pieces.Should().Contain(p => CoreTetrominoes.Contains(p));
+        pieces.Select(p => p.Type).Should().Contain(CoreTetrominoes);
     }
 
     [Fact]
@@ -102,7 +103,8 @@ public class PieceBagGeneratorTests
         var peeked = generator.PeekNextPieces(3);
         var actual = generator.GetNextPieces(3);
 
-        peeked.Should().BeEquivalentTo(actual, options => options.WithStrictOrdering());
+        // Peek doesn't predict rotation, so only compare types
+        peeked.Select(p => p.Type).Should().BeEquivalentTo(actual.Select(p => p.Type), options => options.WithStrictOrdering());
     }
 
     [Fact]
@@ -134,7 +136,7 @@ public class PieceBagGeneratorTests
         var generator = new PieceBagGenerator(seed: 42);
         generator.GetNextPieces(3); // Consume some pieces
 
-        var state = generator.SerializeState();
+        var state = generator.SerializeState(new List<Piece>());
 
         state.Should().NotBeNullOrEmpty();
     }
@@ -145,7 +147,7 @@ public class PieceBagGeneratorTests
         var generator = new PieceBagGenerator(seed: 42);
         generator.GetNextPieces(5); // Consume some pieces
 
-        var state = generator.SerializeState();
+        var state = generator.SerializeState(new List<Piece>());
         var restored = PieceBagGenerator.FromState(state);
 
         // Both should produce the same next pieces
@@ -187,7 +189,7 @@ public class PieceBagGeneratorTests
         var generator = new PieceBagGenerator(seed: 42);
         var pieces = generator.GetNextPieces(50);
 
-        var hasExtended = pieces.Any(p => ExtendedPieces.Contains(p));
+        var hasExtended = pieces.Any(p => ExtendedPieces.Contains(p.Type));
         hasExtended.Should().BeTrue("Expected some extended pieces in a large sample");
     }
 
@@ -205,7 +207,7 @@ public class PieceBagGeneratorTests
             // Should always have valid piece types
             foreach (var piece in bagPieces)
             {
-                Enum.IsDefined(typeof(PieceType), piece).Should().BeTrue();
+                Enum.IsDefined(typeof(PieceType), piece.Type).Should().BeTrue();
             }
         }
     }

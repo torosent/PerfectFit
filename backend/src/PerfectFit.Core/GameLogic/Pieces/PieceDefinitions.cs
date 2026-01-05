@@ -41,13 +41,7 @@ public static class PieceDefinitions
         {
             { true, true, true },
             { true, true, true }
-        },  // 2x3, 6 cells
-        [PieceType.Rect3x2] = new bool[,]
-        {
-            { true, true },
-            { true, true },
-            { true, true }
-        }  // 3x2, 6 cells
+        }  // 2x3, 6 cells
     };
 
     private static readonly Dictionary<PieceType, string> Colors = new()
@@ -72,8 +66,7 @@ public static class PieceDefinitions
         [PieceType.BigCorner] = "#F0E68C",  // Khaki
         [PieceType.Square2x2] = "#CD853F",  // Peru
         [PieceType.Square3x3] = "#8B4513",  // Saddle Brown
-        [PieceType.Rect2x3] = "#FF69B4",  // Hot Pink
-        [PieceType.Rect3x2] = "#4169E1"   // Royal Blue
+        [PieceType.Rect2x3] = "#FF69B4"   // Hot Pink
     };
 
     /// <summary>
@@ -87,12 +80,20 @@ public static class PieceDefinitions
     }
 
     /// <summary>
-    /// Gets the color for a piece type.
+    /// Gets the color for a piece type, accounting for rotation.
     /// </summary>
     /// <param name="type">The piece type.</param>
+    /// <param name="rotation">The rotation (0-3).</param>
     /// <returns>A hex color string.</returns>
-    public static string GetColor(PieceType type)
+    public static string GetColor(PieceType type, int rotation = 0)
     {
+        // Special case: Rect2x3 changes color when rotated to vertical (90 or 270 degrees)
+        // to mimic the old Rect3x2 piece.
+        if (type == PieceType.Rect2x3 && (rotation == 1 || rotation == 3))
+        {
+            return "#4169E1"; // Royal Blue (formerly Rect3x2)
+        }
+
         return Colors[type];
     }
 }

@@ -55,7 +55,7 @@ public class DifficultyTuningTests
         var pieces = selector.GeneratePieces(board, 0, 3);
 
         // Should contain at least one small piece (Dot or Line2)
-        pieces.Should().Contain(p => PieceWeights.GetCellCount(p) <= 2);
+        pieces.Should().Contain(p => PieceWeights.GetCellCount(p.Type) <= 2);
     }
 
     [Fact]
@@ -72,18 +72,18 @@ public class DifficultyTuningTests
         // Huge pieces are rare-ish.
 
         int repeats = 0;
-        PieceType? lastPiece = null;
+        PieceType? lastPieceType = null;
 
         for (int i = 0; i < 100; i++)
         {
             var pieces = selector.GeneratePieces(board, 0, 1);
             var current = pieces[0];
 
-            if (lastPiece.HasValue && current == lastPiece.Value)
+            if (lastPieceType.HasValue && current.Type == lastPieceType.Value)
             {
                 repeats++;
             }
-            lastPiece = current;
+            lastPieceType = current.Type;
         }
 
         _output.WriteLine($"Immediate repeats in 100 generations: {repeats}");
@@ -94,9 +94,9 @@ public class DifficultyTuningTests
         repeats.Should().BeLessThan(15); // Generous upper bound
     }
 
-    private List<PieceType> GenerateMany(WeightedPieceSelector selector, GameBoard board, int lines, int count)
+    private List<Piece> GenerateMany(WeightedPieceSelector selector, GameBoard board, int lines, int count)
     {
-        var result = new List<PieceType>();
+        var result = new List<Piece>();
         for (int i = 0; i < count; i++)
         {
             var pieces = selector.GeneratePieces(board, lines, 1);
@@ -105,11 +105,11 @@ public class DifficultyTuningTests
         return result;
     }
 
-    private int CountLargePieces(List<PieceType> pieces)
+    private int CountLargePieces(List<Piece> pieces)
     {
         return pieces.Count(p =>
-            PieceWeights.GetCategory(p) == PieceWeights.PieceCategory.Large ||
-            PieceWeights.GetCategory(p) == PieceWeights.PieceCategory.Heavy ||
-            PieceWeights.GetCategory(p) == PieceWeights.PieceCategory.Huge);
+            PieceWeights.GetCategory(p.Type) == PieceWeights.PieceCategory.Large ||
+            PieceWeights.GetCategory(p.Type) == PieceWeights.PieceCategory.Heavy ||
+            PieceWeights.GetCategory(p.Type) == PieceWeights.PieceCategory.Huge);
     }
 }

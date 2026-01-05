@@ -16,7 +16,7 @@ public sealed class GameEngine
 
     private readonly GameBoard _board;
     private readonly PieceBagGenerator _pieceBag;
-    private readonly List<PieceType> _currentPieces;
+    private readonly List<Piece> _currentPieces;
 
     /// <summary>
     /// Gets the current score.
@@ -46,7 +46,7 @@ public sealed class GameEngine
     /// <summary>
     /// Gets the current pieces available to place.
     /// </summary>
-    public IReadOnlyList<PieceType> CurrentPieces => _currentPieces.AsReadOnly();
+    public IReadOnlyList<Piece> CurrentPieces => _currentPieces.AsReadOnly();
 
     /// <summary>
     /// Gets the current board analysis for UI display (danger level, etc).
@@ -77,7 +77,7 @@ public sealed class GameEngine
     private GameEngine(
         GameBoard board,
         PieceBagGenerator pieceBag,
-        List<PieceType> currentPieces,
+        List<Piece> currentPieces,
         int score,
         int combo,
         int totalLinesCleared,
@@ -105,7 +105,7 @@ public sealed class GameEngine
         if (pieceIndex < 0 || pieceIndex >= _currentPieces.Count)
             return false;
 
-        var piece = Piece.Create(_currentPieces[pieceIndex]);
+        var piece = _currentPieces[pieceIndex];
         return _board.CanPlacePiece(piece, row, col);
     }
 
@@ -130,8 +130,7 @@ public sealed class GameEngine
                 ClearResult: null);
         }
 
-        var pieceType = _currentPieces[pieceIndex];
-        var piece = Piece.Create(pieceType);
+        var piece = _currentPieces[pieceIndex];
 
         // Try to place the piece
         if (!_board.TryPlacePiece(piece, row, col))
@@ -200,10 +199,11 @@ public sealed class GameEngine
     /// <returns>A GameState record with all game data.</returns>
     public GameState GetState()
     {
+        var pieceInfos = _currentPieces.Select(p => new PieceInfo(p.Type, p.Rotation)).ToList();
         return new GameState(
             BoardGrid: _board.ToArray(),
-            CurrentPieceTypes: new List<PieceType>(_currentPieces),
-            PieceBagState: _pieceBag.SerializeState(),
+            CurrentPieces: pieceInfos,
+            PieceBagState: _pieceBag.SerializeState(_currentPieces),
             Score: Score,
             Combo: Combo,
             TotalLinesCleared: TotalLinesCleared,
@@ -219,7 +219,7 @@ public sealed class GameEngine
     {
         var board = GameBoard.FromArray(state.BoardGrid);
         var pieceBag = PieceBagGenerator.FromState(state.PieceBagState);
-        var currentPieces = new List<PieceType>(state.CurrentPieceTypes);
+        var currentPieces = state.CurrentPieces.Select(p => Piece.Create(p.Type, p.Rotation)).ToList();
 
         return new GameEngine(
             board,
@@ -241,9 +241,8 @@ public sealed class GameEngine
     private bool CheckGameOver()
     {
         // Game is over if none of the current pieces can be placed anywhere
-        foreach (var pieceType in _currentPieces)
+        foreach (var piece in _currentPieces)
         {
-            var piece = Piece.Create(pieceType);
             if (_board.CanPlacePieceAnywhere(piece))
             {
                 return false;
