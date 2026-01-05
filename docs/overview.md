@@ -2,12 +2,12 @@
 
 ## What is PerfectFit?
 
-PerfectFit is a full-stack grid-based block placement puzzle game inspired by classic block puzzle games. Players strategically place tetromino-like pieces on a 10x10 grid to clear lines and achieve high scores.
+PerfectFit is a full-stack grid-based block placement puzzle game inspired by classic block puzzle games. Players strategically place tetromino-like pieces on a 8x8 grid to clear lines and achieve high scores.
 
 ## Core Features
 
 ### Gameplay
-- **10x10 Game Grid**: Strategic placement area
+- **8x8 Game Grid**: Strategic placement area
 - **Multiple Piece Types**: 15+ unique piece shapes including:
   - Tetrominoes (I, O, T, S, Z, J, L)
   - Lines (DOT, LINE2, LINE3, LINE5)
@@ -45,6 +45,38 @@ PerfectFit is a full-stack grid-based block placement puzzle game inspired by cl
 3. **Line Clearing**: Complete rows or columns to clear them
 4. **Scoring**: Points awarded based on lines cleared and combo multiplier
 5. **Game Over**: When no pieces can be placed
+
+## Game Algorithm
+
+### Piece Generation
+The game uses a sophisticated "Weighted Piece Generator" to ensure fairness and solvability.
+
+*   **Board Analysis**: Before generating pieces, the system analyzes the board to calculate a "Danger Level" (0.0 to 1.0) based on:
+    *   Occupancy (percentage of filled cells).
+    *   Legal Moves (number of possible placements for common pieces).
+    *   Fragmentation (number of near-complete lines).
+*   **Dynamic Weights**: Piece probabilities are adjusted based on the Danger Level.
+    *   **Safe Board**: Higher chance of large/complex pieces.
+    *   **Dangerous Board**: Higher chance of small/simple pieces (1x1 Dot, 1x2 Line).
+*   **Solvability Guarantee**: The generator ensures that at least one of the three generated pieces can be placed on the current board. If a generated set is unplayable, it is discarded and regenerated.
+*   **Rescue Mechanism**: In critical situations (Danger > 0.7), the system forces the inclusion of a "rescue piece" (small piece) to prevent unfair game-overs.
+
+### Scoring System
+*   **Line Clears**: Points are awarded for clearing rows or columns.
+    *   1 Line: 10 points
+    *   2 Lines: 30 points
+    *   3 Lines: 60 points
+    *   4 Lines: 100 points
+    *   5+ Lines: 150 + (n-5)*50 points
+*   **Combo System**: Clearing lines in consecutive turns builds a Combo Multiplier.
+    *   Multiplier = 1.0 + (ComboCount * 0.5)
+    *   Example: 3rd consecutive clear (Combo 2) gives 2x points.
+*   **Total Score**: `(LineBonus * ComboMultiplier)`
+
+### Board Mechanics
+*   **Grid**: 8x8 grid.
+*   **No Gravity**: Unlike Tetris, blocks do not fall when lines are cleared. They remain in their placed positions.
+*   **Clear Logic**: A line is cleared when all 8 cells in a row or column are filled. Multiple lines can be cleared simultaneously.
 
 ## Project Goals
 

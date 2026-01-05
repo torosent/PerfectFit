@@ -78,9 +78,9 @@ create_azure_resources() {
     log_info "Azure resources created successfully."
 }
 
-# Build and push Docker images
-build_and_push_images() {
-    log_info "Building and pushing Docker images..."
+# Build and push backend Docker image
+build_and_push_backend() {
+    log_info "Building and pushing backend Docker image..."
     
     # Get ACR login server
     ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --query loginServer -o tsv)
@@ -91,6 +91,7 @@ build_and_push_images() {
     
     # Get current timestamp for image tag
     IMAGE_TAG=$(date +%Y%m%d%H%M%S)
+    export IMAGE_TAG
     
     # Build and push backend image
     log_info "Building backend image..."
@@ -100,13 +101,25 @@ build_and_push_images() {
     log_info "Pushing backend image..."
     docker push "$ACR_LOGIN_SERVER/$BACKEND_APP_NAME:$IMAGE_TAG"
     docker push "$ACR_LOGIN_SERVER/$BACKEND_APP_NAME:latest"
+}
+
+# Build and push frontend Docker image
+build_and_push_frontend() {
+    log_info "Building and pushing frontend Docker image..."
+    
+    ACR_LOGIN_SERVER=$(az acr show --name "$ACR_NAME" --query loginServer -o tsv)
     
     # Build and push frontend image
     log_info "Building frontend image..."
     cd "$(dirname "$0")/../../frontend"
     
-    # Get backend URL for frontend build
-    BACKEND_URL="${NEXT_PUBLIC_API_URL:-https://$BACKEND_APP_NAME.$LOCATION.azurecontainerapps.io}"
+    # Use BACKEND_URL from deploy_backend if available
+    if [ -z "$BACKEND_URL" ]; then
+        log_warn "BACKEND_URL is not set. Using default or NEXT_PUBLIC_API_URL."
+        BACKEND_URL="${NEXT_PUBLIC_API_URL:-https://$BACKEND_APP_NAME.$LOCATION.azurecontainerapps.io}"
+    fi
+    
+    log_info "Using Backend URL: $BACKEND_URL"
     
     docker build \
         --build-arg NEXT_PUBLIC_API_URL="$BACKEND_URL" \
@@ -118,10 +131,7 @@ build_and_push_images() {
     docker push "$ACR_LOGIN_SERVER/$FRONTEND_APP_NAME:$IMAGE_TAG"
     docker push "$ACR_LOGIN_SERVER/$FRONTEND_APP_NAME:latest"
     
-    log_info "Docker images built and pushed successfully."
-    
-    # Export image tag for deployment
-    export IMAGE_TAG
+    log_info "Frontend image built and pushed successfully."
 }
 
 # Deploy backend Container App
@@ -230,9 +240,15 @@ main() {
     
     check_prerequisites
     create_azure_resources
-    build_and_push_images
+    
+    # 1. Build and deploy backend first to get the URL
+    build_and_push_backend
     deploy_backend
+    
+    # 2. Build and deploy frontend using the backend URL
+    build_and_push_frontend
     deploy_frontend
+    
     configure_cors
     
     log_info "=========================================="

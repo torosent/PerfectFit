@@ -196,9 +196,8 @@ public class ScoreValidationService : IScoreValidationService
         }
 
         // Lines cleared should not exceed theoretical maximum
-        // Each move can clear at most 2 lines (one row, one column)
-        // With perfect play, each move could clear 2 lines max
-        var maxTheoreticalLines = session.MoveCount * 2;
+        // Each move can clear at most 6 lines (e.g. 5 rows + 1 column with Line5, or 3 rows + 3 cols with Square3x3)
+        var maxTheoreticalLines = session.MoveCount * 6;
         if (session.LinesCleared > maxTheoreticalLines)
             return false;
 

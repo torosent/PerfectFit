@@ -4,16 +4,16 @@ A modern, full-stack grid-based block placement puzzle game built with Next.js 1
 
 ## 🎮 About the Game
 
-PerfectFit is a strategic puzzle game where players place tetromino-like pieces on a 10x10 grid. The goal is to clear lines vertically or horizontally to score points and keep the board from filling up.
+PerfectFit is a strategic puzzle game where players place tetromino-like pieces on a 8x8 grid. The goal is to clear lines vertically or horizontally to score points and keep the board from filling up.
 
 ## Demo
 [Demo](https://perfectfit.tomer.dev)
 
-![Screenshot of PerfectFit game showing a 10x10 grid with colorful tetromino-like pieces and the game UI](https://github.com/user-attachments/assets/52fea048-c1c9-4ed5-b4b8-c592fb5fc3df)
+![Screenshot of PerfectFit game showing a 8x8 grid with colorful tetromino-like pieces and the game UI](https://github.com/user-attachments/assets/52fea048-c1c9-4ed5-b4b8-c592fb5fc3df)
 
 ### Key Features
 
-- **Strategic Gameplay**: Place pieces on a 10x10 grid to clear lines.
+- **Strategic Gameplay**: Place pieces on a 8x8 grid to clear lines.
 - **Diverse Pieces**: Over 15 unique shapes including Tetrominoes, Lines, Corners, and Squares.
 - **Combo System**: Chain line clears for massive bonus points.
 - **Smooth Experience**: Drag-and-drop controls powered by `@dnd-kit` and fluid animations with `Motion`.

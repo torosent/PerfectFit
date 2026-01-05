@@ -81,7 +81,7 @@ For optimal performance, use specific selectors:
 ```typescript
 // Core state selectors
 useGameState()          // Full GameState object
-useGameGrid()           // 10x10 grid
+useGameGrid()           // 8x8 grid
 useCurrentPieces()      // Array of available pieces
 useGameScore()          // Current score
 useGameCombo()          // Current combo

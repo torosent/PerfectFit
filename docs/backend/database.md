@@ -42,7 +42,7 @@ Stores game session data.
 |--------|------|-------------|-------------|
 | `Id` | GUID | PK | Game session ID |
 | `UserId` | int | FK (nullable) | Associated user (null for anonymous) |
-| `BoardState` | string (JSON) | Required | 10x10 grid state |
+| `BoardState` | string (JSON) | Required | 8x8 grid state |
 | `CurrentPieces` | string (JSON) | Required | Current available pieces |
 | `PieceBagState` | string (JSON) | Required | Piece generator state |
 | `Score` | int | Default: 0 | Current score |

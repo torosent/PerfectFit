@@ -69,30 +69,20 @@ export ACR_NAME=perfectfitacr
    az containerapp env create --name perfectfit-env --resource-group perfectfit-rg --location eastus
    ```
 
-2. **Build and Push Imdocker
+2. **Build and Deploy Backend**
    ```bash
    # Login to ACR
    az acr login --name perfectfitacr
+   ACR_PASSWORD=$(az acr credential show --name perfectfitacr --query "passwords[0].value" -o tsv)
    
    # Build and push backend
    cd backend
    docker build -t perfectfitacr.azurecr.io/perfectfit-api:latest .
    docker push perfectfitacr.azurecr.io/perfectfit-api:latest
    
-   # Build and push frontend
-   cd ../frontend
-   docker build --build-arg NEXT_PUBLIC_API_URL=https://perfectfit-api.eastus.azurecontainerapps.io \
-     -t perfectfitacr.azurecr.io/perfectfit-web:latest .
-   docker push perfectfitacr.azurecr.io/perfectfit-web:latest
-   ```
-
-3. **Deploy Container Apps**
-   ```bash
-   # Get ACR credentials
-   ACR_PASSWORD=$(az acr credential show --name perfectfitacr --query "passwords[0].value" -o tsv)
-   
-   # Deploy backend
-   az acr create --resource-g    --name perfectfit-api \
+   # Deploy backend Container App
+   az containerapp create \
+     --name perfectfit-api \
      --resource-group perfectfit-rg \
      --environment perfectfit-env \
      --image perfectfitacr.azurecr.io/perfectfit-api:latest \
@@ -103,8 +93,21 @@ export ACR_NAME=perfectfitacr
      --ingress external \
      --min-replicas 1 \
      --max-replicas 10
+     
+   # Get Backend URL
+   BACKEND_URL=$(az containerapp show --name perfectfit-api --resource-group perfectfit-rg --query "properties.configuration.ingress.fqdn" -o tsv)
+   echo "Backend URL: https://$BACKEND_URL"
+   ```
+
+3. **Build and Deploy Frontend**
+   ```bash
+   # Build and push frontend (using Backend URL)
+   cd ../frontend
+   docker build --build-arg NEXT_PUBLIC_API_URL=https://$BACKEND_URL \
+     -t perfectfitacr.azurecr.io/perfectfit-web:latest .
+   docker push perfectfitacr.azurecr.io/perfectfit-web:latest
    
-   # Deploy frontend
+   # Deploy frontend Container App
    az containerapp create \
      --name perfectfit-web \
      --resource-group perfectfit-rg \

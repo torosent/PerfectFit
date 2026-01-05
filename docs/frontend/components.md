@@ -12,7 +12,7 @@ Located in `src/components/game/`:
 
 ### GameBoard
 
-The main game board component displaying the 10x10 grid.
+The main game board component displaying the 8x8 grid.
 
 ```tsx
 import { GameBoard } from '@/components/game';
@@ -21,7 +21,7 @@ import { GameBoard } from '@/components/game';
 ```
 
 **Features**:
-- Renders 10x10 grid of cells
+- Renders 8x8 grid of cells
 - Shows current piece positions
 - Highlights valid drop targets
 - Displays hover preview during drag
