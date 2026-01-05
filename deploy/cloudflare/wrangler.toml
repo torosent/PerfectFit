@@ -1,0 +1,25 @@
+# =============================================================================
+# Cloudflare Pages Configuration for PerfectFit Frontend
+# =============================================================================
+
+name = "perfectfit-web"
+compatibility_date = "2024-01-01"
+
+# Pages configuration
+pages_build_output_dir = ".next"
+
+# Environment variables (non-sensitive)
+[vars]
+NODE_VERSION = "22"
+
+# Production environment
+[env.production]
+vars = { ENVIRONMENT = "production" }
+
+# Staging environment
+[env.staging]
+vars = { ENVIRONMENT = "staging" }
+
+# Development environment
+[env.development]
+vars = { ENVIRONMENT = "development" }

@@ -1,0 +1,192 @@
+using PerfectFit.Core.Enums;
+using PerfectFit.Core.Services;
+
+namespace PerfectFit.Core.Entities;
+
+public class User
+{
+    public int Id { get; private set; }
+    public string ExternalId { get; private set; } = string.Empty;
+    public string? Email { get; private set; }
+    public string DisplayName { get; private set; } = string.Empty;
+    public string? Avatar { get; private set; }
+    public AuthProvider Provider { get; private set; }
+    public DateTime CreatedAt { get; private set; }
+    public DateTime? LastLoginAt { get; private set; }
+    public int HighScore { get; private set; }
+    public int GamesPlayed { get; private set; }
+    public DateTime? LastDisplayNameChangeAt { get; private set; }
+    public UserRole Role { get; private set; }
+    public bool IsDeleted { get; private set; }
+    public DateTime? DeletedAt { get; private set; }
+    public string? PasswordHash { get; private set; }
+    public bool EmailVerified { get; private set; }
+    public string? EmailVerificationToken { get; private set; }
+    public DateTime? EmailVerificationTokenExpiry { get; private set; }
+    public int FailedLoginAttempts { get; private set; }
+    public DateTime? LockoutEnd { get; private set; }
+
+    // Navigation
+    public ICollection<GameSession> GameSessions { get; private set; } = new List<GameSession>();
+
+    // Private constructor for EF Core
+    private User() { }
+
+    public static User Create(string externalId, string? email, string displayName, AuthProvider provider, UserRole role = UserRole.User)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(externalId, nameof(externalId));
+        ArgumentException.ThrowIfNullOrWhiteSpace(displayName, nameof(displayName));
+
+        return new User
+        {
+            ExternalId = externalId,
+            Email = email,
+            DisplayName = displayName,
+            Avatar = null,
+            Provider = provider,
+            CreatedAt = DateTime.UtcNow,
+            HighScore = 0,
+            GamesPlayed = 0,
+            LastLoginAt = null,
+            Role = role,
+            IsDeleted = false,
+            DeletedAt = null
+        };
+    }
+
+    /// <summary>
+    /// Sets the display name directly (use after async validation).
+    /// </summary>
+    /// <param name="displayName">The new display name to set (must be pre-validated).</param>
+    /// <exception cref="ArgumentException">Thrown when display name format is invalid.</exception>
+    public void SetDisplayName(string displayName)
+    {
+        // Only validate format here - profanity check should be done via IDisplayNameValidationService before calling this
+        var formatResult = DisplayNameValidator.ValidateFormat(displayName);
+        if (!formatResult.IsValid)
+        {
+            throw new ArgumentException($"Display name validation failed: {formatResult.ErrorMessage}", nameof(displayName));
+        }
+
+        DisplayName = displayName;
+        LastDisplayNameChangeAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Sets the avatar emoji.
+    /// </summary>
+    /// <param name="avatar">The avatar emoji or null to clear.</param>
+    public void SetAvatar(string? avatar)
+    {
+        Avatar = avatar;
+    }
+
+    public void UpdateHighScore(int score)
+    {
+        if (score > HighScore)
+        {
+            HighScore = score;
+        }
+    }
+
+    public void IncrementGamesPlayed()
+    {
+        GamesPlayed++;
+    }
+
+    public void UpdateLastLogin()
+    {
+        LastLoginAt = DateTime.UtcNow;
+    }
+
+    public void SoftDelete()
+    {
+        IsDeleted = true;
+        DeletedAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Sets the user's role.
+    /// </summary>
+    /// <param name="role">The role to assign to the user.</param>
+    public void SetRole(UserRole role)
+    {
+        Role = role;
+    }
+
+    /// <summary>
+    /// Sets the password hash for local authentication.
+    /// </summary>
+    /// <param name="passwordHash">The hashed password to set.</param>
+    public void SetPasswordHash(string passwordHash)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(passwordHash, nameof(passwordHash));
+        PasswordHash = passwordHash;
+    }
+
+    /// <summary>
+    /// Sets email verification token and expiry.
+    /// </summary>
+    /// <param name="token">The verification token.</param>
+    /// <param name="expiry">The token expiry time.</param>
+    public void SetEmailVerificationToken(string token, DateTime expiry)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(token, nameof(token));
+        EmailVerificationToken = token;
+        EmailVerificationTokenExpiry = expiry;
+    }
+
+    /// <summary>
+    /// Sets the email verification token expiry (for testing purposes).
+    /// </summary>
+    /// <param name="expiry">The token expiry time.</param>
+    public void SetEmailVerificationTokenExpiry(DateTime expiry)
+    {
+        EmailVerificationTokenExpiry = expiry;
+    }
+
+    /// <summary>
+    /// Marks the user's email as verified and clears the verification token.
+    /// </summary>
+    public void MarkEmailAsVerified()
+    {
+        EmailVerified = true;
+        EmailVerificationToken = null;
+        EmailVerificationTokenExpiry = null;
+    }
+
+    /// <summary>
+    /// Increments the failed login attempts counter.
+    /// </summary>
+    public void IncrementFailedLoginAttempts()
+    {
+        FailedLoginAttempts++;
+    }
+
+    /// <summary>
+    /// Resets the failed login attempts counter and clears any lockout.
+    /// </summary>
+    public void ResetFailedLoginAttempts()
+    {
+        FailedLoginAttempts = 0;
+        LockoutEnd = null;
+    }
+
+    /// <summary>
+    /// Checks if the user account is currently locked out.
+    /// </summary>
+    /// <returns>True if the account is locked out and the lockout hasn't expired; otherwise, false.</returns>
+    public bool IsLockedOut()
+    {
+        return LockoutEnd.HasValue && LockoutEnd.Value > DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Sets a lockout on the user account until the specified time.
+    /// </summary>
+    /// <param name="until">The UTC time when the lockout expires.</param>
+    public void SetLockout(DateTime until)
+    {
+        LockoutEnd = until;
+    }
+}

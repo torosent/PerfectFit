@@ -1,0 +1,643 @@
+@import "tailwindcss";
+
+/* ============================================
+   iOS Safe Area Insets
+   ============================================ */
+
+/* Individual safe-area padding utilities */
+.safe-area-top {
+  padding-top: env(safe-area-inset-top);
+}
+
+.safe-area-bottom {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.safe-area-left {
+  padding-left: env(safe-area-inset-left);
+}
+
+.safe-area-right {
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Combined safe-area padding for all edges */
+.safe-area-inset {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Mobile-first full height with safe area consideration */
+.min-h-screen-safe {
+  min-height: 100vh;
+  min-height: calc(100vh - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+}
+
+/* ============================================
+   MOBILE TOUCH UTILITY CLASSES
+   ============================================ */
+
+/* Prevent all touch behaviors (scroll, zoom, tap highlight) on game elements */
+.game-touch-none {
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Allow pan and zoom gestures (for non-game elements) */
+.touch-manipulation {
+  touch-action: manipulation;
+}
+
+/* Disable iOS long-press callout menu */
+.no-callout {
+  -webkit-touch-callout: none;
+}
+
+/* Prevent text selection on game elements */
+.no-select {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Remove tap highlight on iOS */
+.no-tap-highlight {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ============================================
+   END MOBILE TOUCH UTILITY CLASSES
+   ============================================ */
+
+/* ============================================
+   TOUCH FEEDBACK STATES
+   ============================================ */
+
+/* General touch feedback for interactive elements */
+.touch-feedback {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, opacity 0.1s ease;
+}
+
+.touch-feedback:active {
+  transform: scale(0.97);
+  opacity: 0.9;
+}
+
+/* Game piece press state - more pronounced visual feedback */
+.piece-press {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, filter 0.1s ease;
+}
+
+.piece-press:active {
+  transform: scale(0.95);
+  filter: brightness(1.1);
+}
+
+/* Button touch feedback */
+.button-press {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.1s ease, opacity 0.1s ease, box-shadow 0.1s ease;
+}
+
+.button-press:active {
+  transform: scale(0.98);
+  opacity: 0.85;
+}
+
+/* Card/panel touch feedback */
+.card-press {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.card-press:active {
+  transform: scale(0.99);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* ============================================
+   END TOUCH FEEDBACK STATES
+   ============================================ */
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  
+  /* Game colors - Ocean Blue Theme */
+  --game-bg-start: #0c1929;
+  --game-bg-mid: #0a2540;
+  --game-bg-end: #0c1929;
+  --cell-empty: rgba(30, 58, 95, 0.6);
+  --cell-border: rgba(56, 97, 140, 0.4);
+  --glow-teal: rgba(20, 184, 166, 0.5);
+  --glow-blue: rgba(14, 165, 233, 0.5);
+  --glow-cyan: rgba(34, 211, 238, 0.5);
+  --glow-gold: rgba(251, 191, 36, 0.5);
+  
+  /* Primary accent */
+  --accent-teal: #14b8a6;
+  --accent-cyan: #22d3ee;
+  --accent-gold: #fbbf24;
+}
+
+/* ============================================
+   LANDING PAGE ANIMATIONS
+   ============================================ */
+
+/* Floating pieces animation */
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+    opacity: 0.15;
+  }
+  25% {
+    transform: translateY(-20px) rotate(5deg);
+    opacity: 0.25;
+  }
+  50% {
+    transform: translateY(-10px) rotate(-3deg);
+    opacity: 0.2;
+  }
+  75% {
+    transform: translateY(-25px) rotate(3deg);
+    opacity: 0.18;
+  }
+}
+
+.animate-float {
+  animation: float 8s ease-in-out infinite;
+}
+
+/* Slow pulse for background orbs */
+@keyframes pulse-slow {
+  0%, 100% {
+    opacity: 0.15;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.25;
+    transform: scale(1.1);
+  }
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 6s ease-in-out infinite;
+}
+
+/* Gradient text shimmer effect */
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient {
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+}
+
+/* Bounce in animation */
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.6s ease-out;
+}
+
+/* Fade in up animation */
+@keyframes fade-in-up {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.6s ease-out;
+}
+
+/* Staggered fade in for children */
+.stagger-children > * {
+  animation: fade-in-up 0.5s ease-out backwards;
+}
+
+.stagger-children > *:nth-child(1) { animation-delay: 0.1s; }
+.stagger-children > *:nth-child(2) { animation-delay: 0.2s; }
+.stagger-children > *:nth-child(3) { animation-delay: 0.3s; }
+.stagger-children > *:nth-child(4) { animation-delay: 0.4s; }
+.stagger-children > *:nth-child(5) { animation-delay: 0.5s; }
+.stagger-children > *:nth-child(6) { animation-delay: 0.6s; }
+
+/* Glow pulse for CTA buttons */
+@keyframes glow-pulse-cta {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(20, 184, 166, 0.3), 0 0 40px rgba(14, 165, 233, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(20, 184, 166, 0.5), 0 0 60px rgba(14, 165, 233, 0.3);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse-cta 2s ease-in-out infinite;
+}
+
+/* Subtle hover lift */
+.hover-lift {
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+/* Smooth scroll */
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============================================
+   END LANDING PAGE ANIMATIONS
+   ============================================ */
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Game background gradient - Ocean Blue Theme */
+.game-background {
+  background: linear-gradient(135deg, var(--game-bg-start) 0%, var(--game-bg-mid) 50%, var(--game-bg-end) 100%);
+  min-height: 100vh;
+}
+
+/* Animated background pattern - Ocean Blue Theme */
+.game-background::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    radial-gradient(circle at 20% 80%, rgba(20, 184, 166, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.12) 0%, transparent 50%),
+    radial-gradient(circle at 40% 40%, rgba(34, 211, 238, 0.08) 0%, transparent 30%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Cell glow effects */
+.cell-glow {
+  box-shadow: 
+    0 0 10px currentColor,
+    0 0 20px currentColor,
+    inset 0 0 5px rgba(255, 255, 255, 0.2);
+}
+
+.cell-glow-pulse {
+  animation: glow-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px currentColor, 0 0 10px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 15px currentColor, 0 0 25px currentColor;
+  }
+}
+
+/* Piece hover glow */
+.piece-hover-glow {
+  transition: box-shadow 0.2s ease;
+}
+
+.piece-hover-glow:hover {
+  box-shadow: 
+    0 0 15px var(--glow-teal),
+    0 0 30px var(--glow-teal);
+}
+
+/* Selected piece glow */
+.piece-selected-glow {
+  box-shadow: 
+    0 0 10px var(--glow-teal),
+    0 0 20px var(--glow-teal),
+    0 0 30px var(--glow-teal);
+  animation: selected-pulse 2s ease-in-out infinite;
+}
+
+@keyframes selected-pulse {
+  0%, 100% {
+    box-shadow: 
+      0 0 10px var(--glow-teal),
+      0 0 20px var(--glow-teal);
+  }
+  50% {
+    box-shadow: 
+      0 0 15px var(--glow-teal),
+      0 0 30px var(--glow-teal),
+      0 0 40px var(--glow-teal);
+  }
+}
+
+/* Combo text glow */
+.combo-glow {
+  text-shadow: 
+    0 0 10px var(--glow-gold),
+    0 0 20px var(--glow-gold),
+    0 0 30px var(--glow-gold);
+}
+
+/* Score update flash */
+.score-flash {
+  animation: score-flash 0.3s ease-out;
+}
+
+@keyframes score-flash {
+  0% {
+    transform: scale(1);
+    color: white;
+  }
+  50% {
+    transform: scale(1.2);
+    color: #fbbf24;
+  }
+  100% {
+    transform: scale(1);
+    color: white;
+  }
+}
+
+/* Board shadow and depth */
+.board-shadow {
+  box-shadow: 
+    0 25px 50px -12px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive text scaling */
+.text-responsive-sm {
+  font-size: clamp(0.75rem, 2vw, 0.875rem);
+}
+
+.text-responsive-md {
+  font-size: clamp(1rem, 3vw, 1.25rem);
+}
+
+.text-responsive-lg {
+  font-size: clamp(1.5rem, 5vw, 2.25rem);
+}
+
+.text-responsive-xl {
+  font-size: clamp(2rem, 7vw, 3rem);
+}
+
+/* Smooth transitions for all interactive elements */
+.interactive-smooth {
+  transition: 
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    opacity 0.15s ease;
+}
+
+/* Loading shimmer effect */
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Glass effect for UI panels - Ocean Blue Theme */
+.glass-panel {
+  background: rgba(13, 36, 61, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(56, 97, 140, 0.4);
+}
+
+/* Clearing cell animation helper */
+.clearing-cell {
+  animation: cell-clear 0.6s ease-out forwards;
+}
+
+@keyframes cell-clear {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1) hue-rotate(0deg);
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+  30% {
+    transform: scale(1.3) rotate(0deg);
+    opacity: 1;
+    filter: brightness(2) hue-rotate(90deg);
+    box-shadow: 0 0 30px rgba(255, 255, 255, 1), 0 0 60px currentColor;
+  }
+  60% {
+    transform: scale(1.1) rotate(180deg);
+    opacity: 1;
+    filter: brightness(2.5) hue-rotate(180deg);
+    box-shadow: 0 0 50px rgba(255, 255, 255, 1), 0 0 100px currentColor;
+  }
+  100% {
+    transform: scale(0) rotate(360deg);
+    opacity: 0;
+    filter: brightness(0) hue-rotate(360deg);
+    box-shadow: 0 0 0 rgba(255, 255, 255, 0);
+  }
+}
+
+/* Line clearing shockwave effect */
+.line-shockwave {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.8) 45%,
+    rgba(255, 255, 255, 1) 50%,
+    rgba(255, 255, 255, 0.8) 55%,
+    transparent 100%
+  );
+  animation: shockwave-sweep 0.4s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes shockwave-sweep {
+  0% {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+  40% {
+    transform: scaleX(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scaleX(1);
+    opacity: 0;
+  }
+}
+
+/* Rainbow shimmer for clearing cells */
+.clearing-rainbow {
+  background: linear-gradient(
+    45deg,
+    #ff0000,
+    #ff7f00,
+    #ffff00,
+    #00ff00,
+    #0000ff,
+    #4b0082,
+    #9400d3,
+    #ff0000
+  );
+  background-size: 400% 400%;
+  animation: rainbow-shift 0.6s ease-in-out forwards;
+}
+
+@keyframes rainbow-shift {
+  0% {
+    background-position: 0% 50%;
+    filter: brightness(1);
+  }
+  50% {
+    background-position: 100% 50%;
+    filter: brightness(2);
+  }
+  100% {
+    background-position: 200% 50%;
+    filter: brightness(0);
+  }
+}
+
+/* Sparkle particle effect */
+.clearing-sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+  animation: sparkle-burst 0.8s ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes sparkle-burst {
+  0% {
+    transform: scale(0) translateY(0);
+    opacity: 0;
+  }
+  30% {
+    transform: scale(1.5) translateY(-10px);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0) translateY(-40px);
+    opacity: 0;
+  }
+}
+
+/* Placed cell animation helper */
+.placed-cell {
+  animation: cell-place 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes cell-place {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  60% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Floating animation for popups */
+.float-up {
+  animation: float-up 1.2s ease-out forwards;
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(0) scale(0.5);
+    opacity: 0;
+  }
+  20% {
+    transform: translateY(-10px) scale(1.2);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(-50px) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-60px) scale(0.8);
+    opacity: 0;
+  }
+}

@@ -1,0 +1,125 @@
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.IdentityModel.Tokens;
+using PerfectFit.Core.Enums;
+using PerfectFit.Infrastructure.Data;
+using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
+using System.Security.Claims;
+using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
+
+namespace PerfectFit.IntegrationTests;
+
+/// <summary>
+/// Custom WebApplicationFactory for integration tests that uses in-memory database.
+/// </summary>
+public class CustomWebApplicationFactory : WebApplicationFactory<Program>
+{
+    private readonly string _databaseName;
+
+    // Use the same JWT secret for test token generation and application configuration
+    private const string JwtSecret = "your-256-bit-secret-key-here-minimum-32-characters-long-for-security";
+
+    /// <summary>
+    /// JSON serializer options that match the server configuration.
+    /// </summary>
+    public static JsonSerializerOptions JsonOptions { get; } = new()
+    {
+        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+        Converters = { new JsonStringEnumConverter() }
+    };
+
+    public CustomWebApplicationFactory()
+    {
+        _databaseName = "TestDb_" + Guid.NewGuid();
+    }
+
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.UseEnvironment("Test");
+
+        // Configure test JWT settings
+        builder.ConfigureAppConfiguration((context, config) =>
+        {
+            config.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Jwt:Secret"] = JwtSecret,
+                ["Jwt:Issuer"] = "PerfectFit",
+                ["Jwt:Audience"] = "PerfectFit",
+                ["Jwt:ExpirationDays"] = "7",
+                // Disable database migrations for in-memory test database
+                ["DatabaseMigration:RunMigrationsOnStartup"] = "false"
+            });
+        });
+
+        builder.ConfigureServices(services =>
+        {
+            // Remove ALL DbContext-related registrations
+            var toRemove = services.Where(d =>
+                d.ServiceType == typeof(DbContextOptions<AppDbContext>) ||
+                d.ServiceType == typeof(DbContextOptions) ||
+                d.ServiceType.FullName?.Contains("EntityFrameworkCore") == true
+            ).ToList();
+
+            foreach (var descriptor in toRemove)
+            {
+                services.Remove(descriptor);
+            }
+
+            // Re-register AppDbContext with in-memory provider
+            services.AddDbContext<AppDbContext>(options =>
+            {
+                options.UseInMemoryDatabase(_databaseName);
+            }, ServiceLifetime.Scoped);
+        });
+    }
+
+    /// <summary>
+    /// Creates an HTTP client with a valid JWT token for the specified user.
+    /// </summary>
+    public HttpClient CreateAuthenticatedClient(int userId, string displayName, string provider)
+    {
+        return CreateAuthenticatedClient(userId, displayName, provider, UserRole.User);
+    }
+
+    /// <summary>
+    /// Creates an HTTP client with a valid JWT token for the specified user with a specific role.
+    /// </summary>
+    public HttpClient CreateAuthenticatedClient(int userId, string displayName, string provider, UserRole role)
+    {
+        var client = CreateClient();
+        var token = GenerateTestJwtToken(userId, displayName, provider, role);
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return client;
+    }
+
+    private static string GenerateTestJwtToken(int userId, string displayName, string provider, UserRole role = UserRole.User)
+    {
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(JwtSecret));
+        var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var claims = new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim(ClaimTypes.Name, displayName),
+            new Claim(ClaimTypes.Role, role.ToString()),
+            new Claim("provider", provider)
+        };
+
+        var token = new JwtSecurityToken(
+            issuer: "PerfectFit",
+            audience: "PerfectFit",
+            claims: claims,
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: credentials
+        );
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+}
