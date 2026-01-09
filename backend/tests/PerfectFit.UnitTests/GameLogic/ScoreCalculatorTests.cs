@@ -21,46 +21,50 @@ public class ScoreCalculatorTests
     }
 
     [Fact]
-    public void CalculateLineBonus_OneLine_ReturnsTen()
+    public void CalculateLineBonus_OneLine_Returns127()
     {
         var result = ScoreCalculator.CalculateLineBonus(1);
-        result.Should().Be(10);
+        result.Should().Be(127);
     }
 
     [Fact]
-    public void CalculateLineBonus_TwoLines_ReturnsThirty()
+    public void CalculateLineBonus_TwoLines_Returns319()
     {
         var result = ScoreCalculator.CalculateLineBonus(2);
-        result.Should().Be(30);
+        result.Should().Be(319);
     }
 
     [Fact]
-    public void CalculateLineBonus_ThreeLines_ReturnsSixty()
+    public void CalculateLineBonus_ThreeLines_Returns673()
     {
         var result = ScoreCalculator.CalculateLineBonus(3);
-        result.Should().Be(60);
+        result.Should().Be(673);
     }
 
     [Fact]
-    public void CalculateLineBonus_FourLines_ReturnsOneHundred()
+    public void CalculateLineBonus_FourLines_Returns1249()
     {
         var result = ScoreCalculator.CalculateLineBonus(4);
-        result.Should().Be(100);
+        result.Should().Be(1249);
     }
 
     [Fact]
-    public void CalculateLineBonus_FiveLines_ReturnsOneHundredFifty()
+    public void CalculateLineBonus_FiveLines_Returns1847()
     {
         var result = ScoreCalculator.CalculateLineBonus(5);
-        result.Should().Be(150);
+        result.Should().Be(1847);
     }
 
     [Fact]
-    public void CalculateLineBonus_SixOrMoreLines_ReturnsOneHundredFiftyPlus()
+    public void CalculateLineBonus_SixOrMoreLines_ScalesUp()
     {
-        // 6+ lines should return at least 150
+        // 6 lines = 1847 + 512 = 2359
         var result = ScoreCalculator.CalculateLineBonus(6);
-        result.Should().BeGreaterThanOrEqualTo(150);
+        result.Should().Be(2359);
+        
+        // 7 lines = 1847 + 1024 = 2871
+        var result7 = ScoreCalculator.CalculateLineBonus(7);
+        result7.Should().Be(2871);
     }
 
     [Theory]
@@ -98,18 +102,32 @@ public class ScoreCalculatorTests
     }
 
     [Fact]
-    public void GetComboMultiplier_ComboThree_ReturnsTwoPointFive()
+    public void GetComboMultiplier_ComboThree_ReturnsThree()
     {
         var result = ScoreCalculator.GetComboMultiplier(3);
-        result.Should().Be(2.5);
+        result.Should().Be(3.0);
     }
 
     [Fact]
-    public void GetComboMultiplier_ComboTen_ReturnsSix()
+    public void GetComboMultiplier_ComboFour_ReturnsFour()
     {
-        // Pattern: 1 + (combo * 0.5) = 1 + (10 * 0.5) = 6.0
+        var result = ScoreCalculator.GetComboMultiplier(4);
+        result.Should().Be(4.0);
+    }
+
+    [Fact]
+    public void GetComboMultiplier_ComboFive_ReturnsFive()
+    {
+        var result = ScoreCalculator.GetComboMultiplier(5);
+        result.Should().Be(5.0);
+    }
+
+    [Fact]
+    public void GetComboMultiplier_ComboTen_ReturnsSevenPointFive()
+    {
+        // Pattern: 5.0 + ((combo - 5) * 0.5) = 5.0 + (5 * 0.5) = 7.5
         var result = ScoreCalculator.GetComboMultiplier(10);
-        result.Should().Be(6.0);
+        result.Should().Be(7.5);
     }
 
     [Theory]
@@ -126,43 +144,51 @@ public class ScoreCalculatorTests
     #region CalculatePoints Tests
 
     [Fact]
-    public void CalculatePoints_OneLineNoCombo_ReturnsTen()
+    public void CalculatePoints_OneLineNoCombo_Returns127()
     {
-        // 1 line = 10 points, combo 0 = 1x multiplier
+        // 1 line = 127 points, combo 0 = 1x multiplier
         var result = ScoreCalculator.CalculatePoints(1, 0);
-        result.Should().Be(10);
+        result.Should().Be(127);
     }
 
     [Fact]
-    public void CalculatePoints_TwoLinesNoCombo_ReturnsThirty()
+    public void CalculatePoints_TwoLinesNoCombo_Returns319()
     {
-        // 2 lines = 30 points, combo 0 = 1x multiplier
+        // 2 lines = 319 points, combo 0 = 1x multiplier
         var result = ScoreCalculator.CalculatePoints(2, 0);
-        result.Should().Be(30);
+        result.Should().Be(319);
     }
 
     [Fact]
-    public void CalculatePoints_OneLineComboOne_ReturnsFifteen()
+    public void CalculatePoints_OneLineComboOne_Returns190()
     {
-        // 1 line = 10 points, combo 1 = 1.5x multiplier = 15
+        // 1 line = 127 points, combo 1 = 1.5x multiplier = 190.5 -> 190
         var result = ScoreCalculator.CalculatePoints(1, 1);
-        result.Should().Be(15);
+        result.Should().Be(190);
     }
 
     [Fact]
-    public void CalculatePoints_TwoLinesComboTwo_ReturnsSixty()
+    public void CalculatePoints_TwoLinesComboTwo_Returns638()
     {
-        // 2 lines = 30 points, combo 2 = 2x multiplier = 60
+        // 2 lines = 319 points, combo 2 = 2x multiplier = 638
         var result = ScoreCalculator.CalculatePoints(2, 2);
-        result.Should().Be(60);
+        result.Should().Be(638);
     }
 
     [Fact]
-    public void CalculatePoints_FourLinesComboThree_ReturnsTwoHundredFifty()
+    public void CalculatePoints_FourLinesComboThree_Returns3747()
     {
-        // 4 lines = 100 points, combo 3 = 2.5x multiplier = 250
+        // 4 lines = 1249 points, combo 3 = 3x multiplier = 3747
         var result = ScoreCalculator.CalculatePoints(4, 3);
-        result.Should().Be(250);
+        result.Should().Be(3747);
+    }
+
+    [Fact]
+    public void CalculatePoints_FiveLinesComboFive_Returns9235()
+    {
+        // 5 lines = 1847 points, combo 5 = 5x multiplier = 9235
+        var result = ScoreCalculator.CalculatePoints(5, 5);
+        result.Should().Be(9235);
     }
 
     [Fact]
@@ -176,7 +202,7 @@ public class ScoreCalculatorTests
     public void CalculatePoints_RoundsDown()
     {
         // Test that fractional points are rounded down (integer result)
-        // 1 line = 10 points, combo 1 = 1.5x = 15 (no rounding needed)
+        // 1 line = 100 points, combo 1 = 1.5x = 150 (no rounding needed)
         // But let's verify the result is always an integer
         var result = ScoreCalculator.CalculatePoints(1, 1);
         result.Should().BeOfType(typeof(int));

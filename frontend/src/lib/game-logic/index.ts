@@ -8,4 +8,6 @@ export {
   getPieceCells,
   createEmptyGrid,
   getAllPieceTypes,
+  getPotentialLineClear,
+  type PotentialLineClear,
 } from './pieces';

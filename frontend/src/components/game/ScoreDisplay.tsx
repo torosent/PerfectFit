@@ -36,6 +36,34 @@ function useAnimatedCounter(value: number, duration: number = 0.5) {
 }
 
 /**
+ * Get combo multiplier display (matching backend logic)
+ */
+function getComboMultiplier(comboCount: number): string {
+  if (comboCount <= 0) return '1×';
+  const multipliers: Record<number, number> = {
+    1: 1.5,
+    2: 2.0,
+    3: 3.0,
+    4: 4.0,
+    5: 5.0,
+  };
+  const mult = multipliers[comboCount] ?? 5.0 + ((comboCount - 5) * 0.5);
+  return `${mult}×`;
+}
+
+/**
+ * Get combo tier color based on combo count
+ */
+function getComboColor(combo: number): string {
+  if (combo <= 0) return '#6b7280';
+  if (combo === 1) return '#fbbf24'; // Yellow
+  if (combo === 2) return '#f97316'; // Orange  
+  if (combo === 3) return '#ef4444'; // Red
+  if (combo === 4) return '#ec4899'; // Pink
+  return '#a855f7'; // Purple for 5+
+}
+
+/**
  * Displays the current game score and combo with animations
  */
 function ScoreDisplayComponent({ 
@@ -66,10 +94,11 @@ function ScoreDisplayComponent({
 
   const animatedScore = useAnimatedCounter(score);
   const animatedLines = useAnimatedCounter(linesCleared, 0.3);
+  const comboColor = getComboColor(combo);
 
   return (
     <div 
-      className="flex items-center justify-center gap-6 sm:gap-8 w-full px-2"
+      className="flex items-start justify-center gap-6 sm:gap-8 w-full px-2"
       style={{ flexDirection: 'row' }}
     >
       {/* Score */}
@@ -89,46 +118,88 @@ function ScoreDisplayComponent({
         </motion.p>
       </div>
 
-      {/* Combo */}
-      <div className="text-center relative">
+      {/* Combo with Multiplier */}
+      <div className="text-center relative min-w-[80px]">
         <p className="text-[10px] sm:text-sm font-medium text-gray-400 uppercase tracking-wider">
           Combo
         </p>
         <AnimatePresence mode="wait">
-          <motion.p
+          <motion.div
             key={comboKey}
             initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ 
-              scale: 1, 
-              opacity: 1,
-              color: hasCombo ? '#fbbf24' : '#6b7280',
-            }}
+            animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 400, damping: 15 }}
-            className="text-xl sm:text-3xl font-bold tabular-nums"
-            aria-live="polite"
+            className="flex flex-col items-center"
           >
-            {hasCombo ? `×${combo}` : '—'}
-          </motion.p>
+            <motion.p
+              style={{ color: comboColor }}
+              className="text-xl sm:text-3xl font-bold tabular-nums"
+              aria-live="polite"
+            >
+              {hasCombo ? `×${combo}` : '—'}
+            </motion.p>
+            {hasCombo && (
+              <motion.span
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-[10px] sm:text-xs font-semibold whitespace-nowrap"
+                style={{ color: comboColor }}
+              >
+                {getComboMultiplier(combo)} bonus
+              </motion.span>
+            )}
+          </motion.div>
         </AnimatePresence>
         
-        {/* Glow effect for active combo */}
+        {/* Enhanced glow effect for active combo */}
         {hasCombo && (
           <motion.div
             className="absolute inset-0 -z-10 rounded-lg"
             animate={{
               boxShadow: [
-                '0 0 10px rgba(251, 191, 36, 0.2)',
-                '0 0 20px rgba(251, 191, 36, 0.4)',
-                '0 0 10px rgba(251, 191, 36, 0.2)',
+                `0 0 10px ${comboColor}40`,
+                `0 0 25px ${comboColor}60`,
+                `0 0 10px ${comboColor}40`,
               ],
             }}
             transition={{
-              duration: 1.5,
+              duration: 1.2,
               repeat: Infinity,
               ease: 'easeInOut',
             }}
           />
+        )}
+        
+        {/* Fire particles for high combos */}
+        {combo >= 3 && (
+          <motion.div
+            className="absolute -top-2 left-1/2 -translate-x-1/2 pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+          >
+            {[...Array(combo >= 5 ? 5 : 3)].map((_, i) => (
+              <motion.div
+                key={i}
+                className="absolute w-1.5 h-1.5 rounded-full"
+                style={{ 
+                  backgroundColor: comboColor,
+                  left: `${(i - 1) * 8}px`,
+                }}
+                animate={{
+                  y: [0, -15, 0],
+                  opacity: [0.8, 0, 0.8],
+                  scale: [1, 0.5, 1],
+                }}
+                transition={{
+                  duration: 0.8,
+                  repeat: Infinity,
+                  delay: i * 0.15,
+                  ease: 'easeOut',
+                }}
+              />
+            ))}
+          </motion.div>
         )}
       </div>
 

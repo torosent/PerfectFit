@@ -181,3 +181,62 @@ export function createEmptyGrid(): Grid {
 export function getAllPieceTypes(): PieceType[] {
   return Object.keys(PIECE_SHAPES) as PieceType[];
 }
+
+/**
+ * Represents lines that would be cleared by placing a piece
+ */
+export interface PotentialLineClear {
+  rows: number[];
+  cols: number[];
+}
+
+/**
+ * Calculate which rows and columns would be cleared if a piece is placed at the given position
+ * @param grid - The current game grid
+ * @param piece - The piece to place
+ * @param row - The top-left row position
+ * @param col - The top-left column position
+ * @returns Object containing arrays of row and column indices that would be cleared
+ */
+export function getPotentialLineClear(
+  grid: Grid,
+  piece: Piece,
+  row: number,
+  col: number
+): PotentialLineClear {
+  // If the piece can't be placed, return empty
+  if (!canPlacePiece(grid, piece, row, col)) {
+    return { rows: [], cols: [] };
+  }
+
+  // Create a simulated grid with the piece placed
+  const simulatedGrid: Grid = grid.map(r => [...r]);
+  const pieceCells = getPieceCells(piece, row, col);
+  
+  // Place the piece on the simulated grid
+  for (const cell of pieceCells) {
+    if (cell.row >= 0 && cell.row < 8 && cell.col >= 0 && cell.col < 8) {
+      simulatedGrid[cell.row][cell.col] = piece.color;
+    }
+  }
+
+  // Check which rows would be cleared (all cells filled)
+  const clearedRows: number[] = [];
+  for (let r = 0; r < 8; r++) {
+    const rowFilled = simulatedGrid[r].every(cell => cell !== null);
+    if (rowFilled) {
+      clearedRows.push(r);
+    }
+  }
+
+  // Check which columns would be cleared (all cells filled)
+  const clearedCols: number[] = [];
+  for (let c = 0; c < 8; c++) {
+    const colFilled = simulatedGrid.every(r => r[c] !== null);
+    if (colFilled) {
+      clearedCols.push(c);
+    }
+  }
+
+  return { rows: clearedRows, cols: clearedCols };
+}

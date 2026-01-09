@@ -5,7 +5,7 @@ import { useDroppable } from '@dnd-kit/core';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Grid, Piece, Position, ClearingCell } from '@/types';
 import { AnimatedCell } from './AnimatedCell';
-import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
+import { canPlacePiece, getPieceCells, getPotentialLineClear } from '@/lib/game-logic/pieces';
 
 export interface HighlightedCell {
   row: number;
@@ -116,6 +116,8 @@ function LineShockwave({
   );
 }
 
+
+
 /**
  * Droppable game board that accepts piece drops
  * Shows preview of piece at hover position with validity indication
@@ -157,6 +159,14 @@ function DroppableBoardComponent({
         ...cell,
         isValid,
       }));
+  }, [grid, hoverPosition, draggedPiece]);
+
+  // Calculate potential line clears for drag preview
+  const potentialLineClear = useMemo(() => {
+    if (!hoverPosition || !draggedPiece) {
+      return { rows: [], cols: [] };
+    }
+    return getPotentialLineClear(grid, draggedPiece, hoverPosition.row, hoverPosition.col);
   }, [grid, hoverPosition, draggedPiece]);
 
   // Calculate which rows and columns are being cleared for shockwave effect
@@ -213,6 +223,24 @@ function DroppableBoardComponent({
     });
     return map;
   }, [lastPlacedCells]);
+
+  // Create a set of cells that would be cleared (for fading preview)
+  const pendingClearSet = useMemo(() => {
+    const set = new Set<string>();
+    // Add all cells in rows that would be cleared
+    for (const row of potentialLineClear.rows) {
+      for (let col = 0; col < 8; col++) {
+        set.add(`${row}-${col}`);
+      }
+    }
+    // Add all cells in columns that would be cleared
+    for (const col of potentialLineClear.cols) {
+      for (let row = 0; row < 8; row++) {
+        set.add(`${row}-${col}`);
+      }
+    }
+    return set;
+  }, [potentialLineClear]);
 
   return (
     <div
@@ -274,6 +302,7 @@ function DroppableBoardComponent({
             const isClearing = clearingColor !== undefined;
             const placedIndex = placedMap.get(key);
             const isRecentlyPlaced = placedIndex !== undefined;
+            const isPendingClear = pendingClearSet.has(key);
 
             return (
               <div
@@ -294,6 +323,7 @@ function DroppableBoardComponent({
                   clearingColor={clearingColor}
                   isRecentlyPlaced={isRecentlyPlaced}
                   placedIndex={placedIndex ?? 0}
+                  isPendingClear={isPendingClear}
                   onClick={!disabled ? onCellClick : undefined}
                 />
                 

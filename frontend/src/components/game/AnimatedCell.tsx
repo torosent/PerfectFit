@@ -24,6 +24,8 @@ export interface AnimatedCellProps {
   isRecentlyPlaced?: boolean;
   /** Index within the placed piece (for stagger animation) */
   placedIndex?: number;
+  /** Whether this cell is in a row/column that would be cleared (preview) */
+  isPendingClear?: boolean;
   /** Click handler for the cell */
   onClick?: (row: number, col: number) => void;
 }
@@ -42,6 +44,7 @@ function AnimatedCellComponent({
   clearingColor,
   isRecentlyPlaced = false,
   placedIndex = 0,
+  isPendingClear = false,
   onClick,
 }: AnimatedCellProps) {
   // Use the clearing color during animation, otherwise use the current value
@@ -102,9 +105,14 @@ function AnimatedCellComponent({
     <motion.div
       variants={cellVariants}
       initial={isEmpty ? 'empty' : 'filled'}
-      animate={getAnimationState()}
+      animate={{
+        ...(getAnimationState() === 'clearing' ? { scale: [1, 0.8, 0] } : {}),
+        ...(getAnimationState() === 'placed' ? { scale: [0.8, 1.1, 1] } : {}),
+        opacity: isPendingClear ? 0.35 : 1,
+      }}
       transition={{
         delay: clearingDelay || placedDelay,
+        opacity: { duration: 0.15 },
       }}
       role={isClickable ? 'button' : undefined}
       tabIndex={isClickable ? 0 : undefined}
@@ -112,7 +120,7 @@ function AnimatedCellComponent({
       className={className}
       style={{
         backgroundColor: !isEmpty ? displayColor : undefined,
-        boxShadow: !isEmpty && !isClearing ? get3DBoxShadow(displayColor) : undefined,
+        boxShadow: !isEmpty && !isClearing && !isPendingClear ? get3DBoxShadow(displayColor) : undefined,
         // CSS custom property for clearing animation
         '--cell-color': displayColor || 'transparent',
       } as React.CSSProperties}

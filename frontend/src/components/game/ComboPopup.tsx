@@ -12,8 +12,72 @@ export interface ComboPopupProps {
 }
 
 /**
+ * Get combo tier styling based on combo count
+ */
+function getComboTier(combo: number): {
+  label: string;
+  gradient: string;
+  glowColor: string;
+  scale: number;
+} {
+  if (combo >= 5) {
+    return {
+      label: 'UNSTOPPABLE!',
+      gradient: 'from-purple-500 via-pink-500 to-red-500',
+      glowColor: 'rgba(168, 85, 247, 0.8)',
+      scale: 1.3,
+    };
+  }
+  if (combo >= 4) {
+    return {
+      label: 'ON FIRE!',
+      gradient: 'from-pink-500 to-orange-500',
+      glowColor: 'rgba(236, 72, 153, 0.8)',
+      scale: 1.2,
+    };
+  }
+  if (combo >= 3) {
+    return {
+      label: 'AWESOME!',
+      gradient: 'from-orange-500 to-yellow-500',
+      glowColor: 'rgba(249, 115, 22, 0.8)',
+      scale: 1.15,
+    };
+  }
+  if (combo >= 2) {
+    return {
+      label: 'GREAT!',
+      gradient: 'from-yellow-500 to-amber-500',
+      glowColor: 'rgba(251, 191, 36, 0.7)',
+      scale: 1.1,
+    };
+  }
+  return {
+    label: 'COMBO!',
+    gradient: 'from-yellow-500 to-orange-500',
+    glowColor: 'rgba(251, 191, 36, 0.5)',
+    scale: 1,
+  };
+}
+
+/**
+ * Get combo multiplier display
+ */
+function getMultiplierText(combo: number): string {
+  const multipliers: Record<number, number> = {
+    1: 1.5,
+    2: 2.0,
+    3: 3.0,
+    4: 4.0,
+    5: 5.0,
+  };
+  const mult = multipliers[combo] ?? 5.0 + ((combo - 5) * 0.5);
+  return `${mult}× Points!`;
+}
+
+/**
  * Floating combo indicator that appears when combo increases
- * Shows "×X combo!" with spring animation
+ * Shows "×X combo!" with spring animation and tier-based styling
  */
 function ComboPopupComponent({ combo, triggerKey }: ComboPopupProps) {
   const [displayCombo, setDisplayCombo] = useState(combo);
@@ -43,12 +107,16 @@ function ComboPopupComponent({ combo, triggerKey }: ComboPopupProps) {
   useEffect(() => {
     if (!showPopup) return;
 
+    // Longer duration for higher combos
+    const duration = displayCombo >= 3 ? 2000 : 1500;
     const timer = setTimeout(() => {
       setShowPopup(false);
-    }, 1500);
+    }, duration);
 
     return () => clearTimeout(timer);
-  }, [version, showPopup]);
+  }, [version, showPopup, displayCombo]);
+
+  const tier = getComboTier(displayCombo);
 
   return (
     <AnimatePresence mode="wait">
@@ -62,23 +130,74 @@ function ComboPopupComponent({ combo, triggerKey }: ComboPopupProps) {
           className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-full pointer-events-none z-20"
         >
           <motion.div
-            className="px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 shadow-lg"
-            animate={{
-              boxShadow: [
-                '0 0 10px rgba(251, 191, 36, 0.5)',
-                '0 0 20px rgba(251, 191, 36, 0.8)',
-                '0 0 10px rgba(251, 191, 36, 0.5)',
-              ],
-            }}
-            transition={{
-              duration: 0.8,
-              repeat: Infinity,
-              ease: 'easeInOut',
-            }}
+            className="flex flex-col items-center"
+            initial={{ scale: 0.5 }}
+            animate={{ scale: tier.scale }}
+            transition={{ type: 'spring', stiffness: 400, damping: 15 }}
           >
-            <span className="text-lg font-bold text-white whitespace-nowrap drop-shadow-md">
-              ×{displayCombo} Combo!
-            </span>
+            {/* Combo tier label */}
+            <motion.div
+              className={`px-4 py-1 rounded-full bg-gradient-to-r ${tier.gradient} shadow-lg mb-1`}
+              animate={{
+                boxShadow: [
+                  `0 0 10px ${tier.glowColor}`,
+                  `0 0 25px ${tier.glowColor}`,
+                  `0 0 10px ${tier.glowColor}`,
+                ],
+              }}
+              transition={{
+                duration: 0.6,
+                repeat: Infinity,
+                ease: 'easeInOut',
+              }}
+            >
+              <span className="text-lg font-black text-white whitespace-nowrap drop-shadow-md tracking-wide">
+                ×{displayCombo} {tier.label}
+              </span>
+            </motion.div>
+            
+            {/* Multiplier bonus indicator */}
+            <motion.div
+              initial={{ opacity: 0, y: -5 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className={`px-3 py-0.5 rounded-full bg-gradient-to-r ${tier.gradient} shadow-md`}
+              style={{ opacity: 0.9 }}
+            >
+              <span className="text-sm font-bold text-white whitespace-nowrap">
+                {getMultiplierText(displayCombo)}
+              </span>
+            </motion.div>
+            
+            {/* Fire/sparkle particles for high combos */}
+            {displayCombo >= 3 && (
+              <div className="absolute inset-0 pointer-events-none overflow-visible">
+                {[...Array(displayCombo >= 5 ? 10 : 6)].map((_, i) => (
+                  <motion.div
+                    key={i}
+                    className="absolute w-2 h-2 rounded-full"
+                    style={{
+                      background: `linear-gradient(135deg, ${displayCombo >= 4 ? '#ec4899' : '#fbbf24'}, ${displayCombo >= 4 ? '#a855f7' : '#f97316'})`,
+                      left: '50%',
+                      top: '50%',
+                    }}
+                    animate={{
+                      x: [0, (Math.random() - 0.5) * 100],
+                      y: [0, -50 - Math.random() * 50],
+                      opacity: [1, 0],
+                      scale: [1, 0.3],
+                    }}
+                    transition={{
+                      duration: 0.8,
+                      delay: i * 0.05,
+                      ease: 'easeOut',
+                      repeat: displayCombo >= 4 ? 2 : 1,
+                      repeatDelay: 0.3,
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </motion.div>
         </motion.div>
       )}
