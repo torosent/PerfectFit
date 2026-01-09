@@ -27,6 +27,12 @@ export type { ComboPopupProps } from './ComboPopup';
 export { PointsPopup } from './PointsPopup';
 export type { PointsPopupProps } from './PointsPopup';
 
+export { StreakCounter } from './StreakCounter';
+export type { StreakCounterProps } from './StreakCounter';
+
+export { PerfectClearOverlay } from './PerfectClearOverlay';
+export type { PerfectClearOverlayProps } from './PerfectClearOverlay';
+
 // Drag-and-drop components
 export { DraggablePiece } from './DraggablePiece';
 export type { DraggablePieceProps } from './DraggablePiece';

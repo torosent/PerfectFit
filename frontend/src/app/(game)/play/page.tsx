@@ -1,16 +1,36 @@
 'use client';
 
 import { useEffect, useCallback, useState, useMemo, useRef } from 'react';
-import { useGameStore, useLastSubmitResult, useIsSubmittingScore, useClearingCells, useLastPlacedCells } from '@/lib/stores/game-store';
+import { 
+  useGameStore, 
+  useLastSubmitResult, 
+  useIsSubmittingScore, 
+  useClearingCells, 
+  useLastPlacedCells,
+  useIsDangerMode,
+  useScreenShakeIntensity,
+  usePerfectClearTriggered,
+  useLastLinesCleared,
+  useIsNewHighScore,
+} from '@/lib/stores/game-store';
 import { useIsAuthenticated } from '@/lib/stores/auth-store';
 import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
 import { DroppableBoard, type HighlightedCell } from '@/components/game/DroppableBoard';
 import { PieceSelector } from '@/components/game/PieceSelector';
 import { ScoreDisplay } from '@/components/game/ScoreDisplay';
 import { GameOverModal } from '@/components/game/GameOverModal';
+import { PerfectClearOverlay } from '@/components/game/PerfectClearOverlay';
 import { DndProvider } from '@/components/providers/DndProvider';
 import { GuestBanner } from '@/components/auth/GuestBanner';
+import { ThemeToggle } from '@/components/ui/ThemeToggle';
+import { SoundToggle } from '@/components/ui/SoundToggle';
 import { useHaptics } from '@/hooks/useHaptics';
+import { useSoundEffects } from '@/contexts/SoundContext';
+import { 
+  fireBigClearConfetti, 
+  fireComboConfetti, 
+  fireHighScoreConfetti 
+} from '@/lib/confetti';
 import type { Grid, ClearingCell, Position } from '@/types';
 
 /**
@@ -77,6 +97,8 @@ export default function PlayPage() {
     setClearingCells,
     setLastPlacedCells,
     clearAnimationState,
+    setPerfectClearTriggered,
+    resetStreak,
   } = useGameStore();
 
   const isAuthenticated = useIsAuthenticated();
@@ -84,6 +106,11 @@ export default function PlayPage() {
   const isSubmittingScore = useIsSubmittingScore();
   const clearingCells = useClearingCells();
   const lastPlacedCells = useLastPlacedCells();
+  const isDangerMode = useIsDangerMode();
+  const shakeIntensity = useScreenShakeIntensity();
+  const perfectClearTriggered = usePerfectClearTriggered();
+  const lastLinesCleared = useLastLinesCleared();
+  const isNewHighScore = useIsNewHighScore();
 
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
   
@@ -96,13 +123,72 @@ export default function PlayPage() {
   // Track previous game over state for haptic feedback
   const prevGameOverRef = useRef(false);
   
+  // Track previous combo for sound effects
+  const prevComboRef = useRef(0);
+  
+  // Track if high score confetti has been fired
+  const highScoreConfettiFiredRef = useRef(false);
+  
   // Haptic feedback
   const haptics = useHaptics();
+  
+  // Sound effects
+  const sounds = useSoundEffects();
 
   // Start a new game on mount
   useEffect(() => {
     startNewGame();
   }, [startNewGame]);
+
+  // Handle sound effects and confetti for line clears
+  useEffect(() => {
+    if (lastLinesCleared > 0) {
+      // Play line clear sound
+      sounds.onLineClear();
+      
+      // Fire confetti for big clears (4+ lines)
+      if (lastLinesCleared >= 4) {
+        fireBigClearConfetti();
+      }
+    }
+  }, [lastLinesCleared, sounds]);
+
+  // Handle combo sound effects and confetti
+  useEffect(() => {
+    const currentCombo = gameState?.combo ?? 0;
+    if (currentCombo > prevComboRef.current && currentCombo > 0) {
+      sounds.onCombo(currentCombo);
+      
+      // Fire confetti for combo 5+
+      if (currentCombo >= 5) {
+        fireComboConfetti(currentCombo);
+      }
+    }
+    prevComboRef.current = currentCombo;
+  }, [gameState?.combo, sounds]);
+
+  // Handle new high score confetti
+  useEffect(() => {
+    if (isNewHighScore && !highScoreConfettiFiredRef.current) {
+      sounds.onHighScore();
+      fireHighScoreConfetti();
+      highScoreConfettiFiredRef.current = true;
+    }
+  }, [isNewHighScore, sounds]);
+
+  // Reset high score confetti flag when starting new game
+  useEffect(() => {
+    if (gameState?.status === 'Playing') {
+      highScoreConfettiFiredRef.current = false;
+    }
+  }, [gameState?.status]);
+
+  // Handle perfect clear sound
+  useEffect(() => {
+    if (perfectClearTriggered) {
+      sounds.onPerfectClear();
+    }
+  }, [perfectClearTriggered, sounds]);
 
   // Compute highlighted cells based on current state (derived state, not effect)
   const highlightedCells = useMemo<HighlightedCell[]>(() => {
@@ -155,6 +241,9 @@ export default function PlayPage() {
         // Store placed cells and color for clearing animation detection
         placedCellsRef.current = { cells: placedCells, color: piece.color };
         
+        // Play placement sound
+        sounds.onPiecePlaced();
+        
         // Place the piece
         const success = await placePiece(selectedPieceIndex, row, col);
         
@@ -165,7 +254,7 @@ export default function PlayPage() {
         }
       }
     },
-    [gameState, selectedPieceIndex, placePiece, setLastPlacedCells]
+    [gameState, selectedPieceIndex, placePiece, setLastPlacedCells, sounds]
   );
 
   // Detect cleared cells when grid changes
@@ -205,8 +294,14 @@ export default function PlayPage() {
   const handlePlayAgain = useCallback(() => {
     clearSubmitResult();
     clearAnimationState();
+    resetStreak();
     startNewGame();
-  }, [clearSubmitResult, clearAnimationState, startNewGame]);
+  }, [clearSubmitResult, clearAnimationState, resetStreak, startNewGame]);
+
+  // Handle perfect clear completion
+  const handlePerfectClearComplete = useCallback(() => {
+    setPerfectClearTriggered(false);
+  }, [setPerfectClearTriggered]);
 
   // Clear error after display
   useEffect(() => {
@@ -218,13 +313,14 @@ export default function PlayPage() {
 
   const isGameOver = gameState?.status === 'Ended';
 
-  // Trigger haptic feedback when game ends
+  // Trigger haptic feedback and sound when game ends
   useEffect(() => {
     if (isGameOver && !prevGameOverRef.current) {
       haptics.gameOver();
+      sounds.onGameOver();
     }
     prevGameOverRef.current = isGameOver;
-  }, [isGameOver, haptics]);
+  }, [isGameOver, haptics, sounds]);
 
   // Submit score when game ends and user is authenticated
   useEffect(() => {
@@ -241,10 +337,16 @@ export default function PlayPage() {
 
   return (
     <DndProvider>
-      <main className="min-h-screen-safe safe-area-inset game-touch-none text-white p-4 sm:p-8">
+      <main className="min-h-screen-safe safe-area-inset game-touch-none text-white p-4 sm:p-8 relative">
+        {/* Settings Buttons - Absolute positioned to not affect layout */}
+        <div className="absolute top-4 right-4 sm:top-8 sm:right-8 flex gap-2 z-10">
+          <ThemeToggle />
+          <SoundToggle />
+        </div>
+
         <div className="max-w-4xl mx-auto">
           {/* Guest Banner */}
-          <GuestBanner className="mb-6 mt-6" />
+          <GuestBanner className="mb-6" />
 
           {/* Loading State */}
           {isLoading && !gameState && (
@@ -298,6 +400,8 @@ export default function PlayPage() {
                   lastPlacedCells={lastPlacedCells}
                   onCellClick={handleCellClick}
                   disabled={isGameOver || isLoading}
+                  shakeIntensity={shakeIntensity}
+                  isDangerMode={isDangerMode}
                 />
               </div>
 
@@ -322,6 +426,12 @@ export default function PlayPage() {
               )}
             </div>
           )}
+
+          {/* Perfect Clear Overlay */}
+          <PerfectClearOverlay 
+            isVisible={perfectClearTriggered} 
+            onComplete={handlePerfectClearComplete}
+          />
 
           {/* Game Over Modal */}
           <GameOverModal

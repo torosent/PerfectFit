@@ -69,7 +69,7 @@ function getComboColor(combo: number): string {
 function ScoreDisplayComponent({ 
   score, 
   combo, 
-  linesCleared = 0 
+  linesCleared = 0,
 }: ScoreDisplayProps) {
   const hasCombo = combo > 0;
   
@@ -98,7 +98,7 @@ function ScoreDisplayComponent({
 
   return (
     <div 
-      className="flex items-start justify-center gap-6 sm:gap-8 w-full px-2"
+      className="flex items-start justify-center gap-6 sm:gap-8 w-full px-2 h-[70px] sm:h-[85px]"
       style={{ flexDirection: 'row' }}
     >
       {/* Score */}

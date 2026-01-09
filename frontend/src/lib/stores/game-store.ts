@@ -4,6 +4,7 @@ import * as gameClient from '@/lib/api/game-client';
 import * as leaderboardClient from '@/lib/api/leaderboard-client';
 import { useAuthStore } from './auth-store';
 import * as antiCheat from '@/lib/anti-cheat';
+import { countTotalValidPlacements, isBoardEmpty } from '@/lib/game-logic/pieces';
 
 /**
  * Result from score submission to leaderboard
@@ -29,6 +30,12 @@ export interface AnimationState {
   lastCombo: number;
   /** Key to trigger animation re-renders */
   animationKey: number;
+  /** Number of lines cleared in the last move */
+  lastLinesCleared: number;
+  /** Whether a perfect clear just happened */
+  perfectClearTriggered: boolean;
+  /** Whether screen shake should be triggered */
+  screenShakeIntensity: number;
 }
 
 /**
@@ -47,6 +54,17 @@ export interface GameStore {
   
   // Animation state
   animationState: AnimationState;
+  
+  // Streak state
+  streak: number;
+  
+  // Danger mode state
+  validPlacementCount: number;
+  isDangerMode: boolean;
+  
+  // High score tracking
+  previousHighScore: number;
+  isNewHighScore: boolean;
   
   // Leaderboard state
   lastSubmitResult: SubmitScoreResult | null;
@@ -74,7 +92,21 @@ export interface GameStore {
   setLastPlacedCells: (cells: Position[]) => void;
   setLastPointsEarned: (points: number) => void;
   setLastCombo: (combo: number) => void;
+  setLastLinesCleared: (count: number) => void;
+  setPerfectClearTriggered: (triggered: boolean) => void;
+  setScreenShakeIntensity: (intensity: number) => void;
   clearAnimationState: () => void;
+  
+  // Streak actions
+  incrementStreak: () => void;
+  resetStreak: () => void;
+  
+  // Danger mode actions
+  updateValidPlacementCount: () => void;
+  
+  // High score actions
+  setPreviousHighScore: (score: number) => void;
+  checkNewHighScore: () => void;
   
   // Leaderboard actions
   submitScoreToLeaderboard: () => Promise<void>;
@@ -90,6 +122,9 @@ const initialAnimationState: AnimationState = {
   lastPointsEarned: 0,
   lastCombo: 0,
   animationKey: 0,
+  lastLinesCleared: 0,
+  perfectClearTriggered: false,
+  screenShakeIntensity: 0,
 };
 
 /**
@@ -103,6 +138,11 @@ const initialState = {
   hoverPosition: null,
   draggedPieceIndex: null,
   animationState: initialAnimationState,
+  streak: 0,
+  validPlacementCount: 64, // Maximum possible placements on an 8x8 board (8 * 8)
+  isDangerMode: false,
+  previousHighScore: 0,
+  isNewHighScore: false,
   lastSubmitResult: null,
   isSubmittingScore: false,
 };
@@ -128,7 +168,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
   // Actions
   startNewGame: async () => {
     // Clear previous game's submit result to avoid showing stale data
-    set({ isLoading: true, error: null, selectedPieceIndex: null, lastSubmitResult: null });
+    set({ 
+      isLoading: true, 
+      error: null, 
+      selectedPieceIndex: null, 
+      lastSubmitResult: null,
+      streak: 0,
+      isNewHighScore: false,
+      animationState: initialAnimationState,
+    });
     
     try {
       // Initialize anti-cheat session tracking
@@ -136,8 +184,16 @@ export const useGameStore = create<GameStore>((set, get) => ({
       
       // Get auth token if available
       const token = useAuthStore.getState().token;
+      const user = useAuthStore.getState().user;
+      
+      // Store previous high score for comparison
+      const previousHighScore = user?.highScore ?? 0;
+      
       const gameState = await gameClient.createGame(token);
-      set({ gameState, isLoading: false });
+      set({ gameState, isLoading: false, previousHighScore });
+      
+      // Update valid placement count
+      get().updateValidPlacementCount();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to start new game';
       set({ error: message, isLoading: false });
@@ -155,6 +211,9 @@ export const useGameStore = create<GameStore>((set, get) => ({
       const token = useAuthStore.getState().token;
       const gameState = await gameClient.getGame(id, token);
       set({ gameState, isLoading: false });
+      
+      // Update valid placement count
+      get().updateValidPlacementCount();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to load game';
       set({ error: message, isLoading: false });
@@ -200,11 +259,36 @@ export const useGameStore = create<GameStore>((set, get) => ({
       }, token);
 
       if (response.success) {
+        const prevLinesCleared = gameState.linesCleared;
+        const newLinesCleared = response.gameState.linesCleared - prevLinesCleared;
+        
+        // Check for perfect clear (board is empty after clearing)
+        const isPerfectClear = newLinesCleared > 0 && isBoardEmpty(response.gameState.grid);
+        
+        // Calculate screen shake intensity based on lines cleared
+        const shakeIntensity = newLinesCleared >= 4 ? 3 : newLinesCleared >= 2 ? 2 : newLinesCleared >= 1 ? 1 : 0;
+        
         set({ 
           gameState: response.gameState, 
           isLoading: false,
-          selectedPieceIndex: null, // Deselect after successful placement
+          selectedPieceIndex: null,
+          animationState: {
+            ...get().animationState,
+            lastLinesCleared: newLinesCleared,
+            perfectClearTriggered: isPerfectClear,
+            screenShakeIntensity: shakeIntensity,
+          },
         });
+        
+        // Increment streak on successful placement
+        get().incrementStreak();
+        
+        // Update valid placement count
+        get().updateValidPlacementCount();
+        
+        // Check for new high score
+        get().checkNewHighScore();
+        
         return true;
       } else {
         set({ 
@@ -324,6 +408,33 @@ export const useGameStore = create<GameStore>((set, get) => ({
     }));
   },
 
+  setLastLinesCleared: (count: number) => {
+    set((state) => ({
+      animationState: {
+        ...state.animationState,
+        lastLinesCleared: count,
+      },
+    }));
+  },
+
+  setPerfectClearTriggered: (triggered: boolean) => {
+    set((state) => ({
+      animationState: {
+        ...state.animationState,
+        perfectClearTriggered: triggered,
+      },
+    }));
+  },
+
+  setScreenShakeIntensity: (intensity: number) => {
+    set((state) => ({
+      animationState: {
+        ...state.animationState,
+        screenShakeIntensity: intensity,
+      },
+    }));
+  },
+
   clearAnimationState: () => {
     set((state) => ({
       animationState: {
@@ -331,6 +442,43 @@ export const useGameStore = create<GameStore>((set, get) => ({
         animationKey: state.animationState.animationKey,
       },
     }));
+  },
+
+  // Streak actions
+  incrementStreak: () => {
+    set((state) => ({ streak: state.streak + 1 }));
+  },
+
+  resetStreak: () => {
+    set({ streak: 0 });
+  },
+
+  // Danger mode actions
+  updateValidPlacementCount: () => {
+    const { gameState } = get();
+    if (!gameState || gameState.status === 'Ended') {
+      set({ validPlacementCount: 0, isDangerMode: false });
+      return;
+    }
+    
+    const count = countTotalValidPlacements(gameState.grid, gameState.currentPieces);
+    const isDanger = count > 0 && count <= 3;
+    
+    set({ validPlacementCount: count, isDangerMode: isDanger });
+  },
+
+  // High score actions
+  setPreviousHighScore: (score: number) => {
+    set({ previousHighScore: score });
+  },
+
+  checkNewHighScore: () => {
+    const { gameState, previousHighScore, isNewHighScore } = get();
+    if (!gameState || isNewHighScore) return;
+    
+    if (gameState.score > previousHighScore) {
+      set({ isNewHighScore: true });
+    }
   },
 
   // Leaderboard actions
@@ -397,6 +545,20 @@ export const useLastPlacedCells = () => useGameStore((state) => state.animationS
 export const useLastPointsEarned = () => useGameStore((state) => state.animationState.lastPointsEarned);
 export const useLastCombo = () => useGameStore((state) => state.animationState.lastCombo);
 export const useAnimationKey = () => useGameStore((state) => state.animationState.animationKey);
+export const useLastLinesCleared = () => useGameStore((state) => state.animationState.lastLinesCleared);
+export const usePerfectClearTriggered = () => useGameStore((state) => state.animationState.perfectClearTriggered);
+export const useScreenShakeIntensity = () => useGameStore((state) => state.animationState.screenShakeIntensity);
+
+// Streak state selectors
+export const useStreak = () => useGameStore((state) => state.streak);
+
+// Danger mode selectors
+export const useValidPlacementCount = () => useGameStore((state) => state.validPlacementCount);
+export const useIsDangerMode = () => useGameStore((state) => state.isDangerMode);
+
+// High score selectors
+export const useIsNewHighScore = () => useGameStore((state) => state.isNewHighScore);
+export const usePreviousHighScore = () => useGameStore((state) => state.previousHighScore);
 
 // Leaderboard state selectors
 export const useLastSubmitResult = () => useGameStore((state) => state.lastSubmitResult);

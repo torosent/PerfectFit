@@ -56,6 +56,9 @@ jest.mock('motion/react', () => ({
     p: ({ children, className, ...props }: React.PropsWithChildren<{ className?: string }>) => (
       <p className={className} {...props}>{children}</p>
     ),
+    span: ({ children, className, ...props }: React.PropsWithChildren<{ className?: string }>) => (
+      <span className={className} {...props}>{children}</span>
+    ),
   },
   AnimatePresence: ({ children }: React.PropsWithChildren) => <>{children}</>,
   useMotionValue: jest.fn(() => ({ get: () => 0, set: jest.fn() })),

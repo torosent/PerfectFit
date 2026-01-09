@@ -1,6 +1,6 @@
 'use client';
 
-import { memo } from 'react';
+import { memo, useMemo, useState, useEffect } from 'react';
 import { useDraggable } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { motion } from 'motion/react';
@@ -24,6 +24,7 @@ export interface DraggablePieceProps {
 /**
  * Wrapper component that makes a piece draggable
  * Uses @dnd-kit's useDraggable hook with motion animations
+ * Includes idle bobbing animation that's staggered between pieces
  */
 function DraggablePieceComponent({
   piece,
@@ -47,6 +48,18 @@ function DraggablePieceComponent({
     disabled,
   });
 
+  // Track prefers-reduced-motion on client side
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  
+  useEffect(() => {
+    const mediaQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    setPrefersReducedMotion(mediaQuery?.matches ?? false);
+    
+    const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
+    mediaQuery?.addEventListener?.('change', handler);
+    return () => mediaQuery?.removeEventListener?.('change', handler);
+  }, []);
+
   // Apply transform during drag merged with base styles
   const baseStyles = {
     backgroundColor: isSelected ? 'rgba(20, 184, 166, 0.15)' : 'rgba(10, 25, 41, 0.5)',
@@ -62,12 +75,45 @@ function DraggablePieceComponent({
       }
     : baseStyles;
 
-  // Determine animation state
-  const getAnimationState = () => {
+  // Determine animation state - return variant name
+  const getAnimationState = (): string => {
     if (isDragging) return 'dragging';
     if (isSelected) return 'selected';
     return 'idle';
   };
+
+  // Should we apply bobbing? Only when idle and not reduced motion
+  const shouldBob = !isDragging && !isSelected && !disabled && !prefersReducedMotion;
+
+  // Idle bobbing animation - staggered timing based on index
+  const bobbingAnimation = useMemo(() => {
+    if (!shouldBob) {
+      return undefined;
+    }
+    
+    // Stagger the animation start time based on piece index
+    const delay = index * 0.7; // ~0.7 seconds stagger between pieces
+    const duration = 2.5; // 2.5 second cycle
+    
+    return {
+      y: [0, -4, 0, -2, 0],
+      transition: {
+        duration,
+        repeat: Infinity,
+        ease: 'easeInOut' as const,
+        delay,
+        times: [0, 0.3, 0.5, 0.7, 1],
+      },
+    };
+  }, [shouldBob, index]);
+
+  // Combine variant state with bobbing animation
+  const animateValue = useMemo(() => {
+    if (bobbingAnimation) {
+      return bobbingAnimation;
+    }
+    return getAnimationState();
+  }, [bobbingAnimation, isDragging, isSelected]);
 
   return (
     <motion.div
@@ -78,7 +124,7 @@ function DraggablePieceComponent({
       onClick={onClick}
       variants={pieceVariants}
       initial="idle"
-      animate={getAnimationState()}
+      animate={animateValue}
       whileHover={!disabled && !isDragging ? 'hover' : undefined}
       whileTap={!disabled ? 'tap' : undefined}
       className={`

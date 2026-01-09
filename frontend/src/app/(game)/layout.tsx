@@ -10,6 +10,8 @@ import {
 } from '@/lib/stores/auth-store';
 import { UserMenu } from '@/components/auth/UserMenu';
 import { MobileNav } from '@/components/ui/MobileNav';
+import { ThemeProvider } from '@/contexts/ThemeContext';
+import { SoundProvider } from '@/contexts/SoundContext';
 
 /**
  * Game layout with header
@@ -31,88 +33,92 @@ export default function GameLayout({
   }, [initializeAuth]);
 
   return (
-    <div className="min-h-screen game-background">
-      {/* Header */}
-      <header className="relative z-20 border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link
-              href="/play"
-              className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-            >
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}>
-                <svg
-                  className="w-5 h-5 text-white"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
+    <ThemeProvider>
+      <SoundProvider>
+        <div className="min-h-screen game-background">
+          {/* Header */}
+          <header className="relative z-20 border-b border-white/10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center justify-between h-16">
+                {/* Logo */}
+                <Link
+                  href="/play"
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
-                  />
-                </svg>
-              </div>
-              <span className="text-xl font-bold text-white">
-                Perfect<span style={{ color: '#2dd4bf' }}>Fit</span>
-              </span>
-            </Link>
-
-            {/* Mobile Navigation */}
-            <MobileNav />
-
-            {/* Desktop Navigation */}
-            <nav className="hidden sm:flex items-center gap-6">
-              <Link
-                href="/play"
-                className={`text-sm font-medium transition-colors ${
-                  pathname === '/play'
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                Play
-              </Link>
-              <Link
-                href="/leaderboard"
-                className={`text-sm font-medium transition-colors ${
-                  pathname === '/leaderboard'
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-white'
-                }`}
-              >
-                🏆 Leaderboard
-              </Link>
-            </nav>
-
-            {/* Auth Controls */}
-            <div className="flex items-center gap-4">
-              {isInitialized && (
-                <>
-                  {isAuthenticated ? (
-                    <UserMenu />
-                  ) : (
-                    <Link
-                      href="/login"
-                      className="py-2 px-4 text-sm font-medium text-white rounded-lg transition-colors"
-                      style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}
+                  <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}>
+                    <svg
+                      className="w-5 h-5 text-white"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
                     >
-                      Sign In
-                    </Link>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"
+                      />
+                    </svg>
+                  </div>
+                  <span className="text-xl font-bold text-white">
+                    Perfect<span style={{ color: '#2dd4bf' }}>Fit</span>
+                  </span>
+                </Link>
 
-      {/* Main Content */}
-      <main className="relative z-10">{children}</main>
-    </div>
+                {/* Mobile Navigation */}
+                <MobileNav />
+
+                {/* Desktop Navigation */}
+                <nav className="hidden sm:flex items-center gap-6">
+                  <Link
+                    href="/play"
+                    className={`text-sm font-medium transition-colors ${
+                      pathname === '/play'
+                        ? 'text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    Play
+                  </Link>
+                  <Link
+                    href="/leaderboard"
+                    className={`text-sm font-medium transition-colors ${
+                      pathname === '/leaderboard'
+                        ? 'text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    🏆 Leaderboard
+                  </Link>
+                </nav>
+
+                {/* Auth Controls */}
+                <div className="flex items-center gap-4">
+                  {isInitialized && (
+                    <>
+                      {isAuthenticated ? (
+                        <UserMenu />
+                      ) : (
+                        <Link
+                          href="/login"
+                          className="py-2 px-4 text-sm font-medium text-white rounded-lg transition-colors"
+                          style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}
+                        >
+                          Sign In
+                        </Link>
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </header>
+
+          {/* Main Content */}
+          <main className="relative z-10">{children}</main>
+        </div>
+      </SoundProvider>
+    </ThemeProvider>
   );
 }

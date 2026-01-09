@@ -240,3 +240,70 @@ export function getPotentialLineClear(
 
   return { rows: clearedRows, cols: clearedCols };
 }
+
+/**
+ * Count the number of valid placements for a piece on the grid
+ * @param grid - The current game grid
+ * @param piece - The piece to check
+ * @returns Number of valid positions where the piece can be placed
+ */
+export function countValidPlacements(grid: Grid, piece: Piece): number {
+  let count = 0;
+  
+  for (let row = 0; row < 8; row++) {
+    for (let col = 0; col < 8; col++) {
+      if (canPlacePiece(grid, piece, row, col)) {
+        count++;
+      }
+    }
+  }
+  
+  return count;
+}
+
+/**
+ * Count total valid placements for all given pieces
+ * @param grid - The current game grid
+ * @param pieces - Array of pieces to check
+ * @returns Total number of valid placements across all pieces
+ */
+export function countTotalValidPlacements(grid: Grid, pieces: Piece[]): number {
+  let total = 0;
+  
+  for (const piece of pieces) {
+    total += countValidPlacements(grid, piece);
+  }
+  
+  return total;
+}
+
+/**
+ * Check if any piece can be placed on the grid
+ * @param grid - The current game grid
+ * @param pieces - Array of pieces to check
+ * @returns true if at least one piece can be placed somewhere
+ */
+export function canAnyPieceBePlaced(grid: Grid, pieces: Piece[]): boolean {
+  for (const piece of pieces) {
+    if (countValidPlacements(grid, piece) > 0) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Check if the grid is completely empty
+ * @param grid - The game grid
+ * @returns true if all cells are empty
+ */
+export function isBoardEmpty(grid: Grid): boolean {
+  for (const row of grid) {
+    for (const cell of row) {
+      if (cell !== null) {
+        return false;
+      }
+    }
+  }
+  return true;
+}

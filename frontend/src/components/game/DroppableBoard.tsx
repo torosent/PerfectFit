@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useMemo } from 'react';
+import { memo, useMemo, useEffect, useState } from 'react';
 import { useDroppable } from '@dnd-kit/core';
 import { motion, AnimatePresence } from 'motion/react';
 import type { Grid, Piece, Position, ClearingCell } from '@/types';
@@ -30,6 +30,10 @@ export interface DroppableBoardProps {
   onCellClick?: (row: number, col: number) => void;
   /** Whether the board is disabled (non-interactive) */
   disabled?: boolean;
+  /** Screen shake intensity (0 = none, 1 = small, 2 = medium, 3 = large) */
+  shakeIntensity?: number;
+  /** Whether danger mode is active (few valid placements left) */
+  isDangerMode?: boolean;
 }
 
 /**
@@ -116,12 +120,29 @@ function LineShockwave({
   );
 }
 
-
+/**
+ * Screen shake keyframes based on intensity
+ */
+const shakeKeyframes = {
+  0: { x: 0, y: 0 },
+  1: { 
+    x: [0, -2, 2, -1, 1, 0],
+    y: [0, 1, -1, 1, -1, 0],
+  },
+  2: {
+    x: [0, -4, 4, -3, 3, -1, 1, 0],
+    y: [0, 2, -2, 2, -2, 1, -1, 0],
+  },
+  3: {
+    x: [0, -6, 6, -5, 5, -3, 3, -1, 1, 0],
+    y: [0, 3, -3, 3, -3, 2, -2, 1, -1, 0],
+  },
+};
 
 /**
  * Droppable game board that accepts piece drops
  * Shows preview of piece at hover position with validity indication
- * Includes animations for cell states
+ * Includes animations for cell states, screen shake, and danger mode
  */
 function DroppableBoardComponent({
   grid,
@@ -132,10 +153,47 @@ function DroppableBoardComponent({
   lastPlacedCells = [],
   onCellClick,
   disabled = false,
+  shakeIntensity = 0,
+  isDangerMode = false,
 }: DroppableBoardProps) {
   const { isOver, setNodeRef } = useDroppable({
     id: 'game-board',
   });
+
+  // Track shake animation state
+  const [isShaking, setIsShaking] = useState(false);
+
+  // Track reduced motion preference
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    // Set initial value
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = (event: MediaQueryListEvent) => {
+      setPrefersReducedMotion(event.matches);
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+
+    return () => {
+      mediaQuery.removeEventListener('change', handleChange);
+    };
+  }, []);
+  // Trigger shake when intensity changes and is > 0
+  useEffect(() => {
+    if (shakeIntensity > 0 && !prefersReducedMotion) {
+      setIsShaking(true);
+      const timer = setTimeout(() => setIsShaking(false), 300);
+      return () => clearTimeout(timer);
+    }
+  }, [shakeIntensity, prefersReducedMotion]);
 
   // Calculate drag preview cells based on hover position and dragged piece
   const dragPreviewCells = useMemo<HighlightedCell[]>(() => {
@@ -242,6 +300,11 @@ function DroppableBoardComponent({
     return set;
   }, [potentialLineClear]);
 
+  // Get shake animation values
+  const shakeAnimation = isShaking && shakeIntensity > 0 
+    ? shakeKeyframes[shakeIntensity as keyof typeof shakeKeyframes] 
+    : shakeKeyframes[0];
+
   return (
     <div
       className="overflow-x-auto overflow-y-hidden"
@@ -254,103 +317,138 @@ function DroppableBoardComponent({
           transition-all duration-150
           ${isOver ? 'ring-2 ring-teal-500 ring-opacity-50' : ''}
         `}
-        style={{ backgroundColor: '#0a1929', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.3)' }}
+        style={{ 
+          backgroundColor: '#0a1929', 
+          borderWidth: isDangerMode ? 2 : 1, 
+          borderStyle: 'solid', 
+          borderColor: isDangerMode ? 'var(--danger-border, rgba(239, 68, 68, 0.6))' : 'rgba(20, 184, 166, 0.3)',
+          boxShadow: isDangerMode ? '0 0 20px var(--danger-glow, rgba(239, 68, 68, 0.3)), 0 0 40px var(--danger-glow, rgba(239, 68, 68, 0.1))' : undefined,
+        }}
         initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.3 }}
+        animate={{ 
+          opacity: 1, 
+          scale: 1,
+          ...shakeAnimation,
+        }}
+        transition={isShaking ? { duration: 0.3 } : { duration: 0.3 }}
         role="grid"
         aria-label="Game board - drop pieces here"
         data-mobile-optimized="true"
         data-min-cell-size="44"
-    >
-      {/* Line clearing shockwave effects */}
-      <AnimatePresence>
-        {clearingLines.rows.map((row, i) => (
-          <LineShockwave 
-            key={`row-${row}`} 
-            type="row" 
-            index={row} 
-            delay={i * 0.1}
-          />
-        ))}
-        {clearingLines.columns.map((col, i) => (
-          <LineShockwave 
-            key={`col-${col}`} 
-            type="column" 
-            index={col} 
-            delay={clearingLines.rows.length * 0.1 + i * 0.1}
-          />
-        ))}
-      </AnimatePresence>
-
-      <div
-        className="grid grid-cols-8 gap-0.5 sm:gap-1 relative z-10"
-        style={{
-          // Mobile-first: use 44px cells for touch targets, max out at 400px on larger screens
-          // 8 cells × 44px = 352px minimum for touch-friendly mobile
-          width: 'max(352px, min(90vw, 400px))',
-          height: 'max(352px, min(90vw, 400px))',
-        }}
       >
-        {grid.map((row, rowIndex) =>
-          row.map((cellValue, colIndex) => {
-            const key = `${rowIndex}-${colIndex}`;
-            const highlight = highlightMap.get(key);
-            const isHighlighted = highlight !== undefined;
-            const isPreview = highlight?.isPreview ?? false;
-            const clearingColor = clearingMap.get(key);
-            const isClearing = clearingColor !== undefined;
-            const placedIndex = placedMap.get(key);
-            const isRecentlyPlaced = placedIndex !== undefined;
-            const isPendingClear = pendingClearSet.has(key);
-
-            return (
-              <div
-                key={key}
-                className={`
-                  relative
-                  ${isPreview && draggedPiece ? 'z-10' : ''}
-                  ${isClearing ? 'z-20' : ''}
-                `}
-              >
-                <AnimatedCell
-                  value={cellValue}
-                  row={rowIndex}
-                  col={colIndex}
-                  isHighlighted={isHighlighted}
-                  isValidPlacement={highlight?.isValid ?? true}
-                  isClearing={isClearing}
-                  clearingColor={clearingColor}
-                  isRecentlyPlaced={isRecentlyPlaced}
-                  placedIndex={placedIndex ?? 0}
-                  isPendingClear={isPendingClear}
-                  onClick={!disabled ? onCellClick : undefined}
-                />
-                
-                {/* Ghost preview for dragged piece */}
-                {isPreview && draggedPiece && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className={`
-                      absolute inset-0 rounded-sm pointer-events-none
-                      ${highlight?.isValid 
-                        ? 'border-2 border-green-400' 
-                        : 'border-2 border-red-400'
-                      }
-                    `}
-                    style={{
-                      backgroundColor: highlight?.isValid 
-                        ? `${draggedPiece.color}66` // 40% opacity
-                        : 'rgba(239, 68, 68, 0.4)',
-                    }}
-                  />
-                )}
-              </div>
-            );
-          })
+        {/* Danger mode pulsing border overlay */}
+        {isDangerMode && (
+          <motion.div
+            className="absolute inset-0 rounded-xl pointer-events-none z-40"
+            style={{
+              borderWidth: 2,
+              borderStyle: 'solid',
+              borderColor: 'var(--danger-border, rgba(239, 68, 68, 0.6))',
+            }}
+            animate={{
+              opacity: [0.5, 1, 0.5],
+              borderColor: [
+                'rgba(239, 68, 68, 0.4)',
+                'rgba(239, 68, 68, 0.8)',
+                'rgba(239, 68, 68, 0.4)',
+              ],
+            }}
+            transition={{
+              duration: 1.5,
+              repeat: Infinity,
+              ease: 'easeInOut',
+            }}
+          />
         )}
-      </div>
+
+        {/* Line clearing shockwave effects */}
+        <AnimatePresence>
+          {clearingLines.rows.map((row, i) => (
+            <LineShockwave 
+              key={`row-${row}`} 
+              type="row" 
+              index={row} 
+              delay={i * 0.1}
+            />
+          ))}
+          {clearingLines.columns.map((col, i) => (
+            <LineShockwave 
+              key={`col-${col}`} 
+              type="column" 
+              index={col} 
+              delay={clearingLines.rows.length * 0.1 + i * 0.1}
+            />
+          ))}
+        </AnimatePresence>
+
+        <div
+          className="grid grid-cols-8 gap-0.5 sm:gap-1 relative z-10"
+          style={{
+            // Mobile-first: use 44px cells for touch targets, max out at 400px on larger screens
+            // 8 cells × 44px = 352px minimum for touch-friendly mobile
+            width: 'max(352px, min(90vw, 400px))',
+            height: 'max(352px, min(90vw, 400px))',
+          }}
+        >
+          {grid.map((row, rowIndex) =>
+            row.map((cellValue, colIndex) => {
+              const key = `${rowIndex}-${colIndex}`;
+              const highlight = highlightMap.get(key);
+              const isHighlighted = highlight !== undefined;
+              const isPreview = highlight?.isPreview ?? false;
+              const clearingColor = clearingMap.get(key);
+              const isClearing = clearingColor !== undefined;
+              const placedIndex = placedMap.get(key);
+              const isRecentlyPlaced = placedIndex !== undefined;
+              const isPendingClear = pendingClearSet.has(key);
+
+              return (
+                <div
+                  key={key}
+                  className={`
+                    relative
+                    ${isPreview && draggedPiece ? 'z-10' : ''}
+                    ${isClearing ? 'z-20' : ''}
+                  `}
+                >
+                  <AnimatedCell
+                    value={cellValue}
+                    row={rowIndex}
+                    col={colIndex}
+                    isHighlighted={isHighlighted}
+                    isValidPlacement={highlight?.isValid ?? true}
+                    isClearing={isClearing}
+                    clearingColor={clearingColor}
+                    isRecentlyPlaced={isRecentlyPlaced}
+                    placedIndex={placedIndex ?? 0}
+                    isPendingClear={isPendingClear}
+                    onClick={!disabled ? onCellClick : undefined}
+                  />
+                  
+                  {/* Ghost preview for dragged piece */}
+                  {isPreview && draggedPiece && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className={`
+                        absolute inset-0 rounded-sm pointer-events-none
+                        ${highlight?.isValid 
+                          ? 'border-2 border-green-400' 
+                          : 'border-2 border-red-400'
+                        }
+                      `}
+                      style={{
+                        backgroundColor: highlight?.isValid 
+                          ? `${draggedPiece.color}66` // 40% opacity
+                          : 'rgba(239, 68, 68, 0.4)',
+                      }}
+                    />
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
       </motion.div>
     </div>
   );
