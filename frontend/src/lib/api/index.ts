@@ -49,3 +49,19 @@ export {
   getAuditLogs,
   AdminApiError,
 } from './admin-client';
+
+export {
+  getGamificationStatus,
+  getChallenges,
+  getAchievements,
+  getSeasonPass,
+  getCosmetics,
+  getPersonalGoals,
+  useStreakFreeze,
+  equipCosmetic,
+  claimSeasonReward,
+  setTimezone,
+  getUserTimezone,
+  initializeTimezone,
+  GamificationApiError,
+} from './gamification-client';

@@ -1,6 +1,9 @@
 // Re-export all game types from this index file
 export * from './game';
 
+// Re-export all gamification types
+export * from './gamification';
+
 // Admin types
 export interface AdminUser {
   id: number;

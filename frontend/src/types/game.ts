@@ -100,3 +100,16 @@ export interface UpdateProfileResponse {
     avatar?: string;
   };
 }
+
+// Import gamification types for game end response
+import type { GameEndGamification } from './gamification';
+
+/**
+ * Response from end game endpoint including gamification data
+ */
+export interface GameEndResponse {
+  /** Final game state */
+  gameState: GameState;
+  /** Gamification updates (streak, challenges, achievements, etc.) */
+  gamification?: GameEndGamification;
+}
