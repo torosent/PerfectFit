@@ -52,7 +52,11 @@ public class GamificationRepository : IGamificationRepository
 
     public async Task UpdateUserAchievementAsync(UserAchievement userAchievement, CancellationToken ct = default)
     {
-        _context.UserAchievements.Update(userAchievement);
+        var entry = _context.Entry(userAchievement);
+        if (entry.State == EntityState.Detached)
+        {
+            _context.UserAchievements.Update(userAchievement);
+        }
         await _context.SaveChangesAsync(ct);
     }
 
@@ -75,7 +79,11 @@ public class GamificationRepository : IGamificationRepository
 
     public async Task UpdateAchievementAsync(Achievement achievement, CancellationToken ct = default)
     {
-        _context.Achievements.Update(achievement);
+        var entry = _context.Entry(achievement);
+        if (entry.State == EntityState.Detached)
+        {
+            _context.Achievements.Update(achievement);
+        }
         await _context.SaveChangesAsync(ct);
     }
 
@@ -147,7 +155,11 @@ public class GamificationRepository : IGamificationRepository
 
     public async Task UpdateUserChallengeAsync(UserChallenge userChallenge, CancellationToken ct = default)
     {
-        _context.UserChallenges.Update(userChallenge);
+        var entry = _context.Entry(userChallenge);
+        if (entry.State == EntityState.Detached)
+        {
+            _context.UserChallenges.Update(userChallenge);
+        }
         await _context.SaveChangesAsync(ct);
     }
 
@@ -293,7 +305,11 @@ public class GamificationRepository : IGamificationRepository
 
     public async Task UpdateCosmeticAsync(Cosmetic cosmetic, CancellationToken ct = default)
     {
-        _context.Cosmetics.Update(cosmetic);
+        var entry = _context.Entry(cosmetic);
+        if (entry.State == EntityState.Detached)
+        {
+            _context.Cosmetics.Update(cosmetic);
+        }
         await _context.SaveChangesAsync(ct);
     }
 
@@ -357,7 +373,11 @@ public class GamificationRepository : IGamificationRepository
 
     public async Task UpdateGoalAsync(PersonalGoal goal, CancellationToken ct = default)
     {
-        _context.PersonalGoals.Update(goal);
+        var entry = _context.Entry(goal);
+        if (entry.State == EntityState.Detached)
+        {
+            _context.PersonalGoals.Update(goal);
+        }
         await _context.SaveChangesAsync(ct);
     }
 
@@ -397,7 +417,11 @@ public class GamificationRepository : IGamificationRepository
 
     public async Task UpdateChallengeAsync(Challenge challenge, CancellationToken ct = default)
     {
-        _context.Challenges.Update(challenge);
+        var entry = _context.Entry(challenge);
+        if (entry.State == EntityState.Detached)
+        {
+            _context.Challenges.Update(challenge);
+        }
         await _context.SaveChangesAsync(ct);
     }
 
@@ -437,7 +461,11 @@ public class GamificationRepository : IGamificationRepository
 
     public async Task UpdateChallengeTemplateAsync(ChallengeTemplate template, CancellationToken ct = default)
     {
-        _context.ChallengeTemplates.Update(template);
+        var entry = _context.Entry(template);
+        if (entry.State == EntityState.Detached)
+        {
+            _context.ChallengeTemplates.Update(template);
+        }
         await _context.SaveChangesAsync(ct);
     }
 
@@ -473,7 +501,11 @@ public class GamificationRepository : IGamificationRepository
 
     public async Task UpdateSeasonAsync(Season season, CancellationToken ct = default)
     {
-        _context.Seasons.Update(season);
+        var entry = _context.Entry(season);
+        if (entry.State == EntityState.Detached)
+        {
+            _context.Seasons.Update(season);
+        }
         await _context.SaveChangesAsync(ct);
     }
 

@@ -36,7 +36,14 @@ public class UserRepository : IUserRepository
 
     public async Task UpdateAsync(User user, CancellationToken cancellationToken = default)
     {
-        _context.Users.Update(user);
+        // Only call Update if the entity isn't already tracked
+        // This prevents issues when the same entity is updated multiple times in a request
+        var entry = _context.Entry(user);
+        if (entry.State == Microsoft.EntityFrameworkCore.EntityState.Detached)
+        {
+            _context.Users.Update(user);
+        }
+        
         await _context.SaveChangesAsync(cancellationToken);
     }
 
