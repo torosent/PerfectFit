@@ -4,6 +4,10 @@ using PerfectFit.UseCases.Games.DTOs;
 using System.Net;
 using System.Net.Http.Json;
 
+// Web DTOs for game end response
+using GameEndResponseWebDto = PerfectFit.Web.DTOs.GameEndResponseWebDto;
+using GameStatusWebDto = PerfectFit.Web.DTOs.GameStatusWebDto;
+
 namespace PerfectFit.IntegrationTests.Endpoints;
 
 /// <summary>
@@ -154,9 +158,12 @@ public class GameEndpointsTests : IClassFixture<CustomWebApplicationFactory>
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
 
-        var gameState = await response.Content.ReadFromJsonAsync<GameStateDto>(CustomWebApplicationFactory.JsonOptions);
-        gameState.Should().NotBeNull();
-        gameState!.Status.Should().Be(GameStatusDto.Ended);
+        var endResponse = await response.Content.ReadFromJsonAsync<GameEndResponseWebDto>(CustomWebApplicationFactory.JsonOptions);
+        endResponse.Should().NotBeNull();
+        endResponse!.GameState.Should().NotBeNull();
+        endResponse.GameState.Status.Should().Be(GameStatusWebDto.Ended);
+        // Gamification should be null for unauthenticated users
+        endResponse.Gamification.Should().BeNull();
     }
 
     [Fact]

@@ -22,9 +22,9 @@ public record GamificationStatusDto(
 public record StreakDto(
     int CurrentStreak,
     int LongestStreak,
-    int FreezeTokens,
-    bool IsAtRisk,
-    DateTimeOffset ResetTime
+    int? FreezeTokens,
+    bool? IsAtRisk,
+    DateTimeOffset? ResetTime
 );
 
 /// <summary>
@@ -260,7 +260,7 @@ public record SeasonXPDto(
     int TotalXP,
     int NewTier,
     bool TierUp,
-    IReadOnlyList<int> NewRewardsAvailable
+    int NewRewardsCount
 );
 
 /// <summary>

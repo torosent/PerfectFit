@@ -74,3 +74,77 @@ public record PlacePieceResponseDto(
     int PiecesRemainingInTurn,
     bool NewTurnStarted
 );
+
+/// <summary>
+/// Response after ending a game
+/// </summary>
+public record GameEndResponseDto(
+    GameStateDto GameState,
+    GameEndGamificationResponseDto? Gamification
+);
+
+/// <summary>
+/// Gamification updates returned after a game ends.
+/// </summary>
+public record GameEndGamificationResponseDto(
+    StreakResponseDto Streak,
+    IReadOnlyList<ChallengeProgressResponseDto> ChallengeUpdates,
+    IReadOnlyList<AchievementUnlockResponseDto> NewAchievements,
+    SeasonXPResponseDto SeasonProgress,
+    IReadOnlyList<GoalProgressResponseDto> GoalUpdates
+);
+
+/// <summary>
+/// Streak update in game end response.
+/// </summary>
+public record StreakResponseDto(
+    int CurrentStreak,
+    int LongestStreak,
+    int? FreezeTokens,
+    bool? IsAtRisk,
+    DateTimeOffset? ResetTime
+);
+
+/// <summary>
+/// Challenge progress update.
+/// </summary>
+public record ChallengeProgressResponseDto(
+    int ChallengeId,
+    string ChallengeName,
+    int NewProgress,
+    bool JustCompleted,
+    int? XPEarned
+);
+
+/// <summary>
+/// Achievement unlock notification.
+/// </summary>
+public record AchievementUnlockResponseDto(
+    int AchievementId,
+    string Name,
+    string Description,
+    string IconUrl,
+    string RewardType,
+    int RewardValue
+);
+
+/// <summary>
+/// Season XP progress update.
+/// </summary>
+public record SeasonXPResponseDto(
+    int XPEarned,
+    int TotalXP,
+    int NewTier,
+    bool TierUp,
+    int NewRewardsCount
+);
+
+/// <summary>
+/// Personal goal progress update.
+/// </summary>
+public record GoalProgressResponseDto(
+    int GoalId,
+    string Description,
+    int NewProgress,
+    bool JustCompleted
+);

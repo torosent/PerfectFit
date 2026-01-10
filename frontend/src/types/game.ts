@@ -12,7 +12,8 @@ export type PieceType =
   | 'I' | 'O' | 'T' | 'S' | 'Z' | 'J' | 'L'  // Tetrominoes
   | 'DOT' | 'LINE2' | 'LINE3' | 'LINE5'       // Lines
   | 'CORNER' | 'BIG_CORNER'                    // Corners
-  | 'SQUARE_2X2' | 'SQUARE_3X3';              // Squares
+  | 'SQUARE_2X2' | 'SQUARE_3X3'               // Squares
+  | 'RECT_2X3';                                // Rectangles
 
 export interface Piece {
   type: PieceType;

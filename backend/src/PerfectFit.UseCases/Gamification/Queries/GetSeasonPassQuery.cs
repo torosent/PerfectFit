@@ -16,11 +16,16 @@ public class GetSeasonPassQueryHandler : IRequestHandler<GetSeasonPassQuery, Sea
 {
     private readonly IUserRepository _userRepository;
     private readonly ISeasonPassService _seasonPassService;
+    private readonly IGamificationRepository _gamificationRepository;
 
-    public GetSeasonPassQueryHandler(IUserRepository userRepository, ISeasonPassService seasonPassService)
+    public GetSeasonPassQueryHandler(
+        IUserRepository userRepository,
+        ISeasonPassService seasonPassService,
+        IGamificationRepository gamificationRepository)
     {
         _userRepository = userRepository;
         _seasonPassService = seasonPassService;
+        _gamificationRepository = gamificationRepository;
     }
 
     public async Task<SeasonPassResult> Handle(GetSeasonPassQuery request, CancellationToken cancellationToken)
@@ -40,6 +45,8 @@ public class GetSeasonPassQueryHandler : IRequestHandler<GetSeasonPassQuery, Sea
         }
 
         var rewards = await _seasonPassService.GetSeasonRewardsAsync(currentSeason.Id, cancellationToken);
+        var claimedRewardIds = await _gamificationRepository.GetClaimedRewardIdsAsync(userId, currentSeason.Id, cancellationToken);
+        var claimedSet = claimedRewardIds.ToHashSet();
 
         var rewardInfos = rewards.Select(r => new SeasonRewardInfo(
             RewardId: r.Id,
@@ -47,8 +54,8 @@ public class GetSeasonPassQueryHandler : IRequestHandler<GetSeasonPassQuery, Sea
             RewardType: r.RewardType,
             RewardValue: r.RewardValue,
             XPRequired: r.XPRequired,
-            IsClaimed: false, // TODO: Track claimed rewards in a separate table
-            CanClaim: user.CurrentSeasonTier >= r.Tier
+            IsClaimed: claimedSet.Contains(r.Id),
+            CanClaim: user.CurrentSeasonTier >= r.Tier && !claimedSet.Contains(r.Id)
         )).ToList();
 
         var seasonPassInfo = new SeasonPassInfo(

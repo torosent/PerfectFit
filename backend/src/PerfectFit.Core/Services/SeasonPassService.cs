@@ -75,6 +75,7 @@ public class SeasonPassService : ISeasonPassService
 
         return new SeasonXPResult(
             Success: true,
+            XPEarned: xpAmount,
             NewXP: user.SeasonPassXP,
             NewTier: newTier,
             TierUp: tierUp,

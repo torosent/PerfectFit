@@ -53,6 +53,8 @@ public class ChallengeService : IChallengeService
         {
             return new ChallengeProgressResult(
                 Success: false,
+                ChallengeId: userChallenge.ChallengeId,
+                ChallengeName: string.Empty,
                 NewProgress: userChallenge.CurrentProgress,
                 IsCompleted: userChallenge.IsCompleted,
                 XPEarned: 0,
@@ -74,6 +76,8 @@ public class ChallengeService : IChallengeService
 
         return new ChallengeProgressResult(
             Success: true,
+            ChallengeId: challenge.Id,
+            ChallengeName: challenge.Name,
             NewProgress: userChallenge.CurrentProgress,
             IsCompleted: userChallenge.IsCompleted,
             XPEarned: xpEarned);

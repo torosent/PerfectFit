@@ -123,6 +123,8 @@ public class PersonalGoalServiceTests
 
         // Assert
         result.Success.Should().BeTrue();
+        result.GoalId.Should().Be(1);
+        result.Description.Should().Be("Test goal");
         result.NewProgress.Should().Be(120);
         result.IsCompleted.Should().BeTrue();
         _repositoryMock.Verify(r => r.UpdateGoalAsync(goal, It.IsAny<CancellationToken>()), Times.Once);
@@ -139,6 +141,8 @@ public class PersonalGoalServiceTests
 
         // Assert
         result.Success.Should().BeTrue();
+        result.GoalId.Should().Be(1);
+        result.Description.Should().Be("Test goal");
         result.NewProgress.Should().Be(50);
         result.IsCompleted.Should().BeFalse();
     }

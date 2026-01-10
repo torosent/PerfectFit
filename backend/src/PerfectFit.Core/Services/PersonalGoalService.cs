@@ -52,6 +52,8 @@ public class PersonalGoalService : IPersonalGoalService
 
         return new GoalProgressResult(
             Success: true,
+            GoalId: goal.Id,
+            Description: goal.Description,
             NewProgress: goal.CurrentValue,
             IsCompleted: goal.IsCompleted);
     }

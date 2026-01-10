@@ -13,13 +13,18 @@ public class GetSeasonPassQueryTests
 {
     private readonly Mock<IUserRepository> _userRepositoryMock;
     private readonly Mock<ISeasonPassService> _seasonPassServiceMock;
+    private readonly Mock<IGamificationRepository> _gamificationRepositoryMock;
     private readonly GetSeasonPassQueryHandler _handler;
 
     public GetSeasonPassQueryTests()
     {
         _userRepositoryMock = new Mock<IUserRepository>();
         _seasonPassServiceMock = new Mock<ISeasonPassService>();
-        _handler = new GetSeasonPassQueryHandler(_userRepositoryMock.Object, _seasonPassServiceMock.Object);
+        _gamificationRepositoryMock = new Mock<IGamificationRepository>();
+        _handler = new GetSeasonPassQueryHandler(
+            _userRepositoryMock.Object,
+            _seasonPassServiceMock.Object,
+            _gamificationRepositoryMock.Object);
     }
 
     [Fact]
@@ -49,6 +54,10 @@ public class GetSeasonPassQueryTests
         _seasonPassServiceMock
             .Setup(x => x.GetSeasonRewardsAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(rewards);
+
+        _gamificationRepositoryMock
+            .Setup(x => x.GetClaimedRewardIdsAsync(It.IsAny<int>(), 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<int>());
 
         var query = new GetSeasonPassQuery(userId);
 
@@ -118,6 +127,10 @@ public class GetSeasonPassQueryTests
             .Setup(x => x.GetSeasonRewardsAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(rewards);
 
+        _gamificationRepositoryMock
+            .Setup(x => x.GetClaimedRewardIdsAsync(It.IsAny<int>(), 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<int>());
+
         var query = new GetSeasonPassQuery(userId);
 
         // Act
@@ -172,6 +185,10 @@ public class GetSeasonPassQueryTests
             .Setup(x => x.GetSeasonRewardsAsync(1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<SeasonReward>());
 
+        _gamificationRepositoryMock
+            .Setup(x => x.GetClaimedRewardIdsAsync(It.IsAny<int>(), 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<int>());
+
         var query = new GetSeasonPassQuery(userId);
 
         // Act
@@ -180,6 +197,60 @@ public class GetSeasonPassQueryTests
         // Assert
         result.HasActiveSeason.Should().BeTrue();
         result.SeasonPass!.Rewards.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Handle_ClaimedRewards_ShowsCorrectIsClaimed()
+    {
+        // Arrange
+        var userId = Guid.NewGuid();
+        var userIntId = 1;
+
+        var user = CreateUser(userIntId, userId, seasonXP: 500, tier: 3);
+        var season = CreateSeason(1, "Winter Season", 1);
+        var rewards = new List<SeasonReward>
+        {
+            CreateSeasonReward(1, 1, 1, RewardType.StreakFreeze, 1, 100),  // Claimed
+            CreateSeasonReward(2, 1, 2, RewardType.Cosmetic, 1, 250),     // Not claimed, can claim
+            CreateSeasonReward(3, 1, 3, RewardType.StreakFreeze, 2, 500)  // Not claimed, can claim
+        };
+
+        _userRepositoryMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(user);
+
+        _seasonPassServiceMock
+            .Setup(x => x.GetCurrentSeasonAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(season);
+
+        _seasonPassServiceMock
+            .Setup(x => x.GetSeasonRewardsAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(rewards);
+
+        // Reward 1 is claimed
+        _gamificationRepositoryMock
+            .Setup(x => x.GetClaimedRewardIdsAsync(It.IsAny<int>(), 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<int> { 1 });
+
+        var query = new GetSeasonPassQuery(userId);
+
+        // Act
+        var result = await _handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        result.SeasonPass!.Rewards.Should().HaveCount(3);
+        
+        // Reward 1: claimed, cannot claim again
+        result.SeasonPass.Rewards[0].IsClaimed.Should().BeTrue();
+        result.SeasonPass.Rewards[0].CanClaim.Should().BeFalse();
+        
+        // Reward 2: not claimed, can claim
+        result.SeasonPass.Rewards[1].IsClaimed.Should().BeFalse();
+        result.SeasonPass.Rewards[1].CanClaim.Should().BeTrue();
+        
+        // Reward 3: not claimed, can claim
+        result.SeasonPass.Rewards[2].IsClaimed.Should().BeFalse();
+        result.SeasonPass.Rewards[2].CanClaim.Should().BeTrue();
     }
 
     private static User CreateUser(int id, Guid externalGuid, int seasonXP = 0, int tier = 0)

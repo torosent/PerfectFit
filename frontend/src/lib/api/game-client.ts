@@ -1,5 +1,5 @@
 import { API_BASE_URL } from './index';
-import type { GameState, PlacePieceRequest, PlacePieceResponse } from '@/types';
+import type { GameState, PlacePieceRequest, PlacePieceResponse, GameEndResponse } from '@/types';
 
 /**
  * Custom error class for API errors
@@ -124,10 +124,10 @@ export async function placePiece(
  * End the current game
  * @param gameId - The game session ID
  * @param token - Optional JWT token for authenticated users
- * @returns The final game state
+ * @returns The final game state with gamification updates
  */
-export async function endGame(gameId: string, token?: string | null): Promise<GameState> {
-  return apiFetch<GameState>(`/api/games/${gameId}/end`, {
+export async function endGame(gameId: string, token?: string | null): Promise<GameEndResponse> {
+  return apiFetch<GameEndResponse>(`/api/games/${gameId}/end`, {
     method: 'POST',
     token,
   });

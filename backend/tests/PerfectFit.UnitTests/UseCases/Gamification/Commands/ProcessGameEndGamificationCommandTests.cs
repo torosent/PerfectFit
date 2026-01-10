@@ -128,7 +128,7 @@ public class ProcessGameEndGamificationCommandTests
 
         var user = CreateUser(userIntId, userId);
         var gameSession = CreateGameSession(gameSessionId, userIntId);
-        var expectedSeasonResult = new SeasonXPResult(true, 150, 2, true, 1);
+        var expectedSeasonResult = new SeasonXPResult(true, 20, 150, 2, true, 1);
 
         SetupMocksForSuccessfulProcessing(user, gameSession, seasonXPResult: expectedSeasonResult);
 
@@ -233,7 +233,7 @@ public class ProcessGameEndGamificationCommandTests
         var user = CreateUser(userIntId, userId);
         var gameSession = CreateGameSession(gameSessionId, userIntId);
         var personalGoals = new List<PersonalGoal> { CreatePersonalGoal(1, userIntId) };
-        var expectedGoalResult = new GoalProgressResult(true, 50, false);
+        var expectedGoalResult = new GoalProgressResult(true, 1, "Test goal", 50, false);
 
         SetupMocksForSuccessfulProcessing(user, gameSession);
 
@@ -296,7 +296,7 @@ public class ProcessGameEndGamificationCommandTests
 
         _seasonPassServiceMock
             .Setup(x => x.AddXPAsync(It.IsAny<User>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(seasonXPResult ?? new SeasonXPResult(true, 50, 1, false, 0));
+            .ReturnsAsync(seasonXPResult ?? new SeasonXPResult(true, 10, 50, 1, false, 0));
 
         _personalGoalServiceMock
             .Setup(x => x.GetActiveGoalsAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))

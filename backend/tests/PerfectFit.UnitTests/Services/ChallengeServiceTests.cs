@@ -130,6 +130,8 @@ public class ChallengeServiceTests
 
         // Assert
         result.Success.Should().BeTrue();
+        result.ChallengeId.Should().Be(1);
+        result.ChallengeName.Should().Be("Challenge 1");
         result.NewProgress.Should().Be(50);
         result.IsCompleted.Should().BeFalse();
         result.XPEarned.Should().Be(0);
@@ -152,6 +154,8 @@ public class ChallengeServiceTests
 
         // Assert
         result.Success.Should().BeTrue();
+        result.ChallengeId.Should().Be(1);
+        result.ChallengeName.Should().Be("Challenge 1");
         result.NewProgress.Should().Be(110);
         result.IsCompleted.Should().BeTrue();
         result.XPEarned.Should().Be(50);
@@ -175,6 +179,8 @@ public class ChallengeServiceTests
 
         // Assert
         result.Success.Should().BeTrue();
+        result.ChallengeId.Should().Be(1);
+        result.ChallengeName.Should().Be("Challenge 1");
         result.IsCompleted.Should().BeTrue();
         result.XPEarned.Should().Be(0); // No XP because already completed
     }

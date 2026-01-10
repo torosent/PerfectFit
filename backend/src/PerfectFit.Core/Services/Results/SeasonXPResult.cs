@@ -4,6 +4,7 @@ namespace PerfectFit.Core.Services.Results;
 /// Result of adding XP to a user's season pass.
 /// </summary>
 /// <param name="Success">Whether the XP was successfully added.</param>
+/// <param name="XPEarned">The amount of XP earned in this operation.</param>
 /// <param name="NewXP">The user's new total season XP.</param>
 /// <param name="NewTier">The user's new season tier.</param>
 /// <param name="TierUp">Whether the user leveled up to a new tier.</param>
@@ -11,6 +12,7 @@ namespace PerfectFit.Core.Services.Results;
 /// <param name="ErrorMessage">Error message if the operation failed.</param>
 public record SeasonXPResult(
     bool Success,
+    int XPEarned,
     int NewXP,
     int NewTier,
     bool TierUp,

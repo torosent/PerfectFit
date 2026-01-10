@@ -73,11 +73,11 @@ public class CompleteChallengeCommandTests
 
         _challengeServiceMock
             .Setup(x => x.UpdateProgressAsync(It.IsAny<UserChallenge>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new ChallengeProgressResult(true, 100, true, 50));
+            .ReturnsAsync(new ChallengeProgressResult(true, 1, "Test Challenge", 100, true, 50));
 
         _seasonPassServiceMock
             .Setup(x => x.AddXPAsync(It.IsAny<User>(), It.IsAny<int>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new SeasonXPResult(true, 100, 1, false, 0));
+            .ReturnsAsync(new SeasonXPResult(true, 50, 100, 1, false, 0));
 
         var command = new CompleteChallengeCommand(userId, challengeId, gameSessionId);
 

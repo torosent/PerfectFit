@@ -1,8 +1,11 @@
 using MediatR;
+using Microsoft.Extensions.Logging;
 using PerfectFit.Core.Enums;
 using PerfectFit.Core.GameLogic;
 using PerfectFit.Core.GameLogic.Pieces;
 using PerfectFit.Core.Interfaces;
+using PerfectFit.UseCases.Gamification;
+using PerfectFit.UseCases.Gamification.Commands;
 using PerfectFit.UseCases.Games.DTOs;
 using System.Text.Json;
 
@@ -12,12 +15,13 @@ namespace PerfectFit.UseCases.Games.Commands;
 /// Command to end an active game.
 /// </summary>
 /// <param name="GameId">The ID of the game to end.</param>
-public record EndGameCommand(Guid GameId) : IRequest<EndGameResult>;
+/// <param name="UserId">Optional user ID for gamification processing.</param>
+public record EndGameCommand(Guid GameId, int? UserId = null) : IRequest<EndGameResult>;
 
 /// <summary>
 /// Result of the end game operation.
 /// </summary>
-public record EndGameResult(bool Found, GameStateDto? GameState);
+public record EndGameResult(bool Found, GameEndResponseDto? Response);
 
 /// <summary>
 /// Handler for ending a game session.
@@ -25,10 +29,17 @@ public record EndGameResult(bool Found, GameStateDto? GameState);
 public class EndGameCommandHandler : IRequestHandler<EndGameCommand, EndGameResult>
 {
     private readonly IGameSessionRepository _gameSessionRepository;
+    private readonly IMediator _mediator;
+    private readonly ILogger<EndGameCommandHandler> _logger;
 
-    public EndGameCommandHandler(IGameSessionRepository gameSessionRepository)
+    public EndGameCommandHandler(
+        IGameSessionRepository gameSessionRepository,
+        IMediator mediator,
+        ILogger<EndGameCommandHandler> logger)
     {
         _gameSessionRepository = gameSessionRepository;
+        _mediator = mediator;
+        _logger = logger;
     }
 
     public async Task<EndGameResult> Handle(EndGameCommand request, CancellationToken cancellationToken)
@@ -37,7 +48,7 @@ public class EndGameCommandHandler : IRequestHandler<EndGameCommand, EndGameResu
 
         if (session is null)
         {
-            return new EndGameResult(Found: false, GameState: null);
+            return new EndGameResult(Found: false, Response: null);
         }
 
         // End the game (idempotent - won't throw if already ended)
@@ -47,8 +58,83 @@ public class EndGameCommandHandler : IRequestHandler<EndGameCommand, EndGameResu
         // Reconstruct game engine for DTO
         var gameState = DeserializeGameState(session);
         var engine = GameEngine.FromState(gameState);
+        var gameStateDto = MapToDto(session, engine);
 
-        return new EndGameResult(Found: true, GameState: MapToDto(session, engine));
+        // Process gamification if user is authenticated
+        GameEndGamificationResponseDto? gamificationDto = null;
+        if (request.UserId.HasValue && session.UserId.HasValue && session.UserId == request.UserId)
+        {
+            try
+            {
+                var userGuid = CreateUserGuid(request.UserId.Value);
+                var gamificationCommand = new ProcessGameEndGamificationCommand(userGuid, request.GameId);
+                var gamificationResult = await _mediator.Send(gamificationCommand, cancellationToken);
+                gamificationDto = MapGamificationToDto(gamificationResult);
+            }
+            catch (Exception ex)
+            {
+                // Log error but don't fail the game end
+                // Gamification is optional enhancement
+                _logger.LogError(ex, "Failed to process gamification for user {UserId} and game {GameId}", 
+                    request.UserId, request.GameId);
+            }
+        }
+
+        return new EndGameResult(Found: true, Response: new GameEndResponseDto(gameStateDto, gamificationDto));
+    }
+
+    /// <summary>
+    /// Creates a deterministic GUID from a user ID that matches the gamification command handler's conversion.
+    /// </summary>
+    private static Guid CreateUserGuid(int userId)
+    {
+        // The handlers use: Math.Abs(BitConverter.ToInt32(bytes, 0) % 1000000) + 1
+        // So we encode (userId - 1) to get the correct userId after decoding
+        var valueToEncode = userId - 1;
+        var bytes = new byte[16];
+        BitConverter.GetBytes(valueToEncode).CopyTo(bytes, 0);
+        return new Guid(bytes);
+    }
+
+    private static GameEndGamificationResponseDto MapGamificationToDto(GameEndGamificationResult result)
+    {
+        return new GameEndGamificationResponseDto(
+            Streak: new StreakResponseDto(
+                CurrentStreak: result.Streak.NewStreak,
+                LongestStreak: result.Streak.LongestStreak,
+                FreezeTokens: null, // Not available in StreakResult - fetch from user status endpoint for full details
+                IsAtRisk: null, // Not available in StreakResult - determined by streak service based on time
+                ResetTime: null // Not available in StreakResult - fetch from user status endpoint for full details
+            ),
+            ChallengeUpdates: result.ChallengeUpdates.Select(c => new ChallengeProgressResponseDto(
+                ChallengeId: c.ChallengeId,
+                ChallengeName: c.ChallengeName,
+                NewProgress: c.NewProgress,
+                JustCompleted: c.IsCompleted,
+                XPEarned: c.IsCompleted ? c.XPEarned : null
+            )).ToList(),
+            NewAchievements: result.AchievementUpdates.UnlockedAchievements.Select(a => new AchievementUnlockResponseDto(
+                AchievementId: a.Id,
+                Name: a.Name,
+                Description: a.Description,
+                IconUrl: a.IconUrl,
+                RewardType: a.RewardType.ToString(),
+                RewardValue: a.RewardValue
+            )).ToList(),
+            SeasonProgress: new SeasonXPResponseDto(
+                XPEarned: result.SeasonProgress.XPEarned,
+                TotalXP: result.SeasonProgress.NewXP,
+                NewTier: result.SeasonProgress.NewTier,
+                TierUp: result.SeasonProgress.TierUp,
+                NewRewardsCount: result.SeasonProgress.RewardsAvailable
+            ),
+            GoalUpdates: result.GoalUpdates.Select(g => new GoalProgressResponseDto(
+                GoalId: g.GoalId,
+                Description: g.Description,
+                NewProgress: g.NewProgress,
+                JustCompleted: g.IsCompleted
+            )).ToList()
+        );
     }
 
     private record StoredPiece(PieceType Type, int Rotation);

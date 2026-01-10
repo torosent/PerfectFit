@@ -3,6 +3,7 @@ import type { GameState, Position, ClearingCell } from '@/types';
 import * as gameClient from '@/lib/api/game-client';
 import * as leaderboardClient from '@/lib/api/leaderboard-client';
 import { useAuthStore } from './auth-store';
+import { useGamificationStore } from './gamification-store';
 import * as antiCheat from '@/lib/anti-cheat';
 import { countTotalValidPlacements, isBoardEmpty } from '@/lib/game-logic/pieces';
 
@@ -346,8 +347,13 @@ export const useGameStore = create<GameStore>((set, get) => ({
     try {
       // Get auth token if available
       const token = useAuthStore.getState().token;
-      const finalState = await gameClient.endGame(gameState.id, token);
-      set({ gameState: finalState, isLoading: false, selectedPieceIndex: null });
+      const response = await gameClient.endGame(gameState.id, token);
+      set({ gameState: response.gameState, isLoading: false, selectedPieceIndex: null });
+      
+      // Process gamification data if returned
+      if (response.gamification) {
+        useGamificationStore.getState().processGameEndGamification(response.gamification);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to end game';
       set({ error: message, isLoading: false });

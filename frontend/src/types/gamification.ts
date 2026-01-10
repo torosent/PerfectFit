@@ -317,8 +317,8 @@ export interface SeasonXPGain {
   newTier: number;
   /** Whether the user leveled up */
   tierUp: boolean;
-  /** IDs of new rewards available to claim */
-  newRewardsAvailable: number[];
+  /** Count of new rewards available to claim */
+  newRewardsCount: number;
 }
 
 /** Progress update for a personal goal (matches GoalProgressDto) */

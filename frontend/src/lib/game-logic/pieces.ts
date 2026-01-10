@@ -58,6 +58,11 @@ export const PIECE_SHAPES: Record<PieceType, PieceShape> = {
     [1, 1, 1],
     [1, 1, 1],
   ],
+  // Rectangles
+  RECT_2X3: [
+    [1, 1, 1],
+    [1, 1, 1],
+  ],
 };
 
 /**
@@ -83,6 +88,8 @@ export const PIECE_COLORS: Record<PieceType, string> = {
   // Squares
   SQUARE_2X2: '#CD853F', // Peru
   SQUARE_3X3: '#8B4513', // Saddle Brown
+  // Rectangles
+  RECT_2X3: '#4682B4', // Steel Blue
 };
 
 /**
