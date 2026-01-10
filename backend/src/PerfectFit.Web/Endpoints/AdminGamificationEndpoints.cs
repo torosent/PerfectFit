@@ -119,6 +119,25 @@ public static class AdminGamificationEndpoints
             .Produces(StatusCodes.Status404NotFound)
             .Produces<EntityInUseResponse>(StatusCodes.Status409Conflict);
 
+        // POST /api/admin/gamification/challenge-templates/{id}/activate - Create active challenge from template
+        group.MapPost("/challenge-templates/{id:int}/activate", ActivateChallengeFromTemplate)
+            .WithName("AdminActivateChallengeFromTemplate")
+            .WithSummary("Create an active challenge from a template (for immediate activation)")
+            .Produces<ActivateChallengeResponse>(StatusCodes.Status201Created)
+            .Produces(StatusCodes.Status400BadRequest)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden)
+            .Produces(StatusCodes.Status404NotFound)
+            .Produces(StatusCodes.Status409Conflict);
+
+        // POST /api/admin/gamification/challenges/rotate - Trigger challenge rotation
+        group.MapPost("/challenges/rotate", TriggerChallengeRotation)
+            .WithName("AdminTriggerChallengeRotation")
+            .WithSummary("Trigger challenge rotation to create challenges from all active templates")
+            .Produces<ChallengeRotationResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
         #endregion
 
         #region Cosmetic Endpoints
@@ -639,6 +658,179 @@ public static class AdminGamificationEndpoints
         return Results.NoContent();
     }
 
+    /// <summary>
+    /// Creates an active challenge from a template immediately.
+    /// </summary>
+    private static async Task<IResult> ActivateChallengeFromTemplate(
+        int id,
+        ClaimsPrincipal user,
+        IGamificationRepository repo,
+        IAdminAuditRepository auditRepo,
+        CancellationToken cancellationToken = default)
+    {
+        var adminUserId = GetAdminUserId(user);
+        if (adminUserId == null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var template = await repo.GetChallengeTemplateByIdAsync(id, cancellationToken);
+        if (template == null)
+        {
+            return Results.NotFound(new { Message = $"Challenge template {id} not found" });
+        }
+
+        if (!template.IsActive)
+        {
+            return Results.BadRequest(new { Message = "Cannot activate a challenge from an inactive template" });
+        }
+
+        // Calculate dates based on challenge type
+        var now = DateTime.UtcNow;
+        var startDate = now.Date;
+        var endDate = template.Type == ChallengeType.Daily
+            ? startDate.AddDays(1)
+            : startDate.AddDays(7);
+
+        // Check if an active challenge from this template already exists
+        var existingChallenges = await repo.GetActiveChallengesAsync(template.Type, cancellationToken);
+        var existingFromTemplate = existingChallenges.FirstOrDefault(c => c.ChallengeTemplateId == id);
+        if (existingFromTemplate != null)
+        {
+            return Results.Conflict(new { Message = $"An active challenge from this template already exists (ID: {existingFromTemplate.Id})" });
+        }
+
+        // Create the challenge
+        var challenge = Challenge.Create(
+            template.Name,
+            template.Description,
+            template.Type,
+            template.TargetValue,
+            template.XPReward,
+            startDate,
+            endDate,
+            template.Id
+        );
+
+        await repo.AddChallengeAsync(challenge, cancellationToken);
+
+        // Create audit log
+        var auditLog = AdminAuditLog.Create(
+            adminUserId.Value,
+            AdminAction.ActivateChallengeTemplate,
+            null,
+            $"Activated challenge from template '{template.Name}' (TemplateID: {id}, ChallengeID: {challenge.Id})"
+        );
+        await auditRepo.AddAsync(auditLog, cancellationToken);
+
+        return Results.Created($"/api/admin/gamification/challenges/{challenge.Id}", new ActivateChallengeResponse(
+            ChallengeId: challenge.Id,
+            TemplateId: template.Id,
+            Name: challenge.Name,
+            Type: challenge.Type.ToString(),
+            StartDate: challenge.StartDate,
+            EndDate: challenge.EndDate,
+            Message: $"Challenge '{challenge.Name}' activated successfully"
+        ));
+    }
+
+    /// <summary>
+    /// Triggers challenge rotation to create challenges from all active templates.
+    /// </summary>
+    private static async Task<IResult> TriggerChallengeRotation(
+        ClaimsPrincipal user,
+        IGamificationRepository repo,
+        IAdminAuditRepository auditRepo,
+        CancellationToken cancellationToken = default)
+    {
+        var adminUserId = GetAdminUserId(user);
+        if (adminUserId == null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var now = DateTime.UtcNow;
+        var createdChallenges = new List<ChallengeInfo>();
+        var skippedTemplates = new List<string>();
+
+        // Get all active templates
+        var dailyTemplates = await repo.GetChallengeTemplatesAsync(ChallengeType.Daily, cancellationToken);
+        var weeklyTemplates = await repo.GetChallengeTemplatesAsync(ChallengeType.Weekly, cancellationToken);
+
+        // Get existing active challenges
+        var activeDailyChallenges = await repo.GetActiveChallengesAsync(ChallengeType.Daily, cancellationToken);
+        var activeWeeklyChallenges = await repo.GetActiveChallengesAsync(ChallengeType.Weekly, cancellationToken);
+
+        // Process daily templates
+        foreach (var template in dailyTemplates.Where(t => t.IsActive))
+        {
+            if (activeDailyChallenges.Any(c => c.ChallengeTemplateId == template.Id))
+            {
+                skippedTemplates.Add($"{template.Name} (Daily) - already active");
+                continue;
+            }
+
+            var startDate = now.Date;
+            var endDate = startDate.AddDays(1);
+
+            var challenge = Challenge.Create(
+                template.Name,
+                template.Description,
+                ChallengeType.Daily,
+                template.TargetValue,
+                template.XPReward,
+                startDate,
+                endDate,
+                template.Id
+            );
+
+            await repo.AddChallengeAsync(challenge, cancellationToken);
+            createdChallenges.Add(new ChallengeInfo(challenge.Id, template.Name, "Daily"));
+        }
+
+        // Process weekly templates
+        foreach (var template in weeklyTemplates.Where(t => t.IsActive))
+        {
+            if (activeWeeklyChallenges.Any(c => c.ChallengeTemplateId == template.Id))
+            {
+                skippedTemplates.Add($"{template.Name} (Weekly) - already active");
+                continue;
+            }
+
+            var startDate = now.Date;
+            var endDate = startDate.AddDays(7);
+
+            var challenge = Challenge.Create(
+                template.Name,
+                template.Description,
+                ChallengeType.Weekly,
+                template.TargetValue,
+                template.XPReward,
+                startDate,
+                endDate,
+                template.Id
+            );
+
+            await repo.AddChallengeAsync(challenge, cancellationToken);
+            createdChallenges.Add(new ChallengeInfo(challenge.Id, template.Name, "Weekly"));
+        }
+
+        // Create audit log
+        var auditLog = AdminAuditLog.Create(
+            adminUserId.Value,
+            AdminAction.TriggerChallengeRotation,
+            null,
+            $"Triggered challenge rotation: created {createdChallenges.Count} challenges, skipped {skippedTemplates.Count} templates"
+        );
+        await auditRepo.AddAsync(auditLog, cancellationToken);
+
+        return Results.Ok(new ChallengeRotationResponse(
+            CreatedChallenges: createdChallenges,
+            SkippedTemplates: skippedTemplates,
+            Message: $"Challenge rotation complete. Created {createdChallenges.Count} challenges, skipped {skippedTemplates.Count} templates."
+        ));
+    }
+
     #endregion
 
     #region Cosmetic Handlers
@@ -947,3 +1139,38 @@ public static class AdminGamificationEndpoints
 
     #endregion
 }
+
+#region Response DTOs for Challenge Activation
+
+/// <summary>
+/// Response for activating a single challenge from a template.
+/// </summary>
+public record ActivateChallengeResponse(
+    int ChallengeId,
+    int TemplateId,
+    string Name,
+    string Type,
+    DateTime StartDate,
+    DateTime EndDate,
+    string Message
+);
+
+/// <summary>
+/// Information about a created challenge.
+/// </summary>
+public record ChallengeInfo(
+    int ChallengeId,
+    string Name,
+    string Type
+);
+
+/// <summary>
+/// Response for triggering challenge rotation.
+/// </summary>
+public record ChallengeRotationResponse(
+    IReadOnlyList<ChallengeInfo> CreatedChallenges,
+    IReadOnlyList<string> SkippedTemplates,
+    string Message
+);
+
+#endregion

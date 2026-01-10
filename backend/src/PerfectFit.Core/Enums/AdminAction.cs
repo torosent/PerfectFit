@@ -19,6 +19,8 @@ public enum AdminAction
     CreateChallengeTemplate = 21,
     UpdateChallengeTemplate = 22,
     DeleteChallengeTemplate = 23,
+    ActivateChallengeTemplate = 24,
+    TriggerChallengeRotation = 25,
 
     // Cosmetic management actions (30-39)
     ViewCosmetics = 30,

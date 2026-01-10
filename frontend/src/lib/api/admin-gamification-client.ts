@@ -262,6 +262,73 @@ export async function deleteAdminChallengeTemplate(
   await handleAdminGamificationResponse<void>(response);
 }
 
+/**
+ * Response from activating a single challenge template
+ */
+export interface ActivateChallengeResponse {
+  challengeId: number;
+  templateId: number;
+  name: string;
+  type: string;
+  startDate: string;
+  endDate: string;
+  message: string;
+}
+
+/**
+ * Information about a created challenge
+ */
+export interface ChallengeInfo {
+  challengeId: number;
+  name: string;
+  type: string;
+}
+
+/**
+ * Response from triggering challenge rotation
+ */
+export interface ChallengeRotationResponse {
+  createdChallenges: ChallengeInfo[];
+  skippedTemplates: string[];
+  message: string;
+}
+
+/**
+ * Activate a challenge from a specific template (admin only)
+ * Creates an active challenge immediately from the template
+ * @param templateId - Challenge template ID to activate
+ * @param token - JWT authentication token
+ * @returns Information about the created challenge
+ * @throws AdminApiError with status 409 if challenge from this template already exists
+ */
+export async function activateChallengeTemplate(
+  templateId: number,
+  token: string
+): Promise<ActivateChallengeResponse> {
+  const response = await fetch(`${GAMIFICATION_BASE}/challenge-templates/${templateId}/activate`, {
+    method: 'POST',
+    headers: getAdminGamificationHeaders(token),
+  });
+
+  return handleAdminGamificationResponse<ActivateChallengeResponse>(response);
+}
+
+/**
+ * Trigger challenge rotation to create challenges from all active templates (admin only)
+ * @param token - JWT authentication token
+ * @returns Information about created and skipped challenges
+ */
+export async function triggerChallengeRotation(
+  token: string
+): Promise<ChallengeRotationResponse> {
+  const response = await fetch(`${GAMIFICATION_BASE}/challenges/rotate`, {
+    method: 'POST',
+    headers: getAdminGamificationHeaders(token),
+  });
+
+  return handleAdminGamificationResponse<ChallengeRotationResponse>(response);
+}
+
 // ============================================================================
 // COSMETICS
 // ============================================================================

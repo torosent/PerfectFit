@@ -6,6 +6,9 @@ import {
   createAdminChallengeTemplate,
   updateAdminChallengeTemplate,
   deleteAdminChallengeTemplate,
+  activateChallengeTemplate,
+  triggerChallengeRotation,
+  type ChallengeRotationResponse,
 } from '@/lib/api/admin-gamification-client';
 import { AdminApiError } from '@/lib/api/admin-client';
 import { useToken } from '@/lib/stores/auth-store';
@@ -101,6 +104,9 @@ export function ChallengeTemplatesTable({ refreshTrigger }: ChallengeTemplatesTa
   const [newValues, setNewValues] = useState<EditValues>(defaultEditValues);
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isRotating, setIsRotating] = useState(false);
+  const [rotationResult, setRotationResult] = useState<ChallengeRotationResponse | null>(null);
+  const [activatingId, setActivatingId] = useState<number | null>(null);
 
   const pageSize = 10;
 
@@ -241,6 +247,49 @@ export function ChallengeTemplatesTable({ refreshTrigger }: ChallengeTemplatesTa
     }
   };
 
+  const handleRotateAll = async () => {
+    if (!token) return;
+
+    setIsRotating(true);
+    setRotationResult(null);
+    setError(null);
+
+    try {
+      const result = await triggerChallengeRotation(token);
+      setRotationResult(result);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to rotate challenges';
+      setError(message);
+    } finally {
+      setIsRotating(false);
+    }
+  };
+
+  const handleActivateSingle = async (templateId: number) => {
+    if (!token) return;
+
+    setActivatingId(templateId);
+    setError(null);
+
+    try {
+      const result = await activateChallengeTemplate(templateId, token);
+      setRotationResult({
+        createdChallenges: [{ challengeId: result.challengeId, name: result.name, type: result.type }],
+        skippedTemplates: [],
+        message: result.message,
+      });
+    } catch (err) {
+      if (err instanceof AdminApiError && err.statusCode === 409) {
+        setError('A challenge from this template is already active.');
+      } else {
+        const message = err instanceof Error ? err.message : 'Failed to activate';
+        setError(message);
+      }
+    } finally {
+      setActivatingId(null);
+    }
+  };
+
   const handleKeyDown = (e: React.KeyboardEvent, id: number) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -262,18 +311,48 @@ export function ChallengeTemplatesTable({ refreshTrigger }: ChallengeTemplatesTa
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex justify-between items-center flex-wrap gap-2">
         <h3 className="text-lg font-semibold text-white">Challenge Templates</h3>
-        {!isCreating && (
+        <div className="flex gap-2">
           <button
-            onClick={() => setIsCreating(true)}
-            className="px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors"
-            style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}
+            onClick={handleRotateAll}
+            disabled={isRotating}
+            className="px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors disabled:opacity-50 bg-purple-600 hover:bg-purple-700"
+            title="Create active challenges from all active templates"
           >
-            Add Template
+            {isRotating ? '🔄 Rotating...' : '🔄 Rotate All'}
           </button>
-        )}
+          {!isCreating && (
+            <button
+              onClick={() => setIsCreating(true)}
+              className="px-4 py-2 rounded-lg text-white text-sm font-medium transition-colors"
+              style={{ background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }}
+            >
+              Add Template
+            </button>
+          )}
+        </div>
       </div>
+
+      {/* Rotation Result */}
+      {rotationResult && (
+        <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-green-400">
+          <div className="font-medium mb-2">✅ {rotationResult.message}</div>
+          {rotationResult.createdChallenges.length > 0 && (
+            <div className="text-sm">
+              <span className="font-medium">Created:</span>{' '}
+              {rotationResult.createdChallenges.map((c) => `${c.name} (${c.type})`).join(', ')}
+            </div>
+          )}
+          {rotationResult.skippedTemplates.length > 0 && (
+            <div className="text-sm text-yellow-400">
+              <span className="font-medium">Skipped:</span>{' '}
+              {rotationResult.skippedTemplates.join(', ')}
+            </div>
+          )}
+          <button onClick={() => setRotationResult(null)} className="mt-2 text-sm underline">Dismiss</button>
+        </div>
+      )}
 
       {/* Error state */}
       {error && (
@@ -568,12 +647,24 @@ export function ChallengeTemplatesTable({ refreshTrigger }: ChallengeTemplatesTa
                         </div>
                       </div>
                     ) : (
-                      <button
-                        onClick={() => setDeleteConfirmId(item.id)}
-                        className="px-3 py-1.5 rounded text-sm text-red-400 hover:bg-red-500/10 transition-colors"
-                      >
-                        Delete
-                      </button>
+                      <div className="flex gap-2">
+                        {item.isActive && (
+                          <button
+                            onClick={() => handleActivateSingle(item.id)}
+                            disabled={activatingId === item.id}
+                            className="px-3 py-1.5 rounded text-sm text-purple-400 hover:bg-purple-500/10 transition-colors disabled:opacity-50"
+                            title="Create an active challenge from this template"
+                          >
+                            {activatingId === item.id ? '...' : '▶️ Activate'}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => setDeleteConfirmId(item.id)}
+                          className="px-3 py-1.5 rounded text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                          Delete
+                        </button>
+                      </div>
                     )}
                   </td>
                 </tr>
