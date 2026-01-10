@@ -12,6 +12,7 @@ public class CosmeticEntityTests
     public void Cosmetic_Create_SetsProperties()
     {
         // Arrange
+        var code = "theme_ocean_blue";
         var name = "Ocean Blue Theme";
         var description = "A calming blue board theme";
         var type = CosmeticType.BoardTheme;
@@ -20,10 +21,11 @@ public class CosmeticEntityTests
         var rarity = CosmeticRarity.Rare;
 
         // Act
-        var cosmetic = Cosmetic.Create(name, description, type, assetUrl, previewUrl, rarity);
+        var cosmetic = Cosmetic.Create(code, name, description, type, assetUrl, previewUrl, rarity);
 
         // Assert
         cosmetic.Id.Should().Be(0); // Not set until persisted
+        cosmetic.Code.Should().Be(code);
         cosmetic.Name.Should().Be(name);
         cosmetic.Description.Should().Be(description);
         cosmetic.Type.Should().Be(type);
@@ -38,6 +40,7 @@ public class CosmeticEntityTests
     {
         // Arrange & Act
         var cosmetic = Cosmetic.Create(
+            "theme_default",
             "Default Theme",
             "The default board theme",
             CosmeticType.BoardTheme,
@@ -55,6 +58,7 @@ public class CosmeticEntityTests
     {
         // Arrange & Act
         var act = () => Cosmetic.Create(
+            "badge_test",
             "",
             "Description",
             CosmeticType.Badge,
@@ -72,6 +76,7 @@ public class CosmeticEntityTests
     {
         // Arrange & Act
         var cosmetic = Cosmetic.Create(
+            "badge_simple",
             "Simple Badge",
             "",
             CosmeticType.Badge,
@@ -88,6 +93,7 @@ public class CosmeticEntityTests
     {
         // Arrange & Act
         var act = () => Cosmetic.Create(
+            "frame_test",
             "Test Cosmetic",
             "Description",
             CosmeticType.AvatarFrame,
@@ -101,13 +107,31 @@ public class CosmeticEntityTests
     }
 
     [Fact]
+    public void Cosmetic_Create_ThrowsWhenCodeEmpty()
+    {
+        // Arrange & Act
+        var act = () => Cosmetic.Create(
+            "",
+            "Test Cosmetic",
+            "Description",
+            CosmeticType.AvatarFrame,
+            "https://example.com/asset.png",
+            "https://example.com/preview.png",
+            CosmeticRarity.Epic);
+
+        // Assert
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("code");
+    }
+
+    [Fact]
     public void Cosmetic_Create_AllowsAllRarities()
     {
         // Arrange & Act
-        var common = Cosmetic.Create("Common", "Desc", CosmeticType.Badge, "url", "preview", CosmeticRarity.Common);
-        var rare = Cosmetic.Create("Rare", "Desc", CosmeticType.Badge, "url", "preview", CosmeticRarity.Rare);
-        var epic = Cosmetic.Create("Epic", "Desc", CosmeticType.Badge, "url", "preview", CosmeticRarity.Epic);
-        var legendary = Cosmetic.Create("Legendary", "Desc", CosmeticType.Badge, "url", "preview", CosmeticRarity.Legendary);
+        var common = Cosmetic.Create("badge_common", "Common", "Desc", CosmeticType.Badge, "url", "preview", CosmeticRarity.Common);
+        var rare = Cosmetic.Create("badge_rare", "Rare", "Desc", CosmeticType.Badge, "url", "preview", CosmeticRarity.Rare);
+        var epic = Cosmetic.Create("badge_epic", "Epic", "Desc", CosmeticType.Badge, "url", "preview", CosmeticRarity.Epic);
+        var legendary = Cosmetic.Create("badge_legendary", "Legendary", "Desc", CosmeticType.Badge, "url", "preview", CosmeticRarity.Legendary);
 
         // Assert
         common.Rarity.Should().Be(CosmeticRarity.Common);
@@ -120,9 +144,9 @@ public class CosmeticEntityTests
     public void Cosmetic_Create_AllowsAllTypes()
     {
         // Arrange & Act
-        var theme = Cosmetic.Create("Theme", "Desc", CosmeticType.BoardTheme, "url", "preview", CosmeticRarity.Common);
-        var frame = Cosmetic.Create("Frame", "Desc", CosmeticType.AvatarFrame, "url", "preview", CosmeticRarity.Common);
-        var badge = Cosmetic.Create("Badge", "Desc", CosmeticType.Badge, "url", "preview", CosmeticRarity.Common);
+        var theme = Cosmetic.Create("theme_test", "Theme", "Desc", CosmeticType.BoardTheme, "url", "preview", CosmeticRarity.Common);
+        var frame = Cosmetic.Create("frame_test", "Frame", "Desc", CosmeticType.AvatarFrame, "url", "preview", CosmeticRarity.Common);
+        var badge = Cosmetic.Create("badge_test", "Badge", "Desc", CosmeticType.Badge, "url", "preview", CosmeticRarity.Common);
 
         // Assert
         theme.Type.Should().Be(CosmeticType.BoardTheme);

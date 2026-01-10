@@ -39,10 +39,21 @@ public class User
     public int SeasonPassXP { get; private set; }
     public int CurrentSeasonTier { get; private set; }
 
+    // Gamification - Achievement tracking fields
+    public int TotalWins { get; private set; }
+    public int CurrentWinStreak { get; private set; }
+    public int PerfectGames { get; private set; }
+    public int HighAccuracyGames { get; private set; }
+    public int FastGames { get; private set; }
+    public int NightGames { get; private set; }
+
     // Gamification - Cosmetic fields
     public int? EquippedBoardThemeId { get; private set; }
     public int? EquippedAvatarFrameId { get; private set; }
     public int? EquippedBadgeId { get; private set; }
+
+    // Gamification - Notification tracking
+    public DateTime? LastStreakNotificationSentAt { get; private set; }
 
     // Navigation
     public ICollection<GameSession> GameSessions { get; private set; } = new List<GameSession>();
@@ -330,6 +341,78 @@ public class User
                 EquippedBadgeId = cosmeticId;
                 break;
         }
+    }
+
+    /// <summary>
+    /// Records that a streak expiry notification was sent.
+    /// </summary>
+    public void RecordStreakNotificationSent()
+    {
+        LastStreakNotificationSentAt = DateTime.UtcNow;
+    }
+
+    /// <summary>
+    /// Checks if a streak notification was sent within the specified hours.
+    /// </summary>
+    /// <param name="hours">Number of hours to check.</param>
+    /// <returns>True if a notification was sent within the specified hours; otherwise, false.</returns>
+    public bool WasStreakNotificationSentWithinHours(int hours)
+    {
+        if (!LastStreakNotificationSentAt.HasValue)
+        {
+            return false;
+        }
+
+        return (DateTime.UtcNow - LastStreakNotificationSentAt.Value).TotalHours < hours;
+    }
+
+    /// <summary>
+    /// Records a game win and updates related achievement tracking.
+    /// </summary>
+    public void RecordWin()
+    {
+        TotalWins++;
+        CurrentWinStreak++;
+    }
+
+    /// <summary>
+    /// Records a game loss and resets the win streak.
+    /// </summary>
+    public void RecordLoss()
+    {
+        CurrentWinStreak = 0;
+    }
+
+    /// <summary>
+    /// Records a perfect game (100% accuracy).
+    /// </summary>
+    public void RecordPerfectGame()
+    {
+        PerfectGames++;
+    }
+
+    /// <summary>
+    /// Records a high accuracy game (95%+ accuracy).
+    /// </summary>
+    public void RecordHighAccuracyGame()
+    {
+        HighAccuracyGames++;
+    }
+
+    /// <summary>
+    /// Records a fast game (completed under the time threshold).
+    /// </summary>
+    public void RecordFastGame()
+    {
+        FastGames++;
+    }
+
+    /// <summary>
+    /// Records a game played during night hours (midnight to 4 AM).
+    /// </summary>
+    public void RecordNightGame()
+    {
+        NightGames++;
     }
 
     #endregion

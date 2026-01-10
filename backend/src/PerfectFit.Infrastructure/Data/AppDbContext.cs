@@ -16,9 +16,11 @@ public class AppDbContext : DbContext
     public DbSet<Achievement> Achievements => Set<Achievement>();
     public DbSet<UserAchievement> UserAchievements => Set<UserAchievement>();
     public DbSet<Challenge> Challenges => Set<Challenge>();
+    public DbSet<ChallengeTemplate> ChallengeTemplates => Set<ChallengeTemplate>();
     public DbSet<UserChallenge> UserChallenges => Set<UserChallenge>();
     public DbSet<Season> Seasons => Set<Season>();
     public DbSet<SeasonReward> SeasonRewards => Set<SeasonReward>();
+    public DbSet<SeasonArchive> SeasonArchives => Set<SeasonArchive>();
     public DbSet<ClaimedSeasonReward> ClaimedSeasonRewards => Set<ClaimedSeasonReward>();
     public DbSet<Cosmetic> Cosmetics => Set<Cosmetic>();
     public DbSet<UserCosmetic> UserCosmetics => Set<UserCosmetic>();

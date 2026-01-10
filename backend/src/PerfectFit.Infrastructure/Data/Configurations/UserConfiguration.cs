@@ -138,6 +138,40 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.EquippedBadgeId)
             .HasColumnName("equipped_badge_id");
 
+        builder.Property(u => u.LastStreakNotificationSentAt)
+            .HasColumnName("last_streak_notification_sent_at");
+
+        // Gamification - Achievement tracking fields
+        builder.Property(u => u.TotalWins)
+            .HasColumnName("total_wins")
+            .HasDefaultValue(0)
+            .IsRequired();
+
+        builder.Property(u => u.CurrentWinStreak)
+            .HasColumnName("current_win_streak")
+            .HasDefaultValue(0)
+            .IsRequired();
+
+        builder.Property(u => u.PerfectGames)
+            .HasColumnName("perfect_games")
+            .HasDefaultValue(0)
+            .IsRequired();
+
+        builder.Property(u => u.HighAccuracyGames)
+            .HasColumnName("high_accuracy_games")
+            .HasDefaultValue(0)
+            .IsRequired();
+
+        builder.Property(u => u.FastGames)
+            .HasColumnName("fast_games")
+            .HasDefaultValue(0)
+            .IsRequired();
+
+        builder.Property(u => u.NightGames)
+            .HasColumnName("night_games")
+            .HasDefaultValue(0)
+            .IsRequired();
+
         // Global query filter for soft delete - excludes deleted users by default
         builder.HasQueryFilter(u => !u.IsDeleted);
 

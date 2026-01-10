@@ -36,6 +36,16 @@ public interface ICosmeticService
     Task<bool> GrantCosmeticAsync(User user, int cosmeticId, ObtainedFrom source, CancellationToken ct = default);
 
     /// <summary>
+    /// Grants a cosmetic to a user by code. Idempotent - returns true if already owned.
+    /// </summary>
+    /// <param name="user">The user to grant the cosmetic to.</param>
+    /// <param name="cosmeticCode">The code of the cosmetic to grant.</param>
+    /// <param name="source">How the cosmetic was obtained.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <returns>True if the cosmetic was granted or already owned.</returns>
+    Task<bool> GrantCosmeticByCodeAsync(User user, string cosmeticCode, ObtainedFrom source, CancellationToken ct = default);
+
+    /// <summary>
     /// Equips a cosmetic for a user.
     /// </summary>
     /// <param name="user">The user equipping the cosmetic.</param>

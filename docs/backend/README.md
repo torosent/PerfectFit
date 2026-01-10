@@ -11,12 +11,27 @@ backend/
 ├── PerfectFit.sln             # Solution file
 ├── src/
 │   ├── PerfectFit.Core/       # Domain layer
+│   │   ├── Entities/          # Domain entities (incl. gamification)
+│   │   ├── Enums/             # Enumerations
+│   │   ├── GameLogic/         # Core game logic
+│   │   ├── Interfaces/        # Repository contracts
+│   │   └── Services/          # Domain services (6 gamification services)
 │   ├── PerfectFit.UseCases/   # Application layer
+│   │   ├── Auth/              # Authentication use cases
+│   │   ├── Games/             # Game use cases
+│   │   ├── Gamification/      # Gamification commands/queries
+│   │   └── Leaderboard/       # Leaderboard use cases
 │   ├── PerfectFit.Infrastructure/ # Data access layer
+│   │   ├── Data/              # EF Core, repositories, seed data
+│   │   ├── Jobs/              # Background jobs (4 jobs)
+│   │   ├── Identity/          # Auth infrastructure
+│   │   └── Services/          # External services
 │   └── PerfectFit.Web/        # API layer
+│       ├── Endpoints/         # Minimal API endpoints (incl. gamification)
+│       └── DTOs/              # Request/response DTOs
 └── tests/
-    ├── PerfectFit.UnitTests/      # Unit tests
-    └── PerfectFit.IntegrationTests/ # Integration tests
+    ├── PerfectFit.UnitTests/      # Unit tests (730+)
+    └── PerfectFit.IntegrationTests/ # Integration tests (100+)
 ```
 
 ## Quick Start
@@ -67,3 +82,4 @@ dotnet test --collect:"XPlat Code Coverage"
 - [Admin API](./admin-api.md) - Admin endpoints and user management
 - [Configuration](./configuration.md) - All configuration options
 - [Database](./database.md) - Database schema and migrations
+- [Gamification](../gamification.md) - Gamification system documentation

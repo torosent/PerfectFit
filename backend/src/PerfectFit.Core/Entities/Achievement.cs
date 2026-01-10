@@ -14,6 +14,11 @@ public class Achievement
     public int RewardValue { get; private set; }
     public bool IsSecret { get; private set; }
     public int DisplayOrder { get; private set; }
+    
+    /// <summary>
+    /// Optional code reference for cosmetic rewards. Used instead of hard-coded IDs.
+    /// </summary>
+    public string? RewardCosmeticCode { get; private set; }
 
     // Navigation properties
     public ICollection<UserAchievement> UserAchievements { get; private set; } = new List<UserAchievement>();
@@ -30,7 +35,8 @@ public class Achievement
         RewardType rewardType,
         int rewardValue,
         bool isSecret = false,
-        int displayOrder = 0)
+        int displayOrder = 0,
+        string? rewardCosmeticCode = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
         ArgumentException.ThrowIfNullOrWhiteSpace(description, nameof(description));
@@ -45,7 +51,8 @@ public class Achievement
             RewardType = rewardType,
             RewardValue = rewardValue,
             IsSecret = isSecret,
-            DisplayOrder = displayOrder
+            DisplayOrder = displayOrder,
+            RewardCosmeticCode = rewardCosmeticCode
         };
     }
 }

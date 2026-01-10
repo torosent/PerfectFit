@@ -81,13 +81,15 @@ public class CosmeticServiceTests
             .ReturnsAsync(cosmetic);
         _repositoryMock.Setup(r => r.GetUserCosmeticAsync(user.Id, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync((UserCosmetic?)null);
+        _repositoryMock.Setup(r => r.TryAddUserCosmeticAsync(It.IsAny<UserCosmetic>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
 
         // Act
         var result = await _service.GrantCosmeticAsync(user, 1, ObtainedFrom.Achievement);
 
         // Assert
         result.Should().BeTrue();
-        _repositoryMock.Verify(r => r.AddUserCosmeticAsync(It.IsAny<UserCosmetic>(), It.IsAny<CancellationToken>()), Times.Once);
+        _repositoryMock.Verify(r => r.TryAddUserCosmeticAsync(It.IsAny<UserCosmetic>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -281,6 +283,7 @@ public class CosmeticServiceTests
         CosmeticRarity rarity = CosmeticRarity.Common)
     {
         var cosmetic = Cosmetic.Create(
+            $"cosmetic_{id}",
             $"Cosmetic {id}",
             $"Description {id}",
             type,

@@ -75,6 +75,15 @@ public class InMemoryUserRepository : IUserRepository
         return Task.FromResult(users);
     }
 
+    public Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        IEnumerable<User> users = _users.Values
+            .Where(u => !u.IsDeleted)
+            .OrderBy(u => u.Id)
+            .ToList();
+        return Task.FromResult(users);
+    }
+
     public Task<int> GetCountAsync(CancellationToken cancellationToken = default)
     {
         var count = _users.Values.Count(u => !u.IsDeleted);
@@ -109,5 +118,36 @@ public class InMemoryUserRepository : IUserRepository
             count++;
         }
         return Task.FromResult(count);
+    }
+
+    public Task<IReadOnlyList<User>> GetUsersWithActiveStreaksAsync(CancellationToken cancellationToken = default)
+    {
+        var users = _users.Values
+            .Where(u => u.CurrentStreak > 0 && !u.IsDeleted)
+            .ToList();
+        return Task.FromResult<IReadOnlyList<User>>(users);
+    }
+
+    public Task<bool> TryClaimStreakNotificationAsync(int userId, int cooldownHours, CancellationToken cancellationToken = default)
+    {
+        var threshold = DateTime.UtcNow.AddHours(-cooldownHours);
+        
+        if (!_users.TryGetValue(userId, out var user))
+        {
+            return Task.FromResult(false);
+        }
+        
+        // Check if already notified within cooldown using atomic compare-and-swap semantics
+        // Note: ConcurrentDictionary doesn't provide true atomic updates, but this is sufficient for testing
+        lock (_idLock)
+        {
+            if (user.LastStreakNotificationSentAt != null && user.LastStreakNotificationSentAt >= threshold)
+            {
+                return Task.FromResult(false);
+            }
+            
+            user.RecordStreakNotificationSent();
+            return Task.FromResult(true);
+        }
     }
 }

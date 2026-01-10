@@ -4,9 +4,11 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using PerfectFit.Core.Configuration;
 using PerfectFit.Infrastructure;
+using PerfectFit.Infrastructure.Data.SeedData;
 using PerfectFit.Infrastructure.Identity;
 using PerfectFit.UseCases.Games.Commands;
 using PerfectFit.Web.Endpoints;
@@ -54,6 +56,9 @@ if (!builder.Configuration.GetValue<bool>("UseInMemoryStorage"))
 {
     builder.Services.AddDatabaseMigration();
 }
+
+// Add gamification background jobs (challenge rotation, season transitions, streak notifications)
+builder.Services.AddGamificationJobs();
 
 // Add MediatR for CQRS
 builder.Services.AddMediatR(cfg =>
@@ -231,6 +236,20 @@ if (app.Environment.IsDevelopment())
     {
         options.SwaggerEndpoint("/swagger/v1/swagger.json", "PerfectFit API v1");
     });
+}
+
+// Seed gamification data based on configuration (not just development mode)
+// Note: Migrations are run first by DatabaseMigrationService (AddDatabaseMigration)
+// before the application starts accepting requests
+var gamificationSettings = builder.Configuration.GetSection(GamificationSettings.SectionName).Get<GamificationSettings>();
+if (gamificationSettings?.SeedOnStartup == true && !builder.Configuration.GetValue<bool>("UseInMemoryStorage"))
+{
+    using var scope = app.Services.CreateScope();
+    var dbContext = scope.ServiceProvider.GetRequiredService<PerfectFit.Infrastructure.Data.AppDbContext>();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    // Seed data (migrations are handled separately by DatabaseMigrationService)
+    await dbContext.SeedGamificationDataAsync(logger);
 }
 
 app.UseHttpsRedirection();

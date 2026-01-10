@@ -12,10 +12,12 @@ namespace PerfectFit.Core.Services;
 public class AchievementService : IAchievementService
 {
     private readonly IGamificationRepository _repository;
+    private readonly ICosmeticService _cosmeticService;
 
-    public AchievementService(IGamificationRepository repository)
+    public AchievementService(IGamificationRepository repository, ICosmeticService cosmeticService)
     {
         _repository = repository;
+        _cosmeticService = cosmeticService;
     }
 
     /// <inheritdoc />
@@ -54,6 +56,12 @@ public class AchievementService : IAchievementService
                 var userAchievement = UserAchievement.Create(user.Id, achievement.Id);
                 userAchievement.Unlock();
                 await _repository.AddUserAchievementAsync(userAchievement, ct);
+
+                // Grant cosmetic reward if applicable
+                if (achievement.RewardType == RewardType.Cosmetic && !string.IsNullOrEmpty(achievement.RewardCosmeticCode))
+                {
+                    await _cosmeticService.GrantCosmeticByCodeAsync(user, achievement.RewardCosmeticCode, ObtainedFrom.Achievement, ct);
+                }
 
                 newlyUnlocked.Add(achievement);
                 totalRewards += achievement.RewardValue;
@@ -100,12 +108,39 @@ public class AchievementService : IAchievementService
     {
         return condition.Type.ToLowerInvariant() switch
         {
+            // Original condition types
             "score" => user.HighScore,
             "streak" => user.CurrentStreak,
             "games" => user.GamesPlayed,
             "challenges" => await _repository.GetCompletedChallengeCountAsync(user.Id, ct),
+            
+            // New condition types matching seed data
+            "totalwins" => user.TotalWins,
+            "streakdays" => user.CurrentStreak,
+            "seasontier" => user.CurrentSeasonTier,
+            "winstreak" => user.CurrentWinStreak,
+            "perfectgames" => user.PerfectGames,
+            "highaccuracygames" => user.HighAccuracyGames,
+            "gamesundertime" => user.FastGames,
+            "nightgames" => user.NightGames,
+            "cosmeticsincategory" => await GetMaxCosmeticsInAnyCategoryAsync(user.Id, ct),
+            
             _ => 0
         };
+    }
+
+    private async Task<int> GetMaxCosmeticsInAnyCategoryAsync(int userId, CancellationToken ct)
+    {
+        var userCosmetics = await _repository.GetUserCosmeticsAsync(userId, ct);
+        if (!userCosmetics.Any())
+        {
+            return 0;
+        }
+
+        // Group by cosmetic type and return the max count in any category
+        return userCosmetics
+            .GroupBy(uc => uc.Cosmetic?.Type)
+            .Max(g => g.Count());
     }
 
     private static UnlockCondition? ParseUnlockCondition(string json)

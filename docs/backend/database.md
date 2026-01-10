@@ -81,9 +81,124 @@ Users 1 ←─────→ N GameSessions
   │
   │
   └──── 1 ←─────→ N LeaderboardEntries
-                        │
-                        └──── 1 ←─────→ 1 GameSessions
+  │                     │
+  │                     └──── 1 ←─────→ 1 GameSessions
+  │
+  └──── 1 ←─────→ N UserAchievements ────→ N Achievements
+  │
+  └──── 1 ←─────→ N UserChallenges ────→ N Challenges
+  │
+  └──── 1 ←─────→ N UserCosmetics ────→ N Cosmetics
+  │
+  └──── 1 ←─────→ N ClaimedSeasonRewards ────→ N SeasonRewards ────→ 1 Season
+  │
+  └──── 1 ←─────→ N PersonalGoals
+  │
+  └──── 1 ←─────→ N SeasonArchives ────→ 1 Season
 ```
+
+## Gamification Tables
+
+### Achievements Table
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `Id` | int | PK, auto-increment | Achievement ID |
+| `Name` | string | Required | Achievement name |
+| `Description` | string | Required | Achievement description |
+| `Category` | int | Required | Category enum (Progression, Skill, etc.) |
+| `Rarity` | int | Required | Rarity enum (Common to Legendary) |
+| `XpReward` | int | Required | XP awarded on unlock |
+| `Conditions` | string (JSON) | Required | Unlock conditions |
+| `RewardCosmeticCode` | string | Nullable | Code of cosmetic reward |
+| `IconUrl` | string | Nullable | Achievement icon URL |
+| `IsActive` | bool | Default: true | Whether achievement is available |
+
+### Challenges Table
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `Id` | int | PK, auto-increment | Challenge ID |
+| `Name` | string | Required | Challenge name |
+| `Description` | string | Required | Challenge description |
+| `Type` | int | Required | ChallengeType enum (Daily, Weekly) |
+| `TargetType` | int | Required | Target type (Score, Lines, Combo, etc.) |
+| `TargetValue` | int | Required | Value to achieve |
+| `XpReward` | int | Required | XP awarded on completion |
+| `StartDate` | datetime | Required | When challenge starts |
+| `EndDate` | datetime | Required | When challenge expires |
+| `IsActive` | bool | Default: true | Whether challenge is active |
+| `ChallengeTemplateId` | int | Nullable, FK | Source template for rotation |
+
+### Seasons Table
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `Id` | int | PK, auto-increment | Season ID |
+| `Name` | string | Required | Season name |
+| `Theme` | string | Nullable | Season theme |
+| `StartDate` | datetime | Required | Season start |
+| `EndDate` | datetime | Required | Season end |
+| `MaxTiers` | int | Default: 50 | Number of tiers |
+| `IsActive` | bool | Default: true | Current active season |
+
+### SeasonRewards Table
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `Id` | int | PK, auto-increment | Reward ID |
+| `SeasonId` | int | FK, Required | Associated season |
+| `Tier` | int | Required | Tier number (1-50) |
+| `RewardType` | int | Required | Type (XP, Cosmetic, StreakFreeze) |
+| `RewardValue` | int | Required | Amount or cosmetic ID |
+| `Description` | string | Nullable | Reward description |
+
+### Cosmetics Table
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `Id` | int | PK, auto-increment | Cosmetic ID |
+| `Code` | string | Required, Unique | Stable identifier (e.g., "theme_ocean") |
+| `Name` | string | Required | Display name |
+| `Description` | string | Nullable | Description |
+| `Type` | int | Required | CosmeticType (BoardTheme, AvatarFrame, Badge) |
+| `Rarity` | int | Required | Rarity tier |
+| `ImageUrl` | string | Nullable | Preview image |
+| `IsDefault` | bool | Default: false | Available to all users |
+
+### ChallengeTemplates Table
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `Id` | int | PK, auto-increment | Template ID |
+| `Name` | string | Required | Template name |
+| `Description` | string | Required | Template description |
+| `Type` | int | Required | Daily or Weekly |
+| `TargetType` | int | Required | What to track |
+| `TargetValue` | int | Required | Target value |
+| `XpReward` | int | Required | XP reward |
+| `IsActive` | bool | Default: true | Whether template is active |
+
+### User Gamification Columns
+
+Additional columns on the Users table:
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `CurrentStreak` | int | Current streak days |
+| `LongestStreak` | int | Best streak achieved |
+| `LastPlayedAt` | datetime | Last game timestamp |
+| `StreakFreezeCount` | int | Available freeze tokens |
+| `CurrentSeasonTier` | int | Current tier in active season |
+| `SeasonXp` | int | XP earned this season |
+| `PreferredTimezone` | string | User's timezone for streak reset |
+| `TotalWins` | int | Total games completed |
+| `PerfectGames` | int | Games with 100% accuracy |
+| `HighAccuracyGames` | int | Games with 95%+ accuracy |
+| `FastGames` | int | Games completed quickly |
+| `NightGames` | int | Games played at night |
+| `CurrentWinStreak` | int | Consecutive wins |
+| `LastStreakNotificationSentAt` | datetime | Dedup for notifications |
 
 ## JSON Data Formats
 

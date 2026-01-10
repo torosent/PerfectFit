@@ -307,6 +307,7 @@ public class GamificationEndpointsTests
         db.Users.Add(user);
 
         var cosmetic = Cosmetic.Create(
+            code: "theme_default",
             name: "Default Theme",
             description: "The default board theme",
             type: CosmeticType.BoardTheme,
@@ -345,6 +346,7 @@ public class GamificationEndpointsTests
         db.Users.Add(user);
 
         var boardTheme = Cosmetic.Create(
+            code: "theme_board",
             name: "Board Theme",
             description: "A board theme",
             type: CosmeticType.BoardTheme,
@@ -354,6 +356,7 @@ public class GamificationEndpointsTests
             isDefault: true
         );
         var badge = Cosmetic.Create(
+            code: "badge_test",
             name: "Test Badge",
             description: "A badge",
             type: CosmeticType.Badge,
@@ -538,6 +541,7 @@ public class GamificationEndpointsTests
         db.Users.Add(user);
 
         var cosmetic = Cosmetic.Create(
+            code: "theme_owned",
             name: "Owned Theme",
             description: "A theme owned by user",
             type: CosmeticType.BoardTheme,
@@ -579,6 +583,7 @@ public class GamificationEndpointsTests
         db.Users.Add(user);
 
         var cosmetic = Cosmetic.Create(
+            code: "theme_notowned",
             name: "Not Owned Theme",
             description: "A theme not owned by user",
             type: CosmeticType.BoardTheme,

@@ -51,6 +51,10 @@ public class ChallengeConfiguration : IEntityTypeConfiguration<Challenge>
             .HasDefaultValue(true)
             .IsRequired();
 
+        builder.Property(c => c.ChallengeTemplateId)
+            .HasColumnName("challenge_template_id")
+            .IsRequired(false);
+
         // Index on Type for filtering daily/weekly
         builder.HasIndex(c => c.Type)
             .HasDatabaseName("ix_challenges_type");
@@ -58,6 +62,17 @@ public class ChallengeConfiguration : IEntityTypeConfiguration<Challenge>
         // Index on IsActive and date range for finding current challenges
         builder.HasIndex(c => new { c.IsActive, c.StartDate, c.EndDate })
             .HasDatabaseName("ix_challenges_active_dates");
+
+        // Unique index on template ID + start date for multi-instance deduplication
+        // Prevents duplicate challenges from being created by concurrent job instances
+        builder.HasIndex(c => new { c.ChallengeTemplateId, c.StartDate })
+            .HasDatabaseName("ix_challenges_template_start_date")
+            .HasFilter("challenge_template_id IS NOT NULL")
+            .IsUnique();
+
+        // Note: We intentionally do NOT have a unique constraint on (Type, StartDate, EndDate)
+        // to allow multiple active challenges per day (e.g., multiple daily challenges from different templates).
+        // Idempotency is handled by the unique index on (ChallengeTemplateId, StartDate) above.
 
         // Navigation
         builder.HasMany(c => c.UserChallenges)

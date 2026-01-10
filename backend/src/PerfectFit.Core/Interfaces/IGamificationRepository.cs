@@ -23,21 +23,46 @@ public interface IGamificationRepository
     Task<UserChallenge?> GetUserChallengeAsync(int userId, int challengeId, CancellationToken ct = default);
     Task AddUserChallengeAsync(UserChallenge userChallenge, CancellationToken ct = default);
     Task UpdateUserChallengeAsync(UserChallenge userChallenge, CancellationToken ct = default);
+    Task AddChallengeAsync(Challenge challenge, CancellationToken ct = default);
+    Task UpdateChallengeAsync(Challenge challenge, CancellationToken ct = default);
+
+    // Challenge template methods
+    Task<IReadOnlyList<ChallengeTemplate>> GetChallengeTemplatesAsync(ChallengeType? type = null, CancellationToken ct = default);
+    Task AddChallengeTemplateAsync(ChallengeTemplate template, CancellationToken ct = default);
 
     // Season methods
     Task<Season?> GetCurrentSeasonAsync(CancellationToken ct = default);
     Task<Season?> GetSeasonByIdAsync(int seasonId, CancellationToken ct = default);
+    Task<IReadOnlyList<Season>> GetAllSeasonsAsync(CancellationToken ct = default);
     Task<IReadOnlyList<SeasonReward>> GetSeasonRewardsAsync(int seasonId, CancellationToken ct = default);
     Task<SeasonReward?> GetSeasonRewardByIdAsync(int seasonRewardId, CancellationToken ct = default);
     Task<IReadOnlyList<int>> GetClaimedRewardIdsAsync(int userId, int seasonId, CancellationToken ct = default);
     Task AddClaimedRewardAsync(int userId, int seasonRewardId, CancellationToken ct = default);
+    /// <summary>
+    /// Attempts to add a claimed reward, handling unique constraint violations gracefully.
+    /// </summary>
+    /// <returns>True if the reward was claimed or already claimed; false on other errors.</returns>
+    Task<bool> TryAddClaimedRewardAsync(int userId, int seasonRewardId, CancellationToken ct = default);
+    Task AddSeasonAsync(Season season, CancellationToken ct = default);
+    Task UpdateSeasonAsync(Season season, CancellationToken ct = default);
+    Task AddSeasonRewardAsync(SeasonReward reward, CancellationToken ct = default);
+
+    // Season archive methods
+    Task AddSeasonArchiveAsync(SeasonArchive archive, CancellationToken ct = default);
+    Task<IReadOnlyList<SeasonArchive>> GetUserSeasonArchivesAsync(int userId, CancellationToken ct = default);
 
     // Cosmetic methods
     Task<IReadOnlyList<Cosmetic>> GetAllCosmeticsAsync(CosmeticType? type = null, CancellationToken ct = default);
     Task<Cosmetic?> GetCosmeticByIdAsync(int cosmeticId, CancellationToken ct = default);
+    Task<Cosmetic?> GetCosmeticByCodeAsync(string code, CancellationToken ct = default);
     Task<IReadOnlyList<UserCosmetic>> GetUserCosmeticsAsync(int userId, CancellationToken ct = default);
     Task<UserCosmetic?> GetUserCosmeticAsync(int userId, int cosmeticId, CancellationToken ct = default);
     Task AddUserCosmeticAsync(UserCosmetic userCosmetic, CancellationToken ct = default);
+    /// <summary>
+    /// Attempts to add a user cosmetic, handling unique constraint violations gracefully.
+    /// </summary>
+    /// <returns>True if the cosmetic was granted or already owned; false on other errors.</returns>
+    Task<bool> TryAddUserCosmeticAsync(UserCosmetic userCosmetic, CancellationToken ct = default);
 
     // Personal goal methods
     Task<IReadOnlyList<PersonalGoal>> GetActiveGoalsAsync(int userId, CancellationToken ct = default);

@@ -61,6 +61,13 @@ public class UserRepository : IUserRepository
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<IEnumerable<User>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .OrderBy(u => u.Id)
+            .ToListAsync(cancellationToken);
+    }
+
     public async Task<int> GetCountAsync(CancellationToken cancellationToken = default)
     {
         return await _context.Users.CountAsync(cancellationToken);
@@ -116,6 +123,57 @@ public class UserRepository : IUserRepository
             
             await _context.SaveChangesAsync(cancellationToken);
             return users.Count;
+        }
+    }
+
+    public async Task<IReadOnlyList<User>> GetUsersWithActiveStreaksAsync(CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .Where(u => u.CurrentStreak > 0 && !u.IsDeleted)
+            .ToListAsync(cancellationToken);
+    }
+
+    public async Task<bool> TryClaimStreakNotificationAsync(int userId, int cooldownHours, CancellationToken cancellationToken = default)
+    {
+        var threshold = DateTime.UtcNow.AddHours(-cooldownHours);
+        
+        try
+        {
+            // Atomic update: only updates if not recently notified
+            // Uses database-level WHERE clause to prevent race conditions
+            var rowsAffected = await _context.Users
+                .Where(u => u.Id == userId)
+                .Where(u => u.LastStreakNotificationSentAt == null || u.LastStreakNotificationSentAt < threshold)
+                .ExecuteUpdateAsync(
+                    s => s.SetProperty(u => u.LastStreakNotificationSentAt, DateTime.UtcNow),
+                    cancellationToken);
+            
+            return rowsAffected > 0;
+        }
+        catch (InvalidOperationException)
+        {
+            // Fallback for providers (such as the EF in-memory provider) that do not support ExecuteUpdateAsync
+            if (_context.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
+            {
+                throw;
+            }
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
+            
+            if (user == null)
+            {
+                return false;
+            }
+            
+            // Check if already notified within cooldown
+            if (user.LastStreakNotificationSentAt != null && user.LastStreakNotificationSentAt >= threshold)
+            {
+                return false;
+            }
+            
+            user.RecordStreakNotificationSent();
+            await _context.SaveChangesAsync(cancellationToken);
+            return true;
         }
     }
 }

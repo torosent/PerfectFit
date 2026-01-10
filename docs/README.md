@@ -6,21 +6,23 @@ Welcome to the PerfectFit documentation. This comprehensive guide covers archite
 
 1. [Project Overview](./overview.md)
 2. [Architecture](./architecture.md)
-3. [Backend Documentation](./backend/README.md)
+3. [Gamification System](./gamification.md)
+4. [Backend Documentation](./backend/README.md)
    - [API Reference](./backend/api-reference.md)
    - [Configuration](./backend/configuration.md)
-   - [Database](./backend/database.md)
-4. [Frontend Documentation](./frontend/README.md)
+   - [Database](./database.md)
+5. [Frontend Documentation](./frontend/README.md)
    - [Components](./frontend/components.md)
    - [State Management](./frontend/state-management.md)
    - [Configuration](./frontend/configuration.md)
-5. [Development Guide](./development.md)
-6. [Deployment](./deployment.md)
+6. [Development Guide](./development.md)
+7. [Deployment](./deployment.md)
 
 ## Quick Links
 
 - **Getting Started**: See [Development Guide](./development.md)
 - **API Endpoints**: See [API Reference](./backend/api-reference.md)
+- **Gamification**: See [Gamification System](./gamification.md)
 - **Configuration Options**: See Backend and Frontend configuration docs
 - **Architecture Decisions**: See [Architecture](./architecture.md)
 

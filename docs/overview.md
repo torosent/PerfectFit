@@ -30,6 +30,46 @@ PerfectFit is a full-stack grid-based block placement puzzle game inspired by cl
 - **Personal Stats**: Track your progress
 - **Score Validation**: Server-side verification prevents cheating
 
+### Gamification System
+
+A comprehensive engagement system designed to keep players motivated and rewarded.
+
+#### Daily & Weekly Challenges
+- **Daily Challenges**: 3 new challenges every day (reset at midnight UTC)
+- **Weekly Challenges**: 3 larger challenges every Monday
+- **Challenge Types**: Score targets, line clears, combo achievements, accuracy goals
+- **XP Rewards**: Earn experience points for completing challenges
+
+#### Streak System
+- **Daily Streaks**: Maintain consecutive days of play
+- **Streak Freeze Tokens**: Protect your streak when you can't play
+- **Streak Rewards**: Bonus XP multipliers for longer streaks
+- **Timezone-Aware**: Streaks reset based on local timezone preference
+
+#### Season Pass
+- **7-Day Seasons**: Weekly themed seasons with fresh rewards
+- **50 Tiers**: Progress through tiers by earning XP
+- **Tier Rewards**: Unlock cosmetics, streak freezes, and XP bonuses
+- **Season Archive**: Track your progress across past seasons
+
+#### Achievements & Badges
+- **18+ Achievements**: Across 5 categories (Progression, Skill, Social, Collection, Special)
+- **Rarity Tiers**: Common, Uncommon, Rare, Epic, Legendary
+- **Cosmetic Rewards**: Unlock board themes, avatar frames, and badges
+- **Automatic Detection**: Achievements unlock as you play
+
+#### Cosmetics
+- **Board Themes**: 8 unique visual styles (Classic, Ocean, Forest, Sunset, Night Sky, Galaxy, etc.)
+- **Avatar Frames**: 7 frames with rarity-based designs (Bronze, Silver, Gold, Diamond, Champion)
+- **Profile Badges**: 8 badges to showcase your achievements
+- **Equipment System**: Mix and match your favorite cosmetics
+
+#### Personal Goals
+- **Beat Your Average**: Surpass your historical performance
+- **Improve Accuracy**: Achieve higher precision in placements
+- **New Personal Best**: Set new records
+- **Motivational Prompts**: Goal notifications at game start
+
 ### Anti-Cheat System
 - **Rate Limiting**: Minimum 50ms between moves to prevent automation
 - **Score Plausibility**: Mathematical validation of score/lines/combo relationships
@@ -85,3 +125,5 @@ The game uses a sophisticated "Weighted Piece Generator" to ensure fairness and 
 - **Scalability**: Stateless backend design for horizontal scaling
 - **Security**: Server-side game state validation with multi-layer anti-cheat
 - **Cross-Platform**: Web-based, works on desktop and mobile browsers
+- **Engagement**: Gamification system with challenges, streaks, and rewards
+- **Retention**: Season pass and achievement systems to encourage daily play

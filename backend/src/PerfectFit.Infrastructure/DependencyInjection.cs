@@ -9,6 +9,7 @@ using PerfectFit.Infrastructure.Data.InMemory;
 using PerfectFit.Infrastructure.Data.Repositories;
 using PerfectFit.Infrastructure.Email;
 using PerfectFit.Infrastructure.Identity;
+using PerfectFit.Infrastructure.Jobs;
 using PerfectFit.Infrastructure.Services;
 
 namespace PerfectFit.Infrastructure;
@@ -97,6 +98,19 @@ public static class DependencyInjection
     public static IServiceCollection AddDatabaseMigration(this IServiceCollection services)
     {
         services.AddHostedService<DatabaseMigrationHostedService>();
+        return services;
+    }
+
+    /// <summary>
+    /// Adds the gamification background jobs that run on schedules.
+    /// Includes daily/weekly challenge rotation, season transitions, and streak notifications.
+    /// </summary>
+    public static IServiceCollection AddGamificationJobs(this IServiceCollection services)
+    {
+        services.AddHostedService<DailyChallengeRotationJob>();
+        services.AddHostedService<WeeklyChallengeRotationJob>();
+        services.AddHostedService<SeasonTransitionJob>();
+        services.AddHostedService<StreakExpiryNotificationJob>();
         return services;
     }
 }

@@ -233,7 +233,7 @@ public class GetCosmeticsQueryTests
 
     private static Cosmetic CreateCosmetic(int id, string name, CosmeticType type, bool isDefault = false)
     {
-        var cosmetic = Cosmetic.Create(name, "Test cosmetic", type, "/asset.png", "/preview.png", CosmeticRarity.Common, isDefault);
+        var cosmetic = Cosmetic.Create($"cosmetic_{id}", name, "Test cosmetic", type, "/asset.png", "/preview.png", CosmeticRarity.Common, isDefault);
         SetProperty(cosmetic, "Id", id);
         return cosmetic;
     }

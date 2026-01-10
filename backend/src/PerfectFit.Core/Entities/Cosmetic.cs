@@ -5,6 +5,7 @@ namespace PerfectFit.Core.Entities;
 public class Cosmetic
 {
     public int Id { get; private set; }
+    public string Code { get; private set; } = string.Empty;
     public string Name { get; private set; } = string.Empty;
     public string Description { get; private set; } = string.Empty;
     public CosmeticType Type { get; private set; }
@@ -20,6 +21,7 @@ public class Cosmetic
     private Cosmetic() { }
 
     public static Cosmetic Create(
+        string code,
         string name,
         string description,
         CosmeticType type,
@@ -28,11 +30,13 @@ public class Cosmetic
         CosmeticRarity rarity,
         bool isDefault = false)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(code, nameof(code));
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
         ArgumentException.ThrowIfNullOrWhiteSpace(assetUrl, nameof(assetUrl));
 
         return new Cosmetic
         {
+            Code = code,
             Name = name,
             Description = description ?? string.Empty,
             Type = type,

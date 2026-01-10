@@ -31,20 +31,28 @@ frontend/
 │   ├── components/             # React components
 │   │   ├── auth/               # Auth components
 │   │   ├── game/               # Game components
+│   │   ├── gamification/       # Gamification UI (17 components)
 │   │   ├── leaderboard/        # Leaderboard components
 │   │   ├── providers/          # Context providers
 │   │   └── ui/                 # Reusable UI
 │   │
 │   ├── hooks/                  # Custom hooks
+│   ├── stores/                 # Zustand stores
+│   │   ├── gamificationStore.ts # Gamification state
+│   │   └── ...
 │   ├── lib/                    # Utilities
 │   │   ├── api/                # API clients
-│   │   ├── stores/             # Zustand stores
+│   │   │   ├── gamification.ts # Gamification API
+│   │   │   └── ...
 │   │   ├── game-logic/         # Game utilities
 │   │   └── animations/         # Animation utilities
 │   │
 │   ├── contexts/               # React contexts
 │   └── types/                  # TypeScript types
+│       ├── gamification.ts     # Gamification types
+│       └── ...
 │
+├── __tests__/                  # Test files (580+ tests)
 ├── public/                     # Static assets
 ├── package.json
 ├── next.config.ts

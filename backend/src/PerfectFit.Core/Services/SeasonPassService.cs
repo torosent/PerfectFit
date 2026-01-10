@@ -109,7 +109,11 @@ public class SeasonPassService : ISeasonPassService
         switch (reward.RewardType)
         {
             case RewardType.Cosmetic:
-                await _cosmeticService.GrantCosmeticAsync(user, reward.RewardValue, ObtainedFrom.SeasonPass, ct);
+                var cosmeticGranted = await _cosmeticService.GrantCosmeticAsync(user, reward.RewardValue, ObtainedFrom.SeasonPass, ct);
+                if (!cosmeticGranted)
+                {
+                    return new ClaimRewardResult(false, null, null, "Failed to grant cosmetic reward.");
+                }
                 break;
 
             case RewardType.StreakFreeze:
@@ -123,7 +127,8 @@ public class SeasonPassService : ISeasonPassService
                 break;
         }
 
-        await _repository.AddClaimedRewardAsync(user.Id, seasonRewardId, ct);
+        // TryAddClaimedRewardAsync handles unique constraint violations
+        await _repository.TryAddClaimedRewardAsync(user.Id, seasonRewardId, ct);
 
         return new ClaimRewardResult(
             Success: true,

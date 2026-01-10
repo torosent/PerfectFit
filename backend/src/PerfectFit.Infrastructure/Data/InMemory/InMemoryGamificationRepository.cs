@@ -14,8 +14,10 @@ public class InMemoryGamificationRepository : IGamificationRepository
     private readonly ConcurrentDictionary<int, UserAchievement> _userAchievements = new();
     private readonly ConcurrentDictionary<int, Challenge> _challenges = new();
     private readonly ConcurrentDictionary<int, UserChallenge> _userChallenges = new();
+    private readonly ConcurrentDictionary<int, ChallengeTemplate> _challengeTemplates = new();
     private readonly ConcurrentDictionary<int, Season> _seasons = new();
     private readonly ConcurrentDictionary<int, SeasonReward> _seasonRewards = new();
+    private readonly ConcurrentDictionary<int, SeasonArchive> _seasonArchives = new();
     private readonly ConcurrentDictionary<(int userId, int rewardId), bool> _claimedRewards = new();
     private readonly ConcurrentDictionary<int, Cosmetic> _cosmetics = new();
     private readonly ConcurrentDictionary<int, UserCosmetic> _userCosmetics = new();
@@ -26,8 +28,10 @@ public class InMemoryGamificationRepository : IGamificationRepository
     private int _nextUserAchievementId = 1;
     private int _nextChallengeId = 1;
     private int _nextUserChallengeId = 1;
+    private int _nextChallengeTemplateId = 1;
     private int _nextSeasonId = 1;
     private int _nextSeasonRewardId = 1;
+    private int _nextSeasonArchiveId = 1;
     private int _nextCosmeticId = 1;
     private int _nextUserCosmeticId = 1;
     private int _nextGoalId = 1;
@@ -122,6 +126,38 @@ public class InMemoryGamificationRepository : IGamificationRepository
         return Task.CompletedTask;
     }
 
+    public Task AddChallengeAsync(Challenge challenge, CancellationToken ct = default)
+    {
+        var id = Interlocked.Increment(ref _nextChallengeId);
+        SetProperty(challenge, "Id", id);
+        _challenges[id] = challenge;
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateChallengeAsync(Challenge challenge, CancellationToken ct = default)
+    {
+        _challenges[challenge.Id] = challenge;
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<ChallengeTemplate>> GetChallengeTemplatesAsync(ChallengeType? type = null, CancellationToken ct = default)
+    {
+        var templates = _challengeTemplates.Values.Where(t => t.IsActive);
+        if (type.HasValue)
+        {
+            templates = templates.Where(t => t.Type == type.Value);
+        }
+        return Task.FromResult<IReadOnlyList<ChallengeTemplate>>(templates.ToList());
+    }
+
+    public Task AddChallengeTemplateAsync(ChallengeTemplate template, CancellationToken ct = default)
+    {
+        var id = Interlocked.Increment(ref _nextChallengeTemplateId);
+        SetProperty(template, "Id", id);
+        _challengeTemplates[id] = template;
+        return Task.CompletedTask;
+    }
+
     #endregion
 
     #region Season Methods
@@ -137,6 +173,11 @@ public class InMemoryGamificationRepository : IGamificationRepository
     {
         _seasons.TryGetValue(seasonId, out var season);
         return Task.FromResult(season);
+    }
+
+    public Task<IReadOnlyList<Season>> GetAllSeasonsAsync(CancellationToken ct = default)
+    {
+        return Task.FromResult<IReadOnlyList<Season>>(_seasons.Values.ToList());
     }
 
     public Task<IReadOnlyList<SeasonReward>> GetSeasonRewardsAsync(int seasonId, CancellationToken ct = default)
@@ -166,6 +207,52 @@ public class InMemoryGamificationRepository : IGamificationRepository
         return Task.CompletedTask;
     }
 
+    public Task<bool> TryAddClaimedRewardAsync(int userId, int seasonRewardId, CancellationToken ct = default)
+    {
+        // In-memory implementation doesn't throw on duplicates, it just overwrites
+        _claimedRewards[(userId, seasonRewardId)] = true;
+        return Task.FromResult(true);
+    }
+
+    public Task AddSeasonAsync(Season season, CancellationToken ct = default)
+    {
+        var id = Interlocked.Increment(ref _nextSeasonId);
+        SetProperty(season, "Id", id);
+        _seasons[id] = season;
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateSeasonAsync(Season season, CancellationToken ct = default)
+    {
+        _seasons[season.Id] = season;
+        return Task.CompletedTask;
+    }
+
+    public Task AddSeasonRewardAsync(SeasonReward reward, CancellationToken ct = default)
+    {
+        var id = Interlocked.Increment(ref _nextSeasonRewardId);
+        SetProperty(reward, "Id", id);
+        _seasonRewards[id] = reward;
+        return Task.CompletedTask;
+    }
+
+    public Task AddSeasonArchiveAsync(SeasonArchive archive, CancellationToken ct = default)
+    {
+        var id = Interlocked.Increment(ref _nextSeasonArchiveId);
+        SetProperty(archive, "Id", id);
+        _seasonArchives[id] = archive;
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<SeasonArchive>> GetUserSeasonArchivesAsync(int userId, CancellationToken ct = default)
+    {
+        var archives = _seasonArchives.Values
+            .Where(sa => sa.UserId == userId)
+            .OrderByDescending(sa => sa.ArchivedAt)
+            .ToList();
+        return Task.FromResult<IReadOnlyList<SeasonArchive>>(archives);
+    }
+
     #endregion
 
     #region Cosmetic Methods
@@ -181,6 +268,12 @@ public class InMemoryGamificationRepository : IGamificationRepository
     public Task<Cosmetic?> GetCosmeticByIdAsync(int cosmeticId, CancellationToken ct = default)
     {
         _cosmetics.TryGetValue(cosmeticId, out var cosmetic);
+        return Task.FromResult(cosmetic);
+    }
+
+    public Task<Cosmetic?> GetCosmeticByCodeAsync(string code, CancellationToken ct = default)
+    {
+        var cosmetic = _cosmetics.Values.FirstOrDefault(c => c.Code == code);
         return Task.FromResult(cosmetic);
     }
 
@@ -202,6 +295,21 @@ public class InMemoryGamificationRepository : IGamificationRepository
         SetProperty(userCosmetic, "Id", id);
         _userCosmetics[id] = userCosmetic;
         return Task.CompletedTask;
+    }
+
+    public Task<bool> TryAddUserCosmeticAsync(UserCosmetic userCosmetic, CancellationToken ct = default)
+    {
+        // Check if already exists (in-memory doesn't have unique constraints, so we check manually)
+        var existing = _userCosmetics.Values.FirstOrDefault(uc => uc.UserId == userCosmetic.UserId && uc.CosmeticId == userCosmetic.CosmeticId);
+        if (existing != null)
+        {
+            return Task.FromResult(true); // Already owned
+        }
+
+        var id = Interlocked.Increment(ref _nextUserCosmeticId);
+        SetProperty(userCosmetic, "Id", id);
+        _userCosmetics[id] = userCosmetic;
+        return Task.FromResult(true);
     }
 
     #endregion
@@ -299,6 +407,13 @@ public class InMemoryGamificationRepository : IGamificationRepository
         var id = cosmetic.Id != 0 ? cosmetic.Id : Interlocked.Increment(ref _nextCosmeticId);
         SetProperty(cosmetic, "Id", id);
         _cosmetics[id] = cosmetic;
+    }
+
+    public void AddChallengeTemplateSync(ChallengeTemplate template)
+    {
+        var id = template.Id != 0 ? template.Id : Interlocked.Increment(ref _nextChallengeTemplateId);
+        SetProperty(template, "Id", id);
+        _challengeTemplates[id] = template;
     }
 
     public void AddGameSession(GameSession session)

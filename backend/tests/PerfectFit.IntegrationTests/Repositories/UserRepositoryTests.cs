@@ -271,4 +271,73 @@ public class UserRepositoryTests : RepositoryTestBase
         result.Should().Contain(u => u.ExternalId == "deleted-1");
         result.Should().Contain(u => u.ExternalId == "deleted-2");
     }
+
+    [Fact]
+    public async Task TryClaimStreakNotificationAsync_WhenNeverNotified_ShouldSucceed()
+    {
+        // Arrange
+        var user = User.Create("claim-test-1", "claim@example.com", "Claim User", AuthProvider.Google);
+        await _repository.AddAsync(user);
+
+        // Act
+        var result = await _repository.TryClaimStreakNotificationAsync(user.Id, 24);
+
+        // Assert
+        result.Should().BeTrue();
+        var updatedUser = await DbContext.Users.FindAsync(user.Id);
+        updatedUser!.LastStreakNotificationSentAt.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task TryClaimStreakNotificationAsync_WhenNotifiedOutsideCooldown_ShouldSucceed()
+    {
+        // Arrange
+        var user = User.Create("claim-test-2", "claim2@example.com", "Claim User 2", AuthProvider.Google);
+        await _repository.AddAsync(user);
+
+        // Set last notification to 25 hours ago (outside 24-hour cooldown)
+        SetProperty(user, "LastStreakNotificationSentAt", DateTime.UtcNow.AddHours(-25));
+        await _repository.UpdateAsync(user);
+
+        // Act
+        var result = await _repository.TryClaimStreakNotificationAsync(user.Id, 24);
+
+        // Assert
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TryClaimStreakNotificationAsync_WhenNotifiedWithinCooldown_ShouldFail()
+    {
+        // Arrange
+        var user = User.Create("claim-test-3", "claim3@example.com", "Claim User 3", AuthProvider.Google);
+        await _repository.AddAsync(user);
+
+        // Set last notification to 12 hours ago (within 24-hour cooldown)
+        SetProperty(user, "LastStreakNotificationSentAt", DateTime.UtcNow.AddHours(-12));
+        await _repository.UpdateAsync(user);
+
+        // Act
+        var result = await _repository.TryClaimStreakNotificationAsync(user.Id, 24);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task TryClaimStreakNotificationAsync_WhenUserDoesNotExist_ShouldFail()
+    {
+        // Act
+        var result = await _repository.TryClaimStreakNotificationAsync(999, 24);
+
+        // Assert
+        result.Should().BeFalse();
+    }
+
+    private static void SetProperty<T, TValue>(T obj, string propertyName, TValue value) where T : class
+    {
+        var backingField = typeof(T).GetField($"<{propertyName}>k__BackingField",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        backingField?.SetValue(obj, value);
+    }
 }

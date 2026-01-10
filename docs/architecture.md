@@ -31,11 +31,13 @@
 │  ┌─────────────────────────────────────────────────────────┐   │
 │  │                  Application Layer                      │   │
 │  │  ┌──────────────────┐  ┌──────────────────────────────┐ │   │
-│  │  │     Commands     │  │          Queries             │ │   │
+│  │  │  Commands     │  │          Queries             │ │   │
 │  │  │ - CreateGame     │  │ - GetGame                    │ │   │
 │  │  │ - PlacePiece     │  │ - GetTopScores               │ │   │
 │  │  │ - EndGame        │  │ - GetUserStats               │ │   │
-│  │  │ - SubmitScore    │  │                              │ │   │
+│  │  │ - SubmitScore    │  │ - GetGamificationStatus      │ │   │
+│  │  │ - ClaimReward    │  │ - GetChallenges              │ │   │
+│  │  │ - EquipCosmetic  │  │ - GetAchievements            │ │   │
 │  │  └──────────────────┘  └──────────────────────────────┘ │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                              │                                 │
@@ -46,10 +48,10 @@
 │  │  │  Game    │  │  Piece   │  │  Score   │  │   Line   │ │   │
 │  │  │  Engine  │  │   Bag    │  │Calculator│  │  Clearer │ │   │
 │  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │   │
-│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐               │   │
-│  │  │   User   │  │  Game    │  │Leaderboard│              │   │
-│  │  │  Entity  │  │ Session  │  │  Entry   │               │   │
-│  │  └──────────┘  └──────────┘  └──────────┘               │   │
+│  │  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐ │   │
+│  │  │   User   │  │  Game    │  │Leaderboard│ │ Gamific- │ │   │
+│  │  │  Entity  │  │ Session  │  │  Entry   │  │  ation   │ │   │
+│  │  └──────────┘  └──────────┘  └──────────┘  └──────────┘ │   │
 │  └─────────────────────────────────────────────────────────┘   │
 │                              │                                 │
 │                              ▼                                 │
@@ -63,6 +65,11 @@
 │  │  │           Score Validation Service               │   │   │
 │  │  │  • Anti-cheat validation  • Score plausibility   │   │   │
 │  │  │  • Rate limiting          • Move history check   │   │   │
+│  │  └──────────────────────────────────────────────────┘   │   │
+│  │  ┌──────────────────────────────────────────────────┐   │   │
+│  │  │           Background Jobs (Hosted Services)      │   │   │
+│  │  │  • DailyChallengeRotation  • SeasonTransition    │   │   │
+│  │  │  • WeeklyChallengeRotation • StreakNotification  │   │   │
 │  │  └──────────────────────────────────────────────────┘   │   │
 │  └─────────────────────────────────────────────────────────┘   │
 └────────────────────────────────────────────────────────────────┘

@@ -472,6 +472,293 @@ Score submissions are validated against:
 
 ---
 
+## Gamification Endpoints
+
+### Get Gamification Status
+
+Get the complete gamification status for the authenticated user.
+
+```http
+GET /api/gamification
+```
+
+**Headers** (Required):
+```
+Authorization: Bearer <token>
+```
+
+**Response**: `200 OK`
+```json
+{
+  "streakData": {
+    "currentStreak": 7,
+    "longestStreak": 14,
+    "lastPlayedAt": "2026-01-10T15:30:00Z",
+    "streakFreezeCount": 2,
+    "isStreakActive": true,
+    "streakExpiresAt": "2026-01-11T00:00:00Z"
+  },
+  "activeChallenges": [...],
+  "recentAchievements": [...],
+  "seasonPass": {...},
+  "equippedCosmetics": {...}
+}
+```
+
+### Get Challenges
+
+Get active daily and weekly challenges.
+
+```http
+GET /api/gamification/challenges
+```
+
+**Response**: `200 OK`
+```json
+{
+  "daily": [
+    {
+      "id": 1,
+      "name": "Score 500",
+      "description": "Score at least 500 points in a single game",
+      "type": "Daily",
+      "targetType": "Score",
+      "targetValue": 500,
+      "currentProgress": 350,
+      "xpReward": 50,
+      "isCompleted": false,
+      "expiresAt": "2026-01-11T00:00:00Z"
+    }
+  ],
+  "weekly": [...]
+}
+```
+
+### Get Achievements
+
+Get all achievements with unlock status.
+
+```http
+GET /api/gamification/achievements
+```
+
+**Response**: `200 OK`
+```json
+[
+  {
+    "id": 1,
+    "name": "First Win",
+    "description": "Complete your first game",
+    "category": "Progression",
+    "rarity": "Common",
+    "xpReward": 100,
+    "isUnlocked": true,
+    "unlockedAt": "2026-01-05T10:30:00Z",
+    "iconUrl": "/icons/first-win.png"
+  }
+]
+```
+
+### Get Season Pass
+
+Get current season and tier progress.
+
+```http
+GET /api/gamification/season-pass
+```
+
+**Response**: `200 OK`
+```json
+{
+  "season": {
+    "id": 1,
+    "name": "Ocean Season",
+    "theme": "ocean",
+    "startDate": "2026-01-06T00:00:00Z",
+    "endDate": "2026-01-13T00:00:00Z",
+    "maxTiers": 50
+  },
+  "currentTier": 15,
+  "currentXp": 1250,
+  "xpToNextTier": 100,
+  "rewards": [
+    {
+      "id": 1,
+      "tier": 5,
+      "rewardType": "Cosmetic",
+      "description": "Bronze Frame",
+      "isClaimed": true
+    }
+  ],
+  "newRewardsCount": 2
+}
+```
+
+### Get Cosmetics
+
+Get owned and available cosmetics.
+
+```http
+GET /api/gamification/cosmetics
+```
+
+**Response**: `200 OK`
+```json
+{
+  "owned": [
+    {
+      "id": 1,
+      "code": "theme_classic",
+      "name": "Classic Theme",
+      "type": "BoardTheme",
+      "rarity": "Common",
+      "isEquipped": true
+    }
+  ],
+  "equipped": {
+    "boardTheme": 1,
+    "avatarFrame": null,
+    "badge": null
+  }
+}
+```
+
+### Get Personal Goals
+
+Get current personal goals.
+
+```http
+GET /api/gamification/goals
+```
+
+**Response**: `200 OK`
+```json
+[
+  {
+    "id": 1,
+    "type": "BeatAverage",
+    "description": "Beat your average score of 450",
+    "targetValue": 450,
+    "currentValue": 0,
+    "progressPercentage": 0,
+    "isCompleted": false
+  }
+]
+```
+
+### Use Streak Freeze
+
+Use a streak freeze token to protect your streak.
+
+```http
+POST /api/gamification/streak-freeze
+```
+
+**Response**: `200 OK`
+```json
+{
+  "success": true,
+  "remainingFreezes": 1,
+  "message": "Streak freeze applied successfully"
+}
+```
+
+**Errors**:
+- `400 Bad Request` - No streak freeze tokens available
+- `401 Unauthorized` - Not authenticated
+
+### Equip Cosmetic
+
+Equip a cosmetic item.
+
+```http
+POST /api/gamification/cosmetics/equip
+```
+
+**Request Body**:
+```json
+{
+  "cosmeticId": 5
+}
+```
+
+**Response**: `200 OK`
+```json
+{
+  "success": true,
+  "equipped": {
+    "boardTheme": 5,
+    "avatarFrame": 2,
+    "badge": null
+  }
+}
+```
+
+**Errors**:
+- `400 Bad Request` - Cosmetic not owned
+- `404 Not Found` - Cosmetic not found
+
+### Claim Season Reward
+
+Claim a season pass reward.
+
+```http
+POST /api/gamification/season-pass/claim-reward
+```
+
+**Request Body**:
+```json
+{
+  "rewardId": 15
+}
+```
+
+**Response**: `200 OK`
+```json
+{
+  "success": true,
+  "reward": {
+    "id": 15,
+    "tier": 15,
+    "rewardType": "Cosmetic",
+    "description": "Ocean Theme",
+    "value": 5
+  }
+}
+```
+
+**Errors**:
+- `400 Bad Request` - Tier not reached or already claimed
+- `404 Not Found` - Reward not found
+
+### Set Timezone
+
+Set the user's preferred timezone for streak calculations.
+
+```http
+POST /api/gamification/timezone
+```
+
+**Request Body**:
+```json
+{
+  "timezone": "America/New_York"
+}
+```
+
+**Response**: `200 OK`
+```json
+{
+  "success": true,
+  "timezone": "America/New_York"
+}
+```
+
+**Errors**:
+- `400 Bad Request` - Invalid timezone
+
+---
+
 ## Error Responses
 
 All errors follow this format:

@@ -21,6 +21,15 @@ PerfectFit is a strategic puzzle game where players place tetromino-like pieces 
 - **Secure**: Robust anti-cheat system with server-side validation and rate limiting.
 - **User Accounts**: Sign in with Email or Microsoft Account to save your progress.
 
+### Gamification System
+
+- **Daily & Weekly Challenges**: Complete challenges to earn XP and rewards.
+- **Streak System**: Maintain daily play streaks with streak freeze tokens to protect your progress.
+- **Season Pass**: Progress through 50 tiers of rewards with themed seasons (7-day cycles).
+- **Achievements & Badges**: Unlock 18+ achievements across 5 categories with cosmetic rewards.
+- **Cosmetics**: Customize your experience with board themes, avatar frames, and profile badges.
+- **Personal Goals**: Beat your average, improve accuracy, and set new personal bests.
+
 ## 🛠️ Tech Stack
 
 ### Frontend
@@ -93,16 +102,17 @@ PerfectFit/
 ├── backend/                # ASP.NET Core Solution
 │   ├── src/
 │   │   ├── PerfectFit.Core/           # Domain Entities & Logic
-│   │   ├── PerfectFit.UseCases/       # Application Business Rules
-│   │   ├── PerfectFit.Infrastructure/ # Database & External Services
+│   │   ├── PerfectFit.UseCases/       # Application Business Rules (CQRS)
+│   │   ├── PerfectFit.Infrastructure/ # Database, Jobs & External Services
 │   │   └── PerfectFit.Web/            # API Endpoints
-│   └── tests/              # Unit & Integration Tests
+│   └── tests/              # Unit & Integration Tests (830+ tests)
 ├── frontend/               # Next.js Application
 │   ├── src/
 │   │   ├── app/            # Pages & Routes
-│   │   ├── components/     # React Components
-│   │   ├── lib/            # Game Logic & Stores
-│   │   └── ...
+│   │   ├── components/     # React Components (incl. gamification)
+│   │   ├── stores/         # Zustand State Management
+│   │   └── lib/            # Game Logic & API Clients
+│   └── __tests__/          # Frontend Tests (580+ tests)
 ├── deploy/                 # Deployment Scripts (Azure/Cloudflare)
 └── docs/                   # Detailed Documentation
 ```
@@ -111,6 +121,7 @@ PerfectFit/
 
 - [**Overview**](docs/overview.md): Game mechanics and features.
 - [**Architecture**](docs/architecture.md): System design and patterns.
+- [**Gamification**](docs/gamification.md): Challenges, streaks, seasons, and achievements.
 - [**Development Guide**](docs/development.md): Setup and contribution guidelines.
 - [**API Reference**](docs/backend/api-reference.md): Backend endpoints.
 

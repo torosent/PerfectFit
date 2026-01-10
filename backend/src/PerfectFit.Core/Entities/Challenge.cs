@@ -13,6 +13,11 @@ public class Challenge
     public DateTime StartDate { get; private set; }
     public DateTime EndDate { get; private set; }
     public bool IsActive { get; private set; }
+    
+    /// <summary>
+    /// The ID of the template this challenge was created from (for multi-instance deduplication).
+    /// </summary>
+    public int? ChallengeTemplateId { get; private set; }
 
     // Navigation properties
     public ICollection<UserChallenge> UserChallenges { get; private set; } = new List<UserChallenge>();
@@ -27,7 +32,8 @@ public class Challenge
         int targetValue,
         int xpReward,
         DateTime startDate,
-        DateTime endDate)
+        DateTime endDate,
+        int? templateId = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
@@ -50,7 +56,8 @@ public class Challenge
             XPReward = xpReward,
             StartDate = startDate,
             EndDate = endDate,
-            IsActive = true
+            IsActive = true,
+            ChallengeTemplateId = templateId
         };
     }
 

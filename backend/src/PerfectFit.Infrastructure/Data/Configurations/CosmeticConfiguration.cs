@@ -16,6 +16,11 @@ public class CosmeticConfiguration : IEntityTypeConfiguration<Cosmetic>
             .HasColumnName("id")
             .ValueGeneratedOnAdd();
 
+        builder.Property(c => c.Code)
+            .HasColumnName("code")
+            .HasMaxLength(100)
+            .IsRequired();
+
         builder.Property(c => c.Name)
             .HasColumnName("name")
             .HasMaxLength(100)
@@ -51,6 +56,11 @@ public class CosmeticConfiguration : IEntityTypeConfiguration<Cosmetic>
         builder.HasIndex(c => c.Name)
             .IsUnique()
             .HasDatabaseName("ix_cosmetics_name");
+
+        // Unique index on Code
+        builder.HasIndex(c => c.Code)
+            .IsUnique()
+            .HasDatabaseName("ix_cosmetics_code");
 
         // Index on Type for filtering
         builder.HasIndex(c => c.Type)

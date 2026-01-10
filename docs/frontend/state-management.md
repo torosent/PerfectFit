@@ -306,6 +306,143 @@ All stores are fully typed. Import types as needed:
 ```typescript
 import type { GameStore, GameState } from '@/lib/stores/game-store';
 import type { AuthStore, AuthState } from '@/lib/stores/auth-store';
+import type { GamificationStore } from '@/stores/gamificationStore';
+```
+
+---
+
+## Gamification Store
+
+Location: `src/stores/gamificationStore.ts`
+
+Manages all gamification-related state including streaks, challenges, achievements, season pass, cosmetics, and personal goals.
+
+### State
+
+```typescript
+interface GamificationStore {
+  // Streak data
+  streakData: StreakData | null;
+  
+  // Challenges
+  challenges: Challenge[];
+  
+  // Achievements
+  achievements: Achievement[];
+  pendingAchievementModals: Achievement[];
+  
+  // Season Pass
+  seasonPass: SeasonPass | null;
+  
+  // Cosmetics
+  cosmetics: Cosmetic[];
+  equippedCosmetics: EquippedCosmetics;
+  
+  // Personal Goals
+  personalGoals: PersonalGoal[];
+  
+  // Loading states
+  isLoading: boolean;
+  error: string | null;
+}
+```
+
+### Actions
+
+| Action | Description |
+|--------|-------------|
+| `fetchGamificationStatus()` | Load all gamification data |
+| `fetchChallenges()` | Load active challenges |
+| `fetchAchievements()` | Load all achievements |
+| `fetchSeasonPass()` | Load season pass progress |
+| `fetchCosmetics()` | Load owned cosmetics |
+| `fetchPersonalGoals()` | Load current goals |
+| `useStreakFreeze()` | Use a streak freeze token |
+| `equipCosmetic(id)` | Equip a cosmetic item |
+| `claimSeasonReward(id)` | Claim a season reward |
+| `setTimezone(tz)` | Set preferred timezone |
+| `processGameEndGamification(result)` | Process game-end rewards |
+| `showNextAchievementModal()` | Show queued achievement unlock |
+| `dismissAchievementModal()` | Close achievement modal |
+
+### Usage
+
+```tsx
+'use client';
+
+import { useGamificationStore } from '@/stores/gamificationStore';
+
+function GamificationWidget() {
+  const { 
+    streakData, 
+    challenges, 
+    fetchGamificationStatus 
+  } = useGamificationStore();
+  
+  useEffect(() => {
+    fetchGamificationStatus();
+  }, [fetchGamificationStatus]);
+  
+  return (
+    <div>
+      <p>Current Streak: {streakData?.currentStreak || 0} days</p>
+      <p>Active Challenges: {challenges.length}</p>
+    </div>
+  );
+}
+```
+
+### Selector Hooks
+
+Custom hooks for optimized subscriptions:
+
+```typescript
+// From src/hooks/gamification-hooks.ts
+useStreaks()           // Streak data and freeze actions
+useChallenges()        // Active challenges
+useAchievements()      // All achievements with unlock status
+useSeasonPass()        // Season progress and rewards
+useCosmetics()         // Owned cosmetics and equipment
+usePersonalGoals()     // Current goals
+useGamification()      // Combined overview data
+```
+
+### Game-End Integration
+
+The gamification store integrates with game completion:
+
+```typescript
+// Called automatically when a game ends
+processGameEndGamification({
+  score: 500,
+  linesCleared: 12,
+  combo: 3,
+  duration: 120,
+  accuracy: 0.95
+});
+```
+
+This triggers:
+1. Streak update
+2. Challenge progress calculation
+3. Achievement check
+4. Season XP calculation
+5. Personal goal evaluation
+
+### Persistence
+
+The store uses `zustand/persist` for equipped cosmetics:
+
+```typescript
+persist(
+  (set, get) => ({ ... }),
+  {
+    name: 'perfectfit-gamification',
+    partialize: (state) => ({
+      equippedCosmetics: state.equippedCosmetics,
+    }),
+  }
+)
 ```
 
 ---

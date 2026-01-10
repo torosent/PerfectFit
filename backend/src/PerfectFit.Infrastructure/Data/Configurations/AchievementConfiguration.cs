@@ -57,6 +57,10 @@ public class AchievementConfiguration : IEntityTypeConfiguration<Achievement>
             .HasDefaultValue(0)
             .IsRequired();
 
+        builder.Property(a => a.RewardCosmeticCode)
+            .HasColumnName("reward_cosmetic_code")
+            .HasMaxLength(100);
+
         // Unique index on Name
         builder.HasIndex(a => a.Name)
             .IsUnique()

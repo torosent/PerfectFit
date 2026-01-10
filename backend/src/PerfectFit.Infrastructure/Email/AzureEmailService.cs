@@ -219,4 +219,174 @@ public class AzureEmailService : IEmailService
             © 2026 PerfectFit. All rights reserved.
             """;
     }
+
+    /// <inheritdoc />
+    public virtual async Task<bool> SendStreakExpiryNotificationAsync(
+        string toEmail,
+        string displayName,
+        int currentStreak,
+        int hoursRemaining)
+    {
+        if (_emailClient is null)
+        {
+            _logger.LogWarning(
+                "Email service not configured. Streak expiry notification to {Email} was not sent.",
+                toEmail);
+            return false;
+        }
+
+        try
+        {
+            var emailMessage = BuildStreakExpiryEmailMessage(toEmail, displayName, currentStreak, hoursRemaining);
+
+            _logger.LogInformation(
+                "Sending streak expiry notification to {Email}",
+                toEmail);
+
+            EmailSendOperation emailSendOperation = await _emailClient.SendAsync(
+                WaitUntil.Completed,
+                emailMessage);
+
+            _logger.LogInformation(
+                "Streak expiry notification sent successfully to {Email}. Operation ID: {OperationId}",
+                toEmail,
+                emailSendOperation.Id);
+
+            return true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Failed to send streak expiry notification to {Email}",
+                toEmail);
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Builds the streak expiry notification email message with HTML and plain text content.
+    /// </summary>
+    protected EmailMessage BuildStreakExpiryEmailMessage(
+        string toEmail,
+        string displayName,
+        int currentStreak,
+        int hoursRemaining)
+    {
+        var htmlContent = BuildStreakExpiryHtmlContent(displayName, currentStreak, hoursRemaining);
+        var plainTextContent = BuildStreakExpiryPlainTextContent(displayName, currentStreak, hoursRemaining);
+
+        var emailContent = new EmailContent($"🔥 Your {currentStreak}-day streak is about to expire!")
+        {
+            Html = htmlContent,
+            PlainText = plainTextContent
+        };
+
+        var recipients = new EmailRecipients(new List<EmailAddress>
+        {
+            new EmailAddress(toEmail, displayName)
+        });
+
+        return new EmailMessage(
+            senderAddress: _settings.SenderAddress,
+            content: emailContent,
+            recipients: recipients);
+    }
+
+    private static string BuildStreakExpiryHtmlContent(string displayName, int currentStreak, int hoursRemaining)
+    {
+        return $"""
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Your streak is about to expire!</title>
+            </head>
+            <body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; background-color: #f5f5f5;">
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #f5f5f5;">
+                    <tr>
+                        <td align="center" style="padding: 40px 20px;">
+                            <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
+                                <!-- Header -->
+                                <tr>
+                                    <td style="padding: 40px 40px 20px 40px; text-align: center; background-color: #f97316; border-radius: 8px 8px 0 0;">
+                                        <h1 style="margin: 0; color: #ffffff; font-size: 48px;">🔥</h1>
+                                        <h2 style="margin: 10px 0 0 0; color: #ffffff; font-size: 24px; font-weight: 700;">Don't lose your streak!</h2>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Content -->
+                                <tr>
+                                    <td style="padding: 40px;">
+                                        <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px;">
+                                            Hi {displayName},
+                                        </p>
+                                        
+                                        <p style="margin: 0 0 20px 0; color: #4b5563; font-size: 16px;">
+                                            Your <strong style="color: #f97316;">{currentStreak}-day streak</strong> is about to expire in <strong>{hoursRemaining} hours</strong>!
+                                        </p>
+                                        
+                                        <p style="margin: 0 0 30px 0; color: #4b5563; font-size: 16px;">
+                                            Play a quick game now to keep your streak going and maintain your progress.
+                                        </p>
+                                        
+                                        <!-- Streak Counter -->
+                                        <div style="text-align: center; margin-bottom: 30px;">
+                                            <div style="display: inline-block; padding: 20px 40px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); border-radius: 12px;">
+                                                <div style="color: #ffffff; font-size: 48px; font-weight: 700;">{currentStreak}</div>
+                                                <div style="color: #ffffff; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Day Streak</div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Urgency Notice -->
+                                        <div style="padding: 16px; background-color: #fef3c7; border-radius: 6px; margin-bottom: 20px;">
+                                            <p style="margin: 0; color: #92400e; font-size: 14px;">
+                                                ⏰ Time remaining: <strong>{hoursRemaining} hours</strong>
+                                            </p>
+                                        </div>
+                                        
+                                        <p style="margin: 0; color: #9ca3af; font-size: 13px;">
+                                            Keep up the great work! Consistency is key to improving your puzzle-solving skills.
+                                        </p>
+                                    </td>
+                                </tr>
+                                
+                                <!-- Footer -->
+                                <tr>
+                                    <td style="padding: 30px 40px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
+                                        <p style="margin: 0; color: #9ca3af; font-size: 12px;">
+                                            © 2026 PerfectFit. All rights reserved.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """;
+    }
+
+    private static string BuildStreakExpiryPlainTextContent(string displayName, int currentStreak, int hoursRemaining)
+    {
+        return $"""
+            PerfectFit - Your streak is about to expire!
+            ============================================
+
+            Hi {displayName},
+
+            🔥 Your {currentStreak}-day streak is about to expire in {hoursRemaining} hours!
+
+            Play a quick game now to keep your streak going and maintain your progress.
+
+            ⏰ Time remaining: {hoursRemaining} hours
+
+            Keep up the great work! Consistency is key to improving your puzzle-solving skills.
+
+            ---
+            © 2026 PerfectFit. All rights reserved.
+            """;
+    }
 }

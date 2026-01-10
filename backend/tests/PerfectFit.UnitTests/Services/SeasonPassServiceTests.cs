@@ -184,6 +184,8 @@ public class SeasonPassServiceTests
             .ReturnsAsync(reward);
         _repositoryMock.Setup(r => r.GetClaimedRewardIdsAsync(user.Id, 1, It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<int>());
+        _repositoryMock.Setup(r => r.TryAddClaimedRewardAsync(user.Id, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(true);
         _cosmeticServiceMock.Setup(c => c.GrantCosmeticAsync(user, 42, ObtainedFrom.SeasonPass, It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
@@ -194,7 +196,7 @@ public class SeasonPassServiceTests
         result.Success.Should().BeTrue();
         result.RewardType.Should().Be(RewardType.Cosmetic);
         result.RewardValue.Should().Be(42);
-        _repositoryMock.Verify(r => r.AddClaimedRewardAsync(user.Id, 1, It.IsAny<CancellationToken>()), Times.Once);
+        _repositoryMock.Verify(r => r.TryAddClaimedRewardAsync(user.Id, 1, It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -271,6 +273,33 @@ public class SeasonPassServiceTests
         // Assert
         result.Success.Should().BeFalse();
         result.ErrorMessage.Should().Contain("not found");
+    }
+
+    [Fact]
+    public async Task ClaimReward_CosmeticGrantFails_ReturnsFailure()
+    {
+        // Arrange
+        var user = CreateUser(seasonXP: 150, currentTier: 1);
+        var reward = CreateSeasonReward(1, 1, 1, RewardType.Cosmetic, 42, 100);
+
+        _repositoryMock.Setup(r => r.GetSeasonRewardByIdAsync(1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(reward);
+        _repositoryMock.Setup(r => r.GetClaimedRewardIdsAsync(user.Id, 1, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<int>());
+        
+        // Cosmetic grant fails (returns false)
+        _cosmeticServiceMock.Setup(c => c.GrantCosmeticAsync(user, 42, ObtainedFrom.SeasonPass, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(false);
+
+        // Act
+        var result = await _service.ClaimRewardAsync(user, 1);
+
+        // Assert
+        result.Success.Should().BeFalse();
+        result.ErrorMessage.Should().Contain("Failed to grant cosmetic");
+        
+        // Reward should not be marked as claimed
+        _repositoryMock.Verify(r => r.AddClaimedRewardAsync(It.IsAny<int>(), It.IsAny<int>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion

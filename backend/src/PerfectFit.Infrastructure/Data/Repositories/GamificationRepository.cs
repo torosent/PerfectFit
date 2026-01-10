@@ -157,6 +157,22 @@ public class GamificationRepository : IGamificationRepository
         await _context.SaveChangesAsync(ct);
     }
 
+    public async Task<bool> TryAddClaimedRewardAsync(int userId, int seasonRewardId, CancellationToken ct = default)
+    {
+        try
+        {
+            var claimedReward = ClaimedSeasonReward.Create(userId, seasonRewardId);
+            _context.ClaimedSeasonRewards.Add(claimedReward);
+            await _context.SaveChangesAsync(ct);
+            return true;
+        }
+        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+        {
+            // Race condition - already claimed, which is fine
+            return true;
+        }
+    }
+
     #endregion
 
     #region Cosmetic Methods
@@ -178,6 +194,11 @@ public class GamificationRepository : IGamificationRepository
         return await _context.Cosmetics.FindAsync([cosmeticId], ct);
     }
 
+    public async Task<Cosmetic?> GetCosmeticByCodeAsync(string code, CancellationToken ct = default)
+    {
+        return await _context.Cosmetics.FirstOrDefaultAsync(c => c.Code == code, ct);
+    }
+
     public async Task<IReadOnlyList<UserCosmetic>> GetUserCosmeticsAsync(int userId, CancellationToken ct = default)
     {
         return await _context.UserCosmetics
@@ -197,6 +218,22 @@ public class GamificationRepository : IGamificationRepository
     {
         _context.UserCosmetics.Add(userCosmetic);
         await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task<bool> TryAddUserCosmeticAsync(UserCosmetic userCosmetic, CancellationToken ct = default)
+    {
+        try
+        {
+            _context.UserCosmetics.Add(userCosmetic);
+            await _context.SaveChangesAsync(ct);
+            // Cosmetic was successfully granted.
+            return true;
+        }
+        catch (DbUpdateException ex) when (IsUniqueConstraintViolation(ex))
+        {
+            // Race condition - user already owns this cosmetic; no new grant occurred.
+            return false;
+        }
     }
 
     #endregion
@@ -250,6 +287,105 @@ public class GamificationRepository : IGamificationRepository
     {
         return await _context.UserChallenges
             .CountAsync(uc => uc.UserId == userId && uc.IsCompleted, ct);
+    }
+
+    #endregion
+
+    #region Challenge Management Methods
+
+    public async Task AddChallengeAsync(Challenge challenge, CancellationToken ct = default)
+    {
+        _context.Challenges.Add(challenge);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task UpdateChallengeAsync(Challenge challenge, CancellationToken ct = default)
+    {
+        _context.Challenges.Update(challenge);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<ChallengeTemplate>> GetChallengeTemplatesAsync(ChallengeType? type = null, CancellationToken ct = default)
+    {
+        var query = _context.ChallengeTemplates.Where(t => t.IsActive);
+
+        if (type.HasValue)
+        {
+            query = query.Where(t => t.Type == type.Value);
+        }
+
+        return await query.ToListAsync(ct);
+    }
+
+    public async Task AddChallengeTemplateAsync(ChallengeTemplate template, CancellationToken ct = default)
+    {
+        _context.ChallengeTemplates.Add(template);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    #endregion
+
+    #region Season Management Methods
+
+    public async Task<IReadOnlyList<Season>> GetAllSeasonsAsync(CancellationToken ct = default)
+    {
+        return await _context.Seasons.ToListAsync(ct);
+    }
+
+    public async Task AddSeasonAsync(Season season, CancellationToken ct = default)
+    {
+        _context.Seasons.Add(season);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task UpdateSeasonAsync(Season season, CancellationToken ct = default)
+    {
+        _context.Seasons.Update(season);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task AddSeasonRewardAsync(SeasonReward reward, CancellationToken ct = default)
+    {
+        _context.SeasonRewards.Add(reward);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    #endregion
+
+    #region Season Archive Methods
+
+    public async Task AddSeasonArchiveAsync(SeasonArchive archive, CancellationToken ct = default)
+    {
+        _context.SeasonArchives.Add(archive);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task<IReadOnlyList<SeasonArchive>> GetUserSeasonArchivesAsync(int userId, CancellationToken ct = default)
+    {
+        return await _context.SeasonArchives
+            .Where(sa => sa.UserId == userId)
+            .Include(sa => sa.Season)
+            .OrderByDescending(sa => sa.ArchivedAt)
+            .ToListAsync(ct);
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    /// <summary>
+    /// Checks if the exception is a unique constraint violation (duplicate key).
+    /// </summary>
+    private static bool IsUniqueConstraintViolation(DbUpdateException ex)
+    {
+        var innerException = ex.InnerException;
+        if (innerException == null) return false;
+
+        var message = innerException.Message;
+        return message.Contains("duplicate key", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("unique constraint", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("UNIQUE constraint", StringComparison.OrdinalIgnoreCase) ||
+               message.Contains("23505"); // PostgreSQL error code
     }
 
     #endregion

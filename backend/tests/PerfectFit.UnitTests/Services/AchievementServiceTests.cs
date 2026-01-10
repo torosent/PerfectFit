@@ -11,12 +11,14 @@ namespace PerfectFit.UnitTests.Services;
 public class AchievementServiceTests
 {
     private readonly Mock<IGamificationRepository> _repositoryMock;
+    private readonly Mock<ICosmeticService> _cosmeticServiceMock;
     private readonly AchievementService _service;
 
     public AchievementServiceTests()
     {
         _repositoryMock = new Mock<IGamificationRepository>();
-        _service = new AchievementService(_repositoryMock.Object);
+        _cosmeticServiceMock = new Mock<ICosmeticService>();
+        _service = new AchievementService(_repositoryMock.Object, _cosmeticServiceMock.Object);
     }
 
     #region CheckAndUnlockAchievementsAsync Tests

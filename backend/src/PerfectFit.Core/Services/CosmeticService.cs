@@ -48,9 +48,21 @@ public class CosmeticService : ICosmeticService
         }
 
         var userCosmetic = UserCosmetic.Create(user.Id, cosmeticId, source);
-        await _repository.AddUserCosmeticAsync(userCosmetic, ct);
+        
+        // TryAddUserCosmeticAsync handles unique constraint violations
+        return await _repository.TryAddUserCosmeticAsync(userCosmetic, ct);
+    }
 
-        return true;
+    /// <inheritdoc />
+    public async Task<bool> GrantCosmeticByCodeAsync(User user, string cosmeticCode, ObtainedFrom source, CancellationToken ct = default)
+    {
+        var cosmetic = await _repository.GetCosmeticByCodeAsync(cosmeticCode, ct);
+        if (cosmetic == null)
+        {
+            return false;
+        }
+
+        return await GrantCosmeticAsync(user, cosmetic.Id, source, ct);
     }
 
     /// <inheritdoc />
