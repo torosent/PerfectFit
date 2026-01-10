@@ -3,3 +3,7 @@ export { UsersTable } from './UsersTable';
 export { DeleteUserModal } from './DeleteUserModal';
 export { BulkDeleteModal } from './BulkDeleteModal';
 export { AuditLogTable } from './AuditLogTable';
+export { AchievementsTable } from './AchievementsTable';
+export { ChallengeTemplatesTable } from './ChallengeTemplatesTable';
+export { CosmeticsTable } from './CosmeticsTable';
+export { GamificationTab } from './GamificationTab';

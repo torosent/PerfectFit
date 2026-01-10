@@ -4,11 +4,12 @@ import { useState, useCallback } from 'react';
 import { motion } from 'motion/react';
 import { UsersTable } from '@/components/admin/UsersTable';
 import { AuditLogTable } from '@/components/admin/AuditLogTable';
+import { GamificationTab } from '@/components/admin/GamificationTab';
 import { DeleteUserModal } from '@/components/admin/DeleteUserModal';
 import { BulkDeleteModal } from '@/components/admin/BulkDeleteModal';
 import type { AdminUser } from '@/types';
 
-type Tab = 'users' | 'audit-logs';
+type Tab = 'users' | 'audit-logs' | 'gamification';
 
 /**
  * Admin Portal Dashboard
@@ -103,6 +104,21 @@ export default function AdminPage() {
           >
             Audit Logs
           </button>
+          <button
+            onClick={() => setActiveTab('gamification')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'gamification'
+                ? 'text-white'
+                : 'text-gray-400 hover:text-white hover:bg-white/5'
+            }`}
+            style={
+              activeTab === 'gamification'
+                ? { background: 'linear-gradient(135deg, #14b8a6, #0ea5e9)' }
+                : undefined
+            }
+          >
+            Gamification
+          </button>
         </div>
 
         {/* Tab content */}
@@ -112,14 +128,18 @@ export default function AdminPage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
         >
-          {activeTab === 'users' ? (
+          {activeTab === 'users' && (
             <UsersTable
               onDeleteClick={handleDeleteClick}
               onBulkDeleteClick={handleBulkDeleteClick}
               refreshTrigger={refreshTrigger}
             />
-          ) : (
+          )}
+          {activeTab === 'audit-logs' && (
             <AuditLogTable refreshTrigger={refreshTrigger} />
+          )}
+          {activeTab === 'gamification' && (
+            <GamificationTab refreshTrigger={refreshTrigger} />
           )}
         </motion.div>
       </main>
