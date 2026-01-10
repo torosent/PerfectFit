@@ -16,6 +16,7 @@ export interface SubmitScoreResult {
   entry?: leaderboardClient.LeaderboardEntry;
   isNewHighScore: boolean;
   newRank?: number;
+  errorMessage?: string;
 }
 
 /**
@@ -522,12 +523,14 @@ export const useGameStore = create<GameStore>((set, get) => ({
         isSubmittingScore: false,
       });
     } catch (err) {
-      console.error('Failed to submit score:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Failed to submit score';
+      console.error('Failed to submit score:', errorMessage, err);
       set({ 
         isSubmittingScore: false,
         lastSubmitResult: {
           success: false,
           isNewHighScore: false,
+          errorMessage,
         },
       });
     }

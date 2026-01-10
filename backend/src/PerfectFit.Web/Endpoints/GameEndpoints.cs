@@ -239,7 +239,9 @@ public static class GameEndpoints
                 Description: g.Description,
                 NewProgress: g.NewProgress,
                 JustCompleted: g.JustCompleted
-            )).ToList()
+            )).ToList(),
+            GamesPlayed: dto.GamesPlayed,
+            HighScore: dto.HighScore
         );
     }
 }

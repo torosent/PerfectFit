@@ -30,6 +30,16 @@ public class WeeklyChallengeRotationJob : BackgroundService
     {
         _logger.LogInformation("Weekly challenge rotation job started");
 
+        // Run once on startup to ensure challenges exist
+        try
+        {
+            await ExecuteRotationAsync(stoppingToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error in initial weekly challenge rotation");
+        }
+
         while (!stoppingToken.IsCancellationRequested)
         {
             try

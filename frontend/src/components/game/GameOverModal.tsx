@@ -11,6 +11,7 @@ export interface LeaderboardResult {
   success: boolean;
   isNewHighScore: boolean;
   newRank?: number;
+  errorMessage?: string;
 }
 
 export interface GameOverModalProps {
@@ -365,6 +366,18 @@ function GameOverModalComponent({
                     animate={{ opacity: 1, scale: 1 }}
                     className="text-center space-y-2"
                   >
+                    {leaderboardResult.success === false && leaderboardResult.errorMessage && (
+                      <motion.div
+                        className="p-3 rounded-lg bg-red-500/10 border border-red-500/30"
+                        initial={{ y: 10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                      >
+                        <p className="text-sm text-red-400">
+                          {leaderboardResult.errorMessage}
+                        </p>
+                      </motion.div>
+                    )}
+
                     {leaderboardResult.isNewHighScore && (
                       <motion.div
                         className="flex items-center justify-center gap-2"

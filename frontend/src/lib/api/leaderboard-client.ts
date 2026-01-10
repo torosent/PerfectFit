@@ -84,12 +84,13 @@ async function apiFetch<T>(
   });
 
   if (!response.ok) {
-    let errorMessage = `API error: ${response.status} ${response.statusText}`;
+    let errorMessage = `API error: ${response.status}`;
     let details: unknown;
     
     try {
       const errorBody = await response.json();
-      errorMessage = errorBody.message || errorBody.error || errorMessage;
+      // Backend returns SubmitScoreResponseDto with errorMessage field (camelCase)
+      errorMessage = errorBody.errorMessage || errorBody.message || errorBody.error || errorMessage;
       details = errorBody;
     } catch {
       // Response body wasn't JSON, use default message
