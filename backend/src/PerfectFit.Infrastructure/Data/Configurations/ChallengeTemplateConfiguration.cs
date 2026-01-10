@@ -43,6 +43,11 @@ public class ChallengeTemplateConfiguration : IEntityTypeConfiguration<Challenge
             .HasDefaultValue(true)
             .IsRequired();
 
+        builder.Property(ct => ct.GoalType)
+            .HasColumnName("goal_type")
+            .HasConversion<int?>()
+            .IsRequired(false);
+
         // Index on Type for filtering daily/weekly templates
         builder.HasIndex(ct => ct.Type)
             .HasDatabaseName("ix_challenge_templates_type");

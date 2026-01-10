@@ -55,6 +55,11 @@ public class ChallengeConfiguration : IEntityTypeConfiguration<Challenge>
             .HasColumnName("challenge_template_id")
             .IsRequired(false);
 
+        builder.Property(c => c.GoalType)
+            .HasColumnName("goal_type")
+            .HasConversion<int?>()
+            .IsRequired(false);
+
         // Index on Type for filtering daily/weekly
         builder.HasIndex(c => c.Type)
             .HasDatabaseName("ix_challenges_type");
