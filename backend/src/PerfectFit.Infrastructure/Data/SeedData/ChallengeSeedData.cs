@@ -24,11 +24,11 @@ public static class ChallengeSeedData
                 xpReward: 50),
 
             ChallengeTemplate.Create(
-                name: "Win Streak",
-                description: "Win 2 games today",
+                name: "Warm Up",
+                description: "Complete 1 game today",
                 type: ChallengeType.Daily,
-                targetValue: 2,
-                xpReward: 75),
+                targetValue: 1,
+                xpReward: 25),
 
             ChallengeTemplate.Create(
                 name: "Score Hunter",
@@ -38,10 +38,10 @@ public static class ChallengeSeedData
                 xpReward: 60),
 
             ChallengeTemplate.Create(
-                name: "Precision Player",
-                description: "Complete 2 games with 90%+ accuracy",
+                name: "Point Collector",
+                description: "Score 1000 total points today",
                 type: ChallengeType.Daily,
-                targetValue: 2,
+                targetValue: 1000,
                 xpReward: 100),
 
             ChallengeTemplate.Create(
@@ -52,39 +52,39 @@ public static class ChallengeSeedData
                 xpReward: 80),
 
             ChallengeTemplate.Create(
-                name: "High Score",
+                name: "High Scorer",
                 description: "Score at least 200 points in a single game",
                 type: ChallengeType.Daily,
-                targetValue: 200,
+                targetValue: 1,
                 xpReward: 75),
 
             ChallengeTemplate.Create(
-                name: "Flawless",
-                description: "Complete a game with 100% accuracy",
-                type: ChallengeType.Daily,
-                targetValue: 1,
-                xpReward: 150),
-
-            ChallengeTemplate.Create(
-                name: "Speed Run",
-                description: "Complete a game in under 90 seconds",
-                type: ChallengeType.Daily,
-                targetValue: 1,
-                xpReward: 100),
-
-            ChallengeTemplate.Create(
-                name: "Consistent Player",
-                description: "Score 100+ points in 3 consecutive games",
+                name: "Triple Threat",
+                description: "Score at least 100 points in 3 games",
                 type: ChallengeType.Daily,
                 targetValue: 3,
                 xpReward: 90),
 
             ChallengeTemplate.Create(
-                name: "Marathon",
-                description: "Play for a total of 15 minutes today",
+                name: "Score Master",
+                description: "Score at least 300 points in a single game",
                 type: ChallengeType.Daily,
-                targetValue: 15,
-                xpReward: 70),
+                targetValue: 1,
+                xpReward: 125),
+
+            ChallengeTemplate.Create(
+                name: "Dedicated Player",
+                description: "Complete 7 games today",
+                type: ChallengeType.Daily,
+                targetValue: 7,
+                xpReward: 120),
+
+            ChallengeTemplate.Create(
+                name: "Big Score",
+                description: "Score 2000 total points today",
+                type: ChallengeType.Daily,
+                targetValue: 2000,
+                xpReward: 150),
         };
     }
 
@@ -97,7 +97,7 @@ public static class ChallengeSeedData
         {
             ChallengeTemplate.Create(
                 name: "Weekly Warrior",
-                description: "Win 25 games this week",
+                description: "Complete 25 games this week",
                 type: ChallengeType.Weekly,
                 targetValue: 25,
                 xpReward: 300),
@@ -110,18 +110,18 @@ public static class ChallengeSeedData
                 xpReward: 350),
 
             ChallengeTemplate.Create(
-                name: "Dedication",
-                description: "Play every day this week (7 days)",
+                name: "Score Legend",
+                description: "Score 10000 total points this week",
                 type: ChallengeType.Weekly,
-                targetValue: 7,
-                xpReward: 400),
+                targetValue: 10000,
+                xpReward: 500),
 
             ChallengeTemplate.Create(
-                name: "Perfectionist",
-                description: "Complete 5 games with 95%+ accuracy",
+                name: "Regular Player",
+                description: "Complete 15 games this week",
                 type: ChallengeType.Weekly,
-                targetValue: 5,
-                xpReward: 350),
+                targetValue: 15,
+                xpReward: 200),
 
             ChallengeTemplate.Create(
                 name: "Game Master",
@@ -131,39 +131,39 @@ public static class ChallengeSeedData
                 xpReward: 400),
 
             ChallengeTemplate.Create(
-                name: "Speed Demon Weekly",
-                description: "Complete 10 games in under 2 minutes each",
+                name: "Getting Started",
+                description: "Complete 5 games this week",
                 type: ChallengeType.Weekly,
-                targetValue: 10,
-                xpReward: 350),
+                targetValue: 5,
+                xpReward: 100),
 
             ChallengeTemplate.Create(
                 name: "High Achiever",
-                description: "Score 300+ points in 10 games",
+                description: "Score at least 300 points in 10 games this week",
                 type: ChallengeType.Weekly,
                 targetValue: 10,
                 xpReward: 375),
 
             ChallengeTemplate.Create(
-                name: "Endurance",
-                description: "Play for a total of 2 hours this week",
+                name: "Point Master",
+                description: "Score 3000 total points this week",
                 type: ChallengeType.Weekly,
-                targetValue: 120,
-                xpReward: 300),
+                targetValue: 3000,
+                xpReward: 250),
 
             ChallengeTemplate.Create(
-                name: "Win Streak Master",
-                description: "Win 5 games in a row",
+                name: "Dedicated Gamer",
+                description: "Complete 35 games this week",
                 type: ChallengeType.Weekly,
-                targetValue: 5,
-                xpReward: 500),
+                targetValue: 35,
+                xpReward: 350),
 
             ChallengeTemplate.Create(
-                name: "Perfect Week",
-                description: "Complete all daily challenges this week",
+                name: "Score Champion",
+                description: "Score 7500 total points this week",
                 type: ChallengeType.Weekly,
-                targetValue: 7,
-                xpReward: 600),
+                targetValue: 7500,
+                xpReward: 425),
         };
     }
 

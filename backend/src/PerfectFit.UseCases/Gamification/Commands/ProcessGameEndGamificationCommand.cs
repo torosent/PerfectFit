@@ -165,9 +165,56 @@ public class ProcessGameEndGamificationCommandHandler : IRequestHandler<ProcessG
 
     private static int CalculateChallengeProgress(Challenge challenge, GameSession gameSession)
     {
-        // Progress is based on challenge name/description patterns or directly uses game score
-        // Most challenges track cumulative score, so use the game score directly
-        return gameSession.Score;
+        // Determine progress type based on challenge name/description patterns
+        var nameLower = challenge.Name.ToLowerInvariant();
+        var descLower = challenge.Description.ToLowerInvariant();
+
+        // Score-based challenges: "score X points", "X points"
+        if (descLower.Contains("points") || descLower.Contains("score") && descLower.Contains("total"))
+        {
+            return gameSession.Score;
+        }
+
+        // High score challenges: "score at least X in a single game"
+        if (descLower.Contains("single game") || descLower.Contains("in a game") || descLower.Contains("in one"))
+        {
+            // Progress is whether the threshold was met (1 = met, 0 = not met)
+            return gameSession.Score >= challenge.TargetValue ? 1 : 0;
+        }
+
+        // Game count challenges: "complete X games", "play X games", "win X games"
+        if (descLower.Contains("games") || descLower.Contains("game") && (descLower.Contains("complete") || descLower.Contains("play") || descLower.Contains("win")))
+        {
+            return 1; // Each game completion adds 1
+        }
+
+        // Accuracy challenges: "X% accuracy"
+        if (descLower.Contains("accuracy"))
+        {
+            // Would need accuracy data from game session - for now assume 1 if game completed
+            return 1;
+        }
+
+        // Time-based challenges: "X minutes", "X seconds", "under X"
+        if (descLower.Contains("minute") || descLower.Contains("second") || descLower.Contains("under"))
+        {
+            // Duration tracking - estimate based on game session if available
+            if (gameSession.EndedAt.HasValue && gameSession.StartedAt != default)
+            {
+                var duration = (gameSession.EndedAt.Value - gameSession.StartedAt).TotalMinutes;
+                return (int)Math.Ceiling(duration);
+            }
+            return 1;
+        }
+
+        // Streak challenges: "X in a row", "consecutive"
+        if (descLower.Contains("in a row") || descLower.Contains("consecutive") || descLower.Contains("streak"))
+        {
+            return 1; // Would need streak tracking logic
+        }
+
+        // Default: count as 1 game completion
+        return 1;
     }
 
     private static int CalculateGoalProgress(PersonalGoal goal, GameSession gameSession)

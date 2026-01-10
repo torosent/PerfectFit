@@ -14,6 +14,7 @@ public class ChallengeTemplate
     public int TargetValue { get; private set; }
     public int XPReward { get; private set; }
     public bool IsActive { get; private set; }
+    public ChallengeGoalType? GoalType { get; private set; }
 
     // Private constructor for EF Core
     private ChallengeTemplate() { }
@@ -23,7 +24,8 @@ public class ChallengeTemplate
         string description,
         ChallengeType type,
         int targetValue,
-        int xpReward)
+        int xpReward,
+        ChallengeGoalType? goalType = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
@@ -44,7 +46,8 @@ public class ChallengeTemplate
             Type = type,
             TargetValue = targetValue,
             XPReward = xpReward,
-            IsActive = true
+            IsActive = true,
+            GoalType = goalType
         };
     }
 
@@ -67,7 +70,8 @@ public class ChallengeTemplate
         ChallengeType type,
         int targetValue,
         int xpReward,
-        bool isActive)
+        bool isActive,
+        ChallengeGoalType? goalType = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
@@ -87,5 +91,6 @@ public class ChallengeTemplate
         TargetValue = targetValue;
         XPReward = xpReward;
         IsActive = isActive;
+        GoalType = goalType;
     }
 }

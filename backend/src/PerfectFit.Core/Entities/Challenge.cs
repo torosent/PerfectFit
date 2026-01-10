@@ -13,7 +13,8 @@ public class Challenge
     public DateTime StartDate { get; private set; }
     public DateTime EndDate { get; private set; }
     public bool IsActive { get; private set; }
-    
+    public ChallengeGoalType? GoalType { get; private set; }
+
     /// <summary>
     /// The ID of the template this challenge was created from (for multi-instance deduplication).
     /// </summary>
@@ -33,7 +34,8 @@ public class Challenge
         int xpReward,
         DateTime startDate,
         DateTime endDate,
-        int? templateId = null)
+        int? templateId = null,
+        ChallengeGoalType? goalType = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
 
@@ -57,8 +59,31 @@ public class Challenge
             StartDate = startDate,
             EndDate = endDate,
             IsActive = true,
-            ChallengeTemplateId = templateId
+            ChallengeTemplateId = templateId,
+            GoalType = goalType
         };
+    }
+
+    /// <summary>
+    /// Creates a new Challenge instance from a ChallengeTemplate.
+    /// </summary>
+    public static Challenge CreateFromTemplate(
+        ChallengeTemplate template,
+        DateTime startDate,
+        DateTime endDate)
+    {
+        ArgumentNullException.ThrowIfNull(template, nameof(template));
+
+        return Create(
+            template.Name,
+            template.Description,
+            template.Type,
+            template.TargetValue,
+            template.XPReward,
+            startDate,
+            endDate,
+            template.Id,
+            template.GoalType);
     }
 
     public void Deactivate()

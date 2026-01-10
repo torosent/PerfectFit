@@ -29,5 +29,10 @@ public enum AdminAction
     DeleteCosmetic = 33,
 
     // Seed data actions (40-49)
-    SeedSampleData = 40
+    SeedSampleData = 40,
+
+    // Reset actions (50-59)
+    ResetAchievements = 50,
+    ResetChallenges = 51,
+    ResetCosmetics = 52
 }

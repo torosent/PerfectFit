@@ -203,6 +203,30 @@ public static class AdminGamificationEndpoints
             .Produces(StatusCodes.Status401Unauthorized)
             .Produces(StatusCodes.Status403Forbidden);
 
+        // DELETE /api/admin/gamification/achievements/reset - Reset all achievements
+        group.MapDelete("/achievements/reset", ResetAchievements)
+            .WithName("AdminResetAchievements")
+            .WithSummary("Delete all achievements and user achievement progress")
+            .Produces<ResetResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
+        // DELETE /api/admin/gamification/challenges/reset - Reset all challenges
+        group.MapDelete("/challenges/reset", ResetChallenges)
+            .WithName("AdminResetChallenges")
+            .WithSummary("Delete all challenges, challenge templates, and user challenge progress")
+            .Produces<ResetResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
+        // DELETE /api/admin/gamification/cosmetics/reset - Reset all cosmetics
+        group.MapDelete("/cosmetics/reset", ResetCosmetics)
+            .WithName("AdminResetCosmetics")
+            .WithSummary("Delete all cosmetics and user cosmetic ownership")
+            .Produces<ResetResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
+
         #endregion
     }
 
@@ -1243,13 +1267,57 @@ public static class AdminGamificationEndpoints
             seedResult.SeasonRewardsAdded = rewards.Count;
         }
 
+        // Auto-create active challenges from templates if no active challenges exist
+        var existingChallengeCount = await dbContext.Challenges
+            .Where(c => c.IsActive && c.EndDate >= DateTime.UtcNow)
+            .CountAsync(cancellationToken);
+        
+        if (existingChallengeCount == 0)
+        {
+            // Get all active templates
+            var activeTemplates = await dbContext.ChallengeTemplates
+                .Where(t => t.IsActive)
+                .ToListAsync(cancellationToken);
+
+            var now = DateTime.UtcNow;
+            var challengesToCreate = new List<Challenge>();
+
+            foreach (var template in activeTemplates)
+            {
+                // Calculate start/end dates based on type
+                var (startDate, endDate) = template.Type == ChallengeType.Daily
+                    ? (now.Date, now.Date.AddDays(1).AddSeconds(-1))
+                    : (now.Date.AddDays(-(int)now.DayOfWeek), now.Date.AddDays(7 - (int)now.DayOfWeek).AddSeconds(-1));
+
+                var challenge = Challenge.Create(
+                    name: template.Name,
+                    description: template.Description,
+                    type: template.Type,
+                    targetValue: template.TargetValue,
+                    xpReward: template.XPReward,
+                    startDate: startDate,
+                    endDate: endDate,
+                    templateId: template.Id
+                );
+
+                challengesToCreate.Add(challenge);
+            }
+
+            if (challengesToCreate.Count > 0)
+            {
+                dbContext.Challenges.AddRange(challengesToCreate);
+                await dbContext.SaveChangesAsync(cancellationToken);
+                seedResult.ActiveChallengesCreated = challengesToCreate.Count;
+            }
+        }
+
         // Create audit log
-        var totalAdded = seedResult.AchievementsAdded + seedResult.CosmeticsAdded + seedResult.ChallengeTemplatesAdded;
+        var totalAdded = seedResult.AchievementsAdded + seedResult.CosmeticsAdded + seedResult.ChallengeTemplatesAdded + seedResult.ActiveChallengesCreated;
         var auditLog = AdminAuditLog.Create(
             adminUserId.Value,
             AdminAction.SeedSampleData,
             null,
-            $"Seeded sample data: {seedResult.AchievementsAdded} achievements, {seedResult.CosmeticsAdded} cosmetics, {seedResult.ChallengeTemplatesAdded} challenge templates"
+            $"Seeded sample data: {seedResult.AchievementsAdded} achievements, {seedResult.CosmeticsAdded} cosmetics, {seedResult.ChallengeTemplatesAdded} templates, {seedResult.ActiveChallengesCreated} active challenges"
         );
         await auditRepo.AddAsync(auditLog, cancellationToken);
 
@@ -1262,6 +1330,7 @@ public static class AdminGamificationEndpoints
             ChallengeTemplatesSkipped: seedResult.ChallengeTemplatesSkipped,
             SeasonCreated: seedResult.SeasonCreated,
             SeasonRewardsAdded: seedResult.SeasonRewardsAdded,
+            ActiveChallengesCreated: seedResult.ActiveChallengesCreated,
             Message: totalAdded > 0 
                 ? $"Successfully seeded {totalAdded} items" 
                 : "All sample data already exists"
@@ -1278,6 +1347,121 @@ public static class AdminGamificationEndpoints
         public int ChallengeTemplatesSkipped { get; set; }
         public bool SeasonCreated { get; set; }
         public int SeasonRewardsAdded { get; set; }
+        public int ActiveChallengesCreated { get; set; }
+    }
+
+    /// <summary>
+    /// Resets all achievements - deletes all achievements and user achievement progress.
+    /// </summary>
+    private static async Task<IResult> ResetAchievements(
+        ClaimsPrincipal user,
+        AppDbContext dbContext,
+        IAdminAuditRepository auditRepo,
+        CancellationToken cancellationToken = default)
+    {
+        var adminUserId = GetAdminUserId(user);
+        if (adminUserId == null)
+        {
+            return Results.Unauthorized();
+        }
+
+        // Delete user achievements first (foreign key constraint)
+        var userAchievementsDeleted = await dbContext.UserAchievements.ExecuteDeleteAsync(cancellationToken);
+        
+        // Delete all achievements
+        var achievementsDeleted = await dbContext.Achievements.ExecuteDeleteAsync(cancellationToken);
+
+        // Create audit log
+        var auditLog = AdminAuditLog.Create(
+            adminUserId.Value,
+            AdminAction.ResetAchievements,
+            null,
+            $"Reset achievements: deleted {achievementsDeleted} achievements and {userAchievementsDeleted} user achievement records"
+        );
+        await auditRepo.AddAsync(auditLog, cancellationToken);
+
+        return Results.Ok(new ResetResponse(
+            ItemsDeleted: achievementsDeleted,
+            RelatedRecordsDeleted: userAchievementsDeleted,
+            Message: $"Successfully deleted {achievementsDeleted} achievements and {userAchievementsDeleted} user achievement records"
+        ));
+    }
+
+    /// <summary>
+    /// Resets all challenges - deletes all challenges, templates, and user challenge progress.
+    /// </summary>
+    private static async Task<IResult> ResetChallenges(
+        ClaimsPrincipal user,
+        AppDbContext dbContext,
+        IAdminAuditRepository auditRepo,
+        CancellationToken cancellationToken = default)
+    {
+        var adminUserId = GetAdminUserId(user);
+        if (adminUserId == null)
+        {
+            return Results.Unauthorized();
+        }
+
+        // Delete user challenges first (foreign key constraint)
+        var userChallengesDeleted = await dbContext.UserChallenges.ExecuteDeleteAsync(cancellationToken);
+        
+        // Delete all challenges
+        var challengesDeleted = await dbContext.Challenges.ExecuteDeleteAsync(cancellationToken);
+        
+        // Delete all challenge templates
+        var templatesDeleted = await dbContext.ChallengeTemplates.ExecuteDeleteAsync(cancellationToken);
+
+        // Create audit log
+        var auditLog = AdminAuditLog.Create(
+            adminUserId.Value,
+            AdminAction.ResetChallenges,
+            null,
+            $"Reset challenges: deleted {challengesDeleted} challenges, {templatesDeleted} templates, and {userChallengesDeleted} user challenge records"
+        );
+        await auditRepo.AddAsync(auditLog, cancellationToken);
+
+        return Results.Ok(new ResetResponse(
+            ItemsDeleted: challengesDeleted + templatesDeleted,
+            RelatedRecordsDeleted: userChallengesDeleted,
+            Message: $"Successfully deleted {challengesDeleted} challenges, {templatesDeleted} templates, and {userChallengesDeleted} user challenge records"
+        ));
+    }
+
+    /// <summary>
+    /// Resets all cosmetics - deletes all cosmetics and user cosmetic ownership.
+    /// </summary>
+    private static async Task<IResult> ResetCosmetics(
+        ClaimsPrincipal user,
+        AppDbContext dbContext,
+        IAdminAuditRepository auditRepo,
+        CancellationToken cancellationToken = default)
+    {
+        var adminUserId = GetAdminUserId(user);
+        if (adminUserId == null)
+        {
+            return Results.Unauthorized();
+        }
+
+        // Delete user cosmetics first (foreign key constraint)
+        var userCosmeticsDeleted = await dbContext.UserCosmetics.ExecuteDeleteAsync(cancellationToken);
+        
+        // Delete all cosmetics
+        var cosmeticsDeleted = await dbContext.Cosmetics.ExecuteDeleteAsync(cancellationToken);
+
+        // Create audit log
+        var auditLog = AdminAuditLog.Create(
+            adminUserId.Value,
+            AdminAction.ResetCosmetics,
+            null,
+            $"Reset cosmetics: deleted {cosmeticsDeleted} cosmetics and {userCosmeticsDeleted} user cosmetic records"
+        );
+        await auditRepo.AddAsync(auditLog, cancellationToken);
+
+        return Results.Ok(new ResetResponse(
+            ItemsDeleted: cosmeticsDeleted,
+            RelatedRecordsDeleted: userCosmeticsDeleted,
+            Message: $"Successfully deleted {cosmeticsDeleted} cosmetics and {userCosmeticsDeleted} user cosmetic records"
+        ));
     }
 
     #endregion
@@ -1332,6 +1516,16 @@ public record SeedDataResponse(
     int ChallengeTemplatesSkipped,
     bool SeasonCreated,
     int SeasonRewardsAdded,
+    int ActiveChallengesCreated,
+    string Message
+);
+
+/// <summary>
+/// Response for reset operations.
+/// </summary>
+public record ResetResponse(
+    int ItemsDeleted,
+    int RelatedRecordsDeleted,
     string Message
 );
 

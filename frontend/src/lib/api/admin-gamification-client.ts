@@ -341,6 +341,7 @@ export interface SeedDataResponse {
   challengeTemplatesSkipped: number;
   seasonCreated: boolean;
   seasonRewardsAdded: number;
+  activeChallengesCreated: number;
   message: string;
 }
 
@@ -462,4 +463,68 @@ export async function deleteAdminCosmetic(
   });
 
   await handleAdminGamificationResponse<void>(response);
+}
+
+// ============================================================================
+// RESET OPERATIONS
+// ============================================================================
+
+/**
+ * Response from reset operations
+ */
+export interface ResetResponse {
+  itemsDeleted: number;
+  relatedRecordsDeleted: number;
+  message: string;
+}
+
+/**
+ * Reset all achievements (admin only)
+ * Deletes all achievements and user achievement progress
+ * @param token - JWT authentication token
+ * @returns Information about deleted items
+ */
+export async function resetAchievements(
+  token: string
+): Promise<ResetResponse> {
+  const response = await fetch(`${GAMIFICATION_BASE}/achievements/reset`, {
+    method: 'DELETE',
+    headers: getAdminGamificationHeaders(token),
+  });
+
+  return handleAdminGamificationResponse<ResetResponse>(response);
+}
+
+/**
+ * Reset all challenges (admin only)
+ * Deletes all challenges, templates, and user challenge progress
+ * @param token - JWT authentication token
+ * @returns Information about deleted items
+ */
+export async function resetChallenges(
+  token: string
+): Promise<ResetResponse> {
+  const response = await fetch(`${GAMIFICATION_BASE}/challenges/reset`, {
+    method: 'DELETE',
+    headers: getAdminGamificationHeaders(token),
+  });
+
+  return handleAdminGamificationResponse<ResetResponse>(response);
+}
+
+/**
+ * Reset all cosmetics (admin only)
+ * Deletes all cosmetics and user cosmetic ownership
+ * @param token - JWT authentication token
+ * @returns Information about deleted items
+ */
+export async function resetCosmetics(
+  token: string
+): Promise<ResetResponse> {
+  const response = await fetch(`${GAMIFICATION_BASE}/cosmetics/reset`, {
+    method: 'DELETE',
+    headers: getAdminGamificationHeaders(token),
+  });
+
+  return handleAdminGamificationResponse<ResetResponse>(response);
 }
