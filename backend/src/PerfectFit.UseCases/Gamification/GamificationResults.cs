@@ -12,7 +12,9 @@ public record GameEndGamificationResult(
     IReadOnlyList<ChallengeProgressResult> ChallengeUpdates,
     AchievementUnlockResult AchievementUpdates,
     SeasonXPResult SeasonProgress,
-    IReadOnlyList<GoalProgressResult> GoalUpdates
+    IReadOnlyList<GoalProgressResult> GoalUpdates,
+    int GamesPlayed,
+    int HighScore
 );
 
 /// <summary>

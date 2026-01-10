@@ -3,7 +3,9 @@
 import { memo, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useMotionValue, animate } from 'motion/react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { modalVariants, backdropVariants, buttonVariants, staggerContainerVariants, staggerItemVariants } from '@/lib/animations';
+import type { GameEndGamification } from '@/types/gamification';
 
 export interface LeaderboardResult {
   success: boolean;
@@ -22,6 +24,8 @@ export interface GameOverModalProps {
   leaderboardResult?: LeaderboardResult | null;
   /** Whether score is being submitted */
   isSubmitting?: boolean;
+  /** Gamification data from game end */
+  gamification?: GameEndGamification | null;
   /** Callback when "Play Again" is clicked */
   onPlayAgain: () => void;
   /** Callback when modal is closed (optional) */
@@ -77,6 +81,7 @@ function GameOverModalComponent({
   linesCleared = 0,
   leaderboardResult,
   isSubmitting = false,
+  gamification,
   onPlayAgain,
   onClose,
 }: GameOverModalProps) {
@@ -85,6 +90,13 @@ function GameOverModalComponent({
   
   const animatedScore = useCountUp(score, isOpen, 1.5);
   const animatedLines = useCountUp(linesCleared, isOpen, 1);
+
+  // Gamification helpers
+  const hasAchievements = gamification?.newAchievements && gamification.newAchievements.length > 0;
+  const hasChallengeProgress = gamification?.challengeUpdates && gamification.challengeUpdates.length > 0;
+  const hasGoalProgress = gamification?.goalUpdates && gamification.goalUpdates.some(g => g.justCompleted);
+  const streak = gamification?.streak;
+  const seasonProgress = gamification?.seasonProgress;
 
   // Focus trap and escape key handling
   useEffect(() => {
@@ -155,7 +167,7 @@ function GameOverModalComponent({
             initial="hidden"
             animate="visible"
             exit="exit"
-            className="relative rounded-2xl shadow-2xl p-8 max-w-sm w-full overflow-hidden"
+            className="relative rounded-2xl shadow-2xl p-6 md:p-8 max-w-md w-full overflow-hidden max-h-[90vh] overflow-y-auto"
             style={{ backgroundColor: '#0d243d', borderWidth: 1, borderStyle: 'solid', borderColor: 'rgba(20, 184, 166, 0.3)' }}
           >
             {/* Animated background gradient */}
@@ -244,6 +256,105 @@ function GameOverModalComponent({
                       <div className="w-4 h-4 border-2 rounded-full animate-spin" style={{ borderColor: '#2dd4bf', borderTopColor: 'transparent' }} />
                       <span className="text-sm">Submitting score...</span>
                     </div>
+                  </motion.div>
+                )}
+
+
+                {/* Basic Stats: Games Played & High Score */}
+                {gamification && (
+                  <motion.div
+                    variants={staggerItemVariants}
+                    className="grid grid-cols-2 gap-4 pt-2 border-t border-gray-700/50"
+                  >
+                    <div className="text-center">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">High Score</p>
+                      <p className="text-lg font-semibold text-white">{gamification.highScore.toLocaleString()}</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-xs font-medium text-gray-400 uppercase tracking-wider">Games Played</p>
+                      <p className="text-lg font-semibold text-white">{gamification.gamesPlayed.toLocaleString()}</p>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Gamification Updates */}
+                {gamification && (
+                  <motion.div variants={staggerItemVariants} className="space-y-4 pt-4 border-t border-gray-700/50">
+                    
+                    {/* XP Gained */}
+                    {seasonProgress && seasonProgress.xpEarned > 0 && (
+                      <div className="bg-white/5 rounded-lg p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-yellow-400 font-bold">XP</span>
+                          <span className="text-sm text-gray-300">Season Progress</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-yellow-400 font-bold">+{seasonProgress.xpEarned} XP</span>
+                          {seasonProgress.tierUp && (
+                            <span className="px-2 py-0.5 rounded bg-purple-500/20 text-purple-400 text-xs font-bold border border-purple-500/30">
+                              TIER UP!
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Streak */}
+                    {streak && (
+                      <div className="bg-white/5 rounded-lg p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-2xl">🔥</span>
+                          <span className="text-sm text-gray-300">Daily Streak</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-white font-bold text-lg">{streak.currentStreak}</span>
+                          <span className="text-gray-400 text-xs ml-1">days</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* New Achievements */}
+                    {hasAchievements && (
+                      <div className="bg-yellow-500/10 rounded-lg p-3 border border-yellow-500/20">
+                        <h4 className="text-xs font-bold text-yellow-400 uppercase mb-2">Achievement Unlocked!</h4>
+                        <div className="space-y-2">
+                          {gamification.newAchievements.map(ach => (
+                            <div key={ach.achievementId} className="flex items-center gap-3">
+                              {ach.iconUrl ? (
+                                <Image src={ach.iconUrl} alt="icon" width={24} height={24} className="w-6 h-6" />
+                              ) : (
+                                <div className="w-6 h-6 rounded-full bg-yellow-400/20 flex items-center justify-center text-yellow-400">🏆</div>
+                              )}
+                              <div className="text-left">
+                                <p className="text-sm font-bold text-white leading-tight">{ach.name}</p>
+                                <p className="text-xs text-gray-400 leading-tight">{ach.description}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Challenge Progress */}
+                    {hasChallengeProgress && (
+                      <div className="bg-blue-500/10 rounded-lg p-3 border border-blue-500/20">
+                        <h4 className="text-xs font-bold text-blue-400 uppercase mb-2">Challenge Progress</h4>
+                        <div className="space-y-2">
+                          {gamification.challengeUpdates.map(ch => (
+                            <div key={ch.challengeId} className="flex items-center justify-between">
+                              <span className="text-sm text-gray-200 truncate pr-2 max-w-[150px]">{ch.challengeName}</span>
+                              <div className="flex items-center gap-2 text-xs">
+                                {ch.justCompleted ? (
+                                  <span className="text-green-400 font-bold">COMPLETED!</span>
+                                ) : (
+                                  <span className="text-blue-300">+{ch.newProgress - (ch.newProgress ?? 0)} progress</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </motion.div>
                 )}
 

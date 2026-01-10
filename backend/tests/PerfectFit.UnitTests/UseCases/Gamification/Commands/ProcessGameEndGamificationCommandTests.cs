@@ -66,6 +66,8 @@ public class ProcessGameEndGamificationCommandTests
         result.AchievementUpdates.Should().NotBeNull();
         result.SeasonProgress.Should().NotBeNull();
         result.GoalUpdates.Should().NotBeNull();
+        result.GamesPlayed.Should().Be(1);
+        result.HighScore.Should().Be(1000);
     }
 
     [Fact]

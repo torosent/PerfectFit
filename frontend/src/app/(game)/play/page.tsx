@@ -12,6 +12,7 @@ import {
   usePerfectClearTriggered,
   useLastLinesCleared,
   useIsNewHighScore,
+  useLastGamification,
 } from '@/lib/stores/game-store';
 import { useIsAuthenticated } from '@/lib/stores/auth-store';
 import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
@@ -111,6 +112,7 @@ export default function PlayPage() {
   const perfectClearTriggered = usePerfectClearTriggered();
   const lastLinesCleared = useLastLinesCleared();
   const isNewHighScore = useIsNewHighScore();
+  const lastGamification = useLastGamification();
 
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
   
@@ -440,6 +442,7 @@ export default function PlayPage() {
             linesCleared={gameState?.linesCleared ?? 0}
             leaderboardResult={lastSubmitResult}
             isSubmitting={isSubmittingScore}
+            gamification={lastGamification}
             onPlayAgain={handlePlayAgain}
           />
         </div>

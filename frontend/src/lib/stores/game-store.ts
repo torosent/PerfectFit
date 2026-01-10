@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { GameState, Position, ClearingCell } from '@/types';
+import type { GameEndGamification } from '@/types/gamification';
 import * as gameClient from '@/lib/api/game-client';
 import * as leaderboardClient from '@/lib/api/leaderboard-client';
 import { useAuthStore } from './auth-store';
@@ -70,6 +71,9 @@ export interface GameStore {
   // Leaderboard state
   lastSubmitResult: SubmitScoreResult | null;
   isSubmittingScore: boolean;
+
+  // Gamification state from last game
+  lastGamification: GameEndGamification | null;
   
   // Computed helpers (not reactive, but convenient)
   isGameOver: () => boolean;
@@ -146,6 +150,7 @@ const initialState = {
   isNewHighScore: false,
   lastSubmitResult: null,
   isSubmittingScore: false,
+  lastGamification: null,
 };
 
 /**
@@ -177,6 +182,7 @@ export const useGameStore = create<GameStore>((set, get) => ({
       streak: 0,
       isNewHighScore: false,
       animationState: initialAnimationState,
+      lastGamification: null,
     });
     
     try {
@@ -348,7 +354,12 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Get auth token if available
       const token = useAuthStore.getState().token;
       const response = await gameClient.endGame(gameState.id, token);
-      set({ gameState: response.gameState, isLoading: false, selectedPieceIndex: null });
+      set({ 
+        gameState: response.gameState, 
+        isLoading: false, 
+        selectedPieceIndex: null,
+        lastGamification: response.gamification ?? null
+      });
       
       // Process gamification data if returned
       if (response.gamification) {
@@ -569,3 +580,4 @@ export const usePreviousHighScore = () => useGameStore((state) => state.previous
 // Leaderboard state selectors
 export const useLastSubmitResult = () => useGameStore((state) => state.lastSubmitResult);
 export const useIsSubmittingScore = () => useGameStore((state) => state.isSubmittingScore);
+export const useLastGamification = () => useGameStore((state) => state.lastGamification);

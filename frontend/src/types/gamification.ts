@@ -275,6 +275,10 @@ export interface GameEndGamification {
   seasonProgress: SeasonXPGain;
   /** Personal goal progress updates */
   goalUpdates: GoalProgress[];
+  /** Total games played by the user */
+  gamesPlayed: number;
+  /** User's high score */
+  highScore: number;
 }
 
 /** Progress update for a challenge (matches ChallengeProgressDto) */

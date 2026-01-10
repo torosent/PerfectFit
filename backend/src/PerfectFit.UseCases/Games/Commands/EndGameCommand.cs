@@ -119,7 +119,9 @@ public class EndGameCommandHandler : IRequestHandler<EndGameCommand, EndGameResu
                 Description: g.Description,
                 NewProgress: g.NewProgress,
                 JustCompleted: g.IsCompleted
-            )).ToList()
+            )).ToList(),
+            GamesPlayed: result.GamesPlayed,
+            HighScore: result.HighScore
         );
     }
 

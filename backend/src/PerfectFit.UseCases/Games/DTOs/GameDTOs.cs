@@ -91,7 +91,9 @@ public record GameEndGamificationResponseDto(
     IReadOnlyList<ChallengeProgressResponseDto> ChallengeUpdates,
     IReadOnlyList<AchievementUnlockResponseDto> NewAchievements,
     SeasonXPResponseDto SeasonProgress,
-    IReadOnlyList<GoalProgressResponseDto> GoalUpdates
+    IReadOnlyList<GoalProgressResponseDto> GoalUpdates,
+    int GamesPlayed,
+    int HighScore
 );
 
 /// <summary>

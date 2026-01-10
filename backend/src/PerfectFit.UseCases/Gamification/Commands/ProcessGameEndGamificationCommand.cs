@@ -96,7 +96,9 @@ public class ProcessGameEndGamificationCommandHandler : IRequestHandler<ProcessG
             ChallengeUpdates: challengeUpdates,
             AchievementUpdates: achievementResult,
             SeasonProgress: seasonResult,
-            GoalUpdates: goalUpdates
+            GoalUpdates: goalUpdates,
+            GamesPlayed: user.GamesPlayed,
+            HighScore: user.HighScore
         );
     }
 
