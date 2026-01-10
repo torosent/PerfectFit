@@ -47,6 +47,7 @@ public static class DependencyInjection
             services.AddScoped<IGameSessionRepository, GameSessionRepository>();
             services.AddScoped<ILeaderboardRepository, LeaderboardRepository>();
             services.AddScoped<IAdminAuditRepository, AdminAuditRepository>();
+            services.AddScoped<IGamificationRepository, GamificationRepository>();
         }
 
         // Configure JWT settings and service

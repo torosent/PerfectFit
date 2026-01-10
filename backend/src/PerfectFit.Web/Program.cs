@@ -197,6 +197,18 @@ builder.Services.AddRateLimiter(options =>
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 0
             }));
+
+    // Rate limiting for gamification actions: 30 requests per minute per user
+    options.AddPolicy("GamificationActionLimit", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 30,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
 });
 
 var app = builder.Build();
@@ -255,6 +267,9 @@ app.MapLeaderboardEndpoints();
 
 // Map admin endpoints
 app.MapAdminEndpoints();
+
+// Map gamification endpoints
+app.MapGamificationEndpoints();
 
 app.Run();
 

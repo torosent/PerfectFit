@@ -19,6 +19,7 @@ public class AppDbContext : DbContext
     public DbSet<UserChallenge> UserChallenges => Set<UserChallenge>();
     public DbSet<Season> Seasons => Set<Season>();
     public DbSet<SeasonReward> SeasonRewards => Set<SeasonReward>();
+    public DbSet<ClaimedSeasonReward> ClaimedSeasonRewards => Set<ClaimedSeasonReward>();
     public DbSet<Cosmetic> Cosmetics => Set<Cosmetic>();
     public DbSet<UserCosmetic> UserCosmetics => Set<UserCosmetic>();
     public DbSet<PersonalGoal> PersonalGoals => Set<PersonalGoal>();
