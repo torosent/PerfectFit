@@ -130,45 +130,57 @@ public sealed class SolvabilityChecker
 
     /// <summary>
     /// Tries to place a sequence of pieces on the board.
+    /// Uses backtracking to find a valid placement sequence.
     /// Simulates line clears after each placement.
     /// </summary>
     private static bool TryPlaceSequence(GameBoard originalBoard, IReadOnlyList<Piece> sequence)
     {
         // Work with a copy of the board
         var boardArray = originalBoard.ToArray();
+        return TryPlaceSequenceRecursive(boardArray, sequence, 0);
+    }
 
-        foreach (var piece in sequence)
+    /// <summary>
+    /// Recursively tries to place pieces with backtracking.
+    /// </summary>
+    private static bool TryPlaceSequenceRecursive(string?[,] boardArray, IReadOnlyList<Piece> sequence, int pieceIndex)
+    {
+        // Base case: all pieces placed successfully
+        if (pieceIndex >= sequence.Count)
         {
-            var tempBoard = GameBoard.FromArray(boardArray);
+            return true;
+        }
 
-            var positions = GetLimitedPositions(tempBoard, piece);
-            if (positions.Count == 0)
-            {
-                return false;
-            }
+        var piece = sequence[pieceIndex];
+        var tempBoard = GameBoard.FromArray(boardArray);
 
-            // Try to find a position that works (use first valid for speed, or could try best)
-            bool placed = false;
-            foreach (var (row, col) in positions)
+        var positions = GetLimitedPositions(tempBoard, piece);
+        if (positions.Count == 0)
+        {
+            return false;
+        }
+
+        // Try each valid position with backtracking
+        foreach (var (row, col) in positions)
+        {
+            var testBoard = GameBoard.FromArray(boardArray);
+            if (testBoard.TryPlacePiece(piece, row, col))
             {
-                var testBoard = GameBoard.FromArray(boardArray);
-                if (testBoard.TryPlacePiece(piece, row, col))
+                // Simulate line clears
+                SimulateLineClear(testBoard);
+                var newBoardArray = testBoard.ToArray();
+
+                // Recursively try to place remaining pieces
+                if (TryPlaceSequenceRecursive(newBoardArray, sequence, pieceIndex + 1))
                 {
-                    // Simulate line clears
-                    SimulateLineClear(testBoard);
-                    boardArray = testBoard.ToArray();
-                    placed = true;
-                    break;
+                    return true;
                 }
-            }
-
-            if (!placed)
-            {
-                return false;
+                // Backtrack: try next position
             }
         }
 
-        return true;
+        // No valid placement found for this piece with current board state
+        return false;
     }
 
     /// <summary>

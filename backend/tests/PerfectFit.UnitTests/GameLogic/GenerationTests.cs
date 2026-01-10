@@ -342,6 +342,76 @@ public class SolvabilityCheckerTests
         result.IsSolvable.Should().BeTrue();
         result.AtLeastOneFits.Should().BeTrue();
     }
+
+    [Fact]
+    public void CheckSolvability_UsesBacktracking_WhenFirstPlacementBlocksOthers()
+    {
+        // Create a scenario where greedy placement fails but backtracking succeeds
+        // Board: Fill most cells leaving a constrained area where placement order matters
+        var board = new GameBoard();
+
+        // Fill the board leaving only a 2x4 gap in bottom-right corner
+        // This gap can fit two Line2 pieces but only if placed correctly
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                // Leave rows 6-7, cols 4-7 empty (2x4 area)
+                if (!(row >= 6 && col >= 4))
+                {
+                    board.TryPlacePiece(Piece.Create(PieceType.Dot), row, col);
+                }
+            }
+        }
+
+        // Create two horizontal Line2 pieces (2 cells each)
+        // The 2x4 area can fit both, but only if the first one doesn't block the second
+        var pieces = new List<Piece> 
+        { 
+            Piece.Create(PieceType.Line2, 0), // Horizontal
+            Piece.Create(PieceType.Line2, 0), // Horizontal
+            Piece.Create(PieceType.Line2, 0), // Horizontal  
+            Piece.Create(PieceType.Line2, 0)  // Horizontal
+        };
+
+        var result = SolvabilityChecker.CheckSolvability(board, pieces);
+
+        // With backtracking, all 4 Line2 pieces (8 cells) should fit in the 2x4 (8 cell) area
+        result.IsSolvable.Should().BeTrue("Backtracking should find valid placement for all pieces");
+        result.AllFit.Should().BeTrue();
+    }
+
+    [Fact]
+    public void CheckSolvability_FindsSolution_WhenOrderMatters()
+    {
+        // Scenario: Board has a specific shape where one piece must go in a specific spot
+        var board = new GameBoard();
+
+        // Create a 2x2 empty area with one cell blocked (L-shape)
+        // Corner piece shape is: { { true, true }, { true, false } }
+        // which covers (0,0), (0,1), (1,0) - leaving (1,1) empty
+        // We need to leave empty: (6,6), (6,7), (7,6) for the corner piece
+        for (int row = 0; row < 8; row++)
+        {
+            for (int col = 0; col < 8; col++)
+            {
+                bool isEmptyCell = (row == 6 && col == 6) || 
+                                   (row == 6 && col == 7) || 
+                                   (row == 7 && col == 6);
+                if (!isEmptyCell)
+                {
+                    board.TryPlacePiece(Piece.Create(PieceType.Dot), row, col);
+                }
+            }
+        }
+
+        // Corner piece (L-shape) should fit exactly in the remaining space
+        var pieces = new List<Piece> { Piece.Create(PieceType.Corner, 0) };
+
+        var result = SolvabilityChecker.CheckSolvability(board, pieces);
+
+        result.IsSolvable.Should().BeTrue("Corner piece should fit in the L-shaped gap");
+    }
 }
 
 public class WeightedPieceSelectorTests
