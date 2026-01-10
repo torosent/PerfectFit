@@ -5,6 +5,8 @@ namespace PerfectFit.Core.Entities;
 
 public class User
 {
+    private const int XPPerTier = 1000;
+
     public int Id { get; private set; }
     public string ExternalId { get; private set; } = string.Empty;
     public string? Email { get; private set; }
@@ -26,8 +28,28 @@ public class User
     public int FailedLoginAttempts { get; private set; }
     public DateTime? LockoutEnd { get; private set; }
 
+    // Gamification - Streak fields
+    public int CurrentStreak { get; private set; }
+    public int LongestStreak { get; private set; }
+    public int StreakFreezeTokens { get; private set; }
+    public DateTime? LastPlayedDate { get; private set; }
+    public string? Timezone { get; private set; }
+
+    // Gamification - Season pass fields
+    public int SeasonPassXP { get; private set; }
+    public int CurrentSeasonTier { get; private set; }
+
+    // Gamification - Cosmetic fields
+    public int? EquippedBoardThemeId { get; private set; }
+    public int? EquippedAvatarFrameId { get; private set; }
+    public int? EquippedBadgeId { get; private set; }
+
     // Navigation
     public ICollection<GameSession> GameSessions { get; private set; } = new List<GameSession>();
+    public ICollection<UserAchievement> UserAchievements { get; private set; } = new List<UserAchievement>();
+    public ICollection<UserChallenge> UserChallenges { get; private set; } = new List<UserChallenge>();
+    public ICollection<UserCosmetic> UserCosmetics { get; private set; } = new List<UserCosmetic>();
+    public ICollection<PersonalGoal> PersonalGoals { get; private set; } = new List<PersonalGoal>();
 
     // Private constructor for EF Core
     private User() { }
@@ -189,4 +211,126 @@ public class User
     {
         LockoutEnd = until;
     }
+
+    #region Gamification Methods
+
+    /// <summary>
+    /// Sets the user's timezone for streak calculations.
+    /// </summary>
+    /// <param name="timezone">The IANA timezone identifier (e.g., "America/New_York").</param>
+    public void SetTimezone(string timezone)
+    {
+        Timezone = timezone;
+    }
+
+    /// <summary>
+    /// Updates the user's streak based on play activity.
+    /// </summary>
+    /// <param name="playDate">The date the user played (in their local timezone).</param>
+    public void UpdateStreak(DateTime playDate)
+    {
+        var playDateOnly = playDate.Date;
+
+        // If already played today, don't increment
+        if (LastPlayedDate.HasValue && LastPlayedDate.Value == playDateOnly)
+        {
+            return;
+        }
+
+        // Check if this is a consecutive day
+        if (LastPlayedDate.HasValue)
+        {
+            var daysSinceLastPlay = (playDateOnly - LastPlayedDate.Value).Days;
+
+            if (daysSinceLastPlay == 1)
+            {
+                // Consecutive day - increment streak
+                CurrentStreak++;
+            }
+            else
+            {
+                // Missed day(s) - reset streak
+                CurrentStreak = 1;
+            }
+        }
+        else
+        {
+            // First play ever
+            CurrentStreak = 1;
+        }
+
+        // Update longest streak if needed
+        if (CurrentStreak > LongestStreak)
+        {
+            LongestStreak = CurrentStreak;
+        }
+
+        LastPlayedDate = playDateOnly;
+    }
+
+    /// <summary>
+    /// Uses a streak freeze token to maintain the streak.
+    /// </summary>
+    /// <returns>True if a token was used successfully, false if no tokens available.</returns>
+    public bool UseStreakFreeze()
+    {
+        if (StreakFreezeTokens <= 0)
+        {
+            return false;
+        }
+
+        StreakFreezeTokens--;
+        return true;
+    }
+
+    /// <summary>
+    /// Adds streak freeze tokens to the user's account.
+    /// </summary>
+    /// <param name="count">The number of tokens to add.</param>
+    public void AddStreakFreezeTokens(int count)
+    {
+        StreakFreezeTokens += count;
+    }
+
+    /// <summary>
+    /// Adds XP to the user's season pass and updates tier if needed.
+    /// </summary>
+    /// <param name="xp">The amount of XP to add.</param>
+    public void AddSeasonXP(int xp)
+    {
+        SeasonPassXP += xp;
+        CurrentSeasonTier = SeasonPassXP / XPPerTier;
+    }
+
+    /// <summary>
+    /// Resets the user's season progress (called at start of new season).
+    /// </summary>
+    public void ResetSeasonProgress()
+    {
+        SeasonPassXP = 0;
+        CurrentSeasonTier = 0;
+    }
+
+    /// <summary>
+    /// Equips a cosmetic item of the specified type.
+    /// </summary>
+    /// <param name="type">The type of cosmetic to equip.</param>
+    /// <param name="cosmeticId">The ID of the cosmetic, or null to unequip.</param>
+    public void EquipCosmetic(CosmeticType type, int? cosmeticId)
+    {
+        switch (type)
+        {
+            case CosmeticType.BoardTheme:
+                EquippedBoardThemeId = cosmeticId;
+                break;
+            case CosmeticType.AvatarFrame:
+                EquippedAvatarFrameId = cosmeticId;
+                break;
+            case CosmeticType.Badge:
+                EquippedBadgeId = cosmeticId;
+                break;
+        }
+    }
+
+    #endregion
 }

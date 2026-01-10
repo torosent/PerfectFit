@@ -94,6 +94,50 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.LockoutEnd)
             .HasColumnName("lockout_end");
 
+        // Gamification - Streak fields
+        builder.Property(u => u.CurrentStreak)
+            .HasColumnName("current_streak")
+            .HasDefaultValue(0)
+            .IsRequired();
+
+        builder.Property(u => u.LongestStreak)
+            .HasColumnName("longest_streak")
+            .HasDefaultValue(0)
+            .IsRequired();
+
+        builder.Property(u => u.StreakFreezeTokens)
+            .HasColumnName("streak_freeze_tokens")
+            .HasDefaultValue(0)
+            .IsRequired();
+
+        builder.Property(u => u.LastPlayedDate)
+            .HasColumnName("last_played_date");
+
+        builder.Property(u => u.Timezone)
+            .HasColumnName("timezone")
+            .HasMaxLength(64);
+
+        // Gamification - Season pass fields
+        builder.Property(u => u.SeasonPassXP)
+            .HasColumnName("season_pass_xp")
+            .HasDefaultValue(0)
+            .IsRequired();
+
+        builder.Property(u => u.CurrentSeasonTier)
+            .HasColumnName("current_season_tier")
+            .HasDefaultValue(0)
+            .IsRequired();
+
+        // Gamification - Cosmetic fields
+        builder.Property(u => u.EquippedBoardThemeId)
+            .HasColumnName("equipped_board_theme_id");
+
+        builder.Property(u => u.EquippedAvatarFrameId)
+            .HasColumnName("equipped_avatar_frame_id");
+
+        builder.Property(u => u.EquippedBadgeId)
+            .HasColumnName("equipped_badge_id");
+
         // Global query filter for soft delete - excludes deleted users by default
         builder.HasQueryFilter(u => !u.IsDeleted);
 
@@ -117,5 +161,26 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .WithOne(gs => gs.User)
             .HasForeignKey(gs => gs.UserId)
             .OnDelete(DeleteBehavior.SetNull);
+
+        // Gamification navigation properties
+        builder.HasMany(u => u.UserAchievements)
+            .WithOne(ua => ua.User)
+            .HasForeignKey(ua => ua.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(u => u.UserChallenges)
+            .WithOne(uc => uc.User)
+            .HasForeignKey(uc => uc.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(u => u.UserCosmetics)
+            .WithOne(uco => uco.User)
+            .HasForeignKey(uco => uco.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(u => u.PersonalGoals)
+            .WithOne(pg => pg.User)
+            .HasForeignKey(pg => pg.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
