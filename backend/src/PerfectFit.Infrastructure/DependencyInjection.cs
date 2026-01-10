@@ -28,6 +28,7 @@ public static class DependencyInjection
             services.AddSingleton<IAdminAuditRepository, InMemoryAdminAuditRepository>();
             // LeaderboardRepository depends on UserRepository, so register it after
             services.AddSingleton<ILeaderboardRepository, InMemoryLeaderboardRepository>();
+            services.AddSingleton<IGamificationRepository, InMemoryGamificationRepository>();
         }
         else
         {
@@ -76,6 +77,14 @@ public static class DependencyInjection
 
         // Register display name validation service
         services.AddScoped<IDisplayNameValidationService, DisplayNameValidationService>();
+
+        // Register gamification services
+        services.AddScoped<IStreakService, StreakService>();
+        services.AddScoped<IChallengeService, ChallengeService>();
+        services.AddScoped<IAchievementService, AchievementService>();
+        services.AddScoped<ISeasonPassService, SeasonPassService>();
+        services.AddScoped<ICosmeticService, CosmeticService>();
+        services.AddScoped<IPersonalGoalService, PersonalGoalService>();
 
         return services;
     }
