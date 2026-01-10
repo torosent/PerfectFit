@@ -66,8 +66,7 @@ public class EndGameCommandHandler : IRequestHandler<EndGameCommand, EndGameResu
         {
             try
             {
-                var userGuid = CreateUserGuid(request.UserId.Value);
-                var gamificationCommand = new ProcessGameEndGamificationCommand(userGuid, request.GameId);
+                var gamificationCommand = new ProcessGameEndGamificationCommand(request.UserId.Value, request.GameId);
                 var gamificationResult = await _mediator.Send(gamificationCommand, cancellationToken);
                 gamificationDto = MapGamificationToDto(gamificationResult);
             }
@@ -81,19 +80,6 @@ public class EndGameCommandHandler : IRequestHandler<EndGameCommand, EndGameResu
         }
 
         return new EndGameResult(Found: true, Response: new GameEndResponseDto(gameStateDto, gamificationDto));
-    }
-
-    /// <summary>
-    /// Creates a deterministic GUID from a user ID that matches the gamification command handler's conversion.
-    /// </summary>
-    private static Guid CreateUserGuid(int userId)
-    {
-        // The handlers use: Math.Abs(BitConverter.ToInt32(bytes, 0) % 1000000) + 1
-        // So we encode (userId - 1) to get the correct userId after decoding
-        var valueToEncode = userId - 1;
-        var bytes = new byte[16];
-        BitConverter.GetBytes(valueToEncode).CopyTo(bytes, 0);
-        return new Guid(bytes);
     }
 
     private static GameEndGamificationResponseDto MapGamificationToDto(GameEndGamificationResult result)

@@ -8,9 +8,9 @@ namespace PerfectFit.UseCases.Gamification.Commands;
 /// <summary>
 /// Command to process all gamification updates after a game ends.
 /// </summary>
-/// <param name="UserId">The user's external ID (GUID).</param>
+/// <param name="UserId">The user's internal ID.</param>
 /// <param name="GameSessionId">The game session ID.</param>
-public record ProcessGameEndGamificationCommand(Guid UserId, Guid GameSessionId) : IRequest<GameEndGamificationResult>;
+public record ProcessGameEndGamificationCommand(int UserId, Guid GameSessionId) : IRequest<GameEndGamificationResult>;
 
 /// <summary>
 /// Handler for processing all gamification after game ends.
@@ -48,8 +48,7 @@ public class ProcessGameEndGamificationCommandHandler : IRequestHandler<ProcessG
 
     public async Task<GameEndGamificationResult> Handle(ProcessGameEndGamificationCommand request, CancellationToken cancellationToken)
     {
-        var userId = GetUserIdFromGuid(request.UserId);
-        var user = await _userRepository.GetByIdAsync(userId, cancellationToken);
+        var user = await _userRepository.GetByIdAsync(request.UserId, cancellationToken);
 
         if (user is null)
         {
@@ -62,13 +61,14 @@ public class ProcessGameEndGamificationCommandHandler : IRequestHandler<ProcessG
             throw new InvalidOperationException($"Game session {request.GameSessionId} not found");
         }
 
-        if (gameSession.UserId != userId)
+        if (gameSession.UserId != request.UserId)
         {
             throw new InvalidOperationException("Game session does not belong to the user");
         }
 
         // Update user stats (games played, high score)
         user.IncrementGamesPlayed();
+
         user.UpdateHighScore(gameSession.Score);
         await _userRepository.UpdateAsync(user, cancellationToken);
 
@@ -173,11 +173,5 @@ public class ProcessGameEndGamificationCommandHandler : IRequestHandler<ProcessG
             Core.Enums.GoalType.NewPersonalBest => Math.Max(goal.CurrentValue, gameSession.Score),
             _ => goal.CurrentValue
         };
-    }
-
-    private static int GetUserIdFromGuid(Guid guid)
-    {
-        var bytes = guid.ToByteArray();
-        return Math.Abs(BitConverter.ToInt32(bytes, 0) % 1000000) + 1;
     }
 }

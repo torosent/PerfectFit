@@ -54,7 +54,7 @@ public class ProcessGameEndGamificationCommandTests
 
         SetupMocksForSuccessfulProcessing(user, gameSession);
 
-        var command = new ProcessGameEndGamificationCommand(userId, gameSessionId);
+        var command = new ProcessGameEndGamificationCommand(userIntId, gameSessionId);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -82,7 +82,7 @@ public class ProcessGameEndGamificationCommandTests
 
         SetupMocksForSuccessfulProcessing(user, gameSession, streakResult: expectedStreakResult);
 
-        var command = new ProcessGameEndGamificationCommand(userId, gameSessionId);
+        var command = new ProcessGameEndGamificationCommand(userIntId, gameSessionId);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -107,7 +107,7 @@ public class ProcessGameEndGamificationCommandTests
 
         SetupMocksForSuccessfulProcessing(user, gameSession, achievementResult: expectedAchievementResult);
 
-        var command = new ProcessGameEndGamificationCommand(userId, gameSessionId);
+        var command = new ProcessGameEndGamificationCommand(userIntId, gameSessionId);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -132,7 +132,7 @@ public class ProcessGameEndGamificationCommandTests
 
         SetupMocksForSuccessfulProcessing(user, gameSession, seasonXPResult: expectedSeasonResult);
 
-        var command = new ProcessGameEndGamificationCommand(userId, gameSessionId);
+        var command = new ProcessGameEndGamificationCommand(userIntId, gameSessionId);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
@@ -149,12 +149,13 @@ public class ProcessGameEndGamificationCommandTests
         // Arrange
         var userId = Guid.NewGuid();
         var gameSessionId = Guid.NewGuid();
+        var userIntId = 123;
 
         _userRepositoryMock
             .Setup(x => x.GetByIdAsync(It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((User?)null);
 
-        var command = new ProcessGameEndGamificationCommand(userId, gameSessionId);
+        var command = new ProcessGameEndGamificationCommand(userIntId, gameSessionId);
 
         // Act
         Func<Task> act = () => _handler.Handle(command, CancellationToken.None);
@@ -182,7 +183,7 @@ public class ProcessGameEndGamificationCommandTests
             .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((GameSession?)null);
 
-        var command = new ProcessGameEndGamificationCommand(userId, gameSessionId);
+        var command = new ProcessGameEndGamificationCommand(userIntId, gameSessionId);
 
         // Act
         Func<Task> act = () => _handler.Handle(command, CancellationToken.None);
@@ -212,7 +213,7 @@ public class ProcessGameEndGamificationCommandTests
             .Setup(x => x.GetByIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(gameSession);
 
-        var command = new ProcessGameEndGamificationCommand(userId, gameSessionId);
+        var command = new ProcessGameEndGamificationCommand(userIntId, gameSessionId);
 
         // Act
         Func<Task> act = () => _handler.Handle(command, CancellationToken.None);
@@ -246,7 +247,7 @@ public class ProcessGameEndGamificationCommandTests
             .Setup(x => x.UpdateGoalProgressAsync(It.IsAny<PersonalGoal>(), It.IsAny<int>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(expectedGoalResult);
 
-        var command = new ProcessGameEndGamificationCommand(userId, gameSessionId);
+        var command = new ProcessGameEndGamificationCommand(userIntId, gameSessionId);
 
         // Act
         var result = await _handler.Handle(command, CancellationToken.None);
