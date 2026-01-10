@@ -329,6 +329,38 @@ export async function triggerChallengeRotation(
   return handleAdminGamificationResponse<ChallengeRotationResponse>(response);
 }
 
+/**
+ * Response from seeding sample gamification data
+ */
+export interface SeedDataResponse {
+  achievementsAdded: number;
+  achievementsSkipped: number;
+  cosmeticsAdded: number;
+  cosmeticsSkipped: number;
+  challengeTemplatesAdded: number;
+  challengeTemplatesSkipped: number;
+  seasonCreated: boolean;
+  seasonRewardsAdded: number;
+  message: string;
+}
+
+/**
+ * Seed sample gamification data (admin only)
+ * Creates sample achievements, cosmetics, and challenge templates
+ * @param token - JWT authentication token
+ * @returns Information about seeded data
+ */
+export async function seedSampleData(
+  token: string
+): Promise<SeedDataResponse> {
+  const response = await fetch(`${GAMIFICATION_BASE}/seed`, {
+    method: 'POST',
+    headers: getAdminGamificationHeaders(token),
+  });
+
+  return handleAdminGamificationResponse<SeedDataResponse>(response);
+}
+
 // ============================================================================
 // COSMETICS
 // ============================================================================

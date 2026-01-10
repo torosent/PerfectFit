@@ -67,6 +67,11 @@ public class ProcessGameEndGamificationCommandHandler : IRequestHandler<ProcessG
             throw new InvalidOperationException("Game session does not belong to the user");
         }
 
+        // Update user stats (games played, high score)
+        user.IncrementGamesPlayed();
+        user.UpdateHighScore(gameSession.Score);
+        await _userRepository.UpdateAsync(user, cancellationToken);
+
         // 1. Update streak
         var gameEndTime = gameSession.EndedAt.HasValue 
             ? new DateTimeOffset(gameSession.EndedAt.Value, TimeSpan.Zero) 
@@ -160,9 +165,9 @@ public class ProcessGameEndGamificationCommandHandler : IRequestHandler<ProcessG
 
     private static int CalculateChallengeProgress(Challenge challenge, GameSession gameSession)
     {
-        // This is a simplified calculation - the actual logic would depend on challenge type
-        // For now, use a basic formula based on game metrics
-        return Math.Max(1, gameSession.Score / 100);
+        // Progress is based on challenge name/description patterns or directly uses game score
+        // Most challenges track cumulative score, so use the game score directly
+        return gameSession.Score;
     }
 
     private static int CalculateGoalProgress(PersonalGoal goal, GameSession gameSession)

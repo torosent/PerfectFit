@@ -1,6 +1,9 @@
+using Microsoft.EntityFrameworkCore;
 using PerfectFit.Core.Entities;
 using PerfectFit.Core.Enums;
 using PerfectFit.Core.Interfaces;
+using PerfectFit.Infrastructure.Data;
+using PerfectFit.Infrastructure.Data.SeedData;
 using PerfectFit.Web.DTOs;
 using System.Security.Claims;
 using System.Text.Json;
@@ -187,6 +190,18 @@ public static class AdminGamificationEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status404NotFound)
             .Produces<EntityInUseResponse>(StatusCodes.Status409Conflict);
+
+        #endregion
+
+        #region Seed Data Endpoints
+
+        // POST /api/admin/gamification/seed - Seed sample data
+        group.MapPost("/seed", SeedSampleData)
+            .WithName("AdminSeedSampleData")
+            .WithSummary("Seed sample achievements, cosmetics, and challenge templates")
+            .Produces<SeedDataResponse>(StatusCodes.Status200OK)
+            .Produces(StatusCodes.Status401Unauthorized)
+            .Produces(StatusCodes.Status403Forbidden);
 
         #endregion
     }
@@ -1138,6 +1153,134 @@ public static class AdminGamificationEndpoints
     }
 
     #endregion
+
+    #region Seed Data Handlers
+
+    /// <summary>
+    /// Seeds sample achievements, cosmetics, and challenge templates.
+    /// Only adds items that don't already exist (idempotent).
+    /// </summary>
+    private static async Task<IResult> SeedSampleData(
+        ClaimsPrincipal user,
+        AppDbContext dbContext,
+        IAdminAuditRepository auditRepo,
+        CancellationToken cancellationToken = default)
+    {
+        var adminUserId = GetAdminUserId(user);
+        if (adminUserId == null)
+        {
+            return Results.Unauthorized();
+        }
+
+        var seedResult = new SeedDataResult();
+
+        // Seed achievements
+        var existingAchievementNames = await dbContext.Achievements
+            .Select(a => a.Name)
+            .ToListAsync(cancellationToken);
+        
+        var achievementsToAdd = AchievementSeedData.GetAchievements()
+            .Where(a => !existingAchievementNames.Contains(a.Name))
+            .ToList();
+
+        if (achievementsToAdd.Count > 0)
+        {
+            dbContext.Achievements.AddRange(achievementsToAdd);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            seedResult.AchievementsAdded = achievementsToAdd.Count;
+        }
+        seedResult.AchievementsSkipped = AchievementSeedData.GetAchievements().Count - achievementsToAdd.Count;
+
+        // Seed cosmetics
+        var existingCosmeticCodes = await dbContext.Cosmetics
+            .Select(c => c.Code)
+            .ToListAsync(cancellationToken);
+        
+        var cosmeticsToAdd = CosmeticSeedData.GetCosmetics()
+            .Where(c => !existingCosmeticCodes.Contains(c.Code))
+            .ToList();
+
+        if (cosmeticsToAdd.Count > 0)
+        {
+            dbContext.Cosmetics.AddRange(cosmeticsToAdd);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            seedResult.CosmeticsAdded = cosmeticsToAdd.Count;
+        }
+        seedResult.CosmeticsSkipped = CosmeticSeedData.GetCosmetics().Count - cosmeticsToAdd.Count;
+
+        // Seed challenge templates
+        var existingTemplateNames = await dbContext.ChallengeTemplates
+            .Select(t => t.Name)
+            .ToListAsync(cancellationToken);
+        
+        var templatesToAdd = ChallengeSeedData.GetAllTemplates()
+            .Where(t => !existingTemplateNames.Contains(t.Name))
+            .ToList();
+
+        if (templatesToAdd.Count > 0)
+        {
+            dbContext.ChallengeTemplates.AddRange(templatesToAdd);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            seedResult.ChallengeTemplatesAdded = templatesToAdd.Count;
+        }
+        seedResult.ChallengeTemplatesSkipped = ChallengeSeedData.GetAllTemplates().Count - templatesToAdd.Count;
+
+        // Seed initial season if none exists
+        if (!await dbContext.Seasons.AnyAsync(cancellationToken))
+        {
+            var (season, rewardsFactory) = SeasonSeedData.GetInitialSeason();
+            dbContext.Seasons.Add(season);
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            // Build cosmetic code resolver from cosmetics in database
+            var cosmeticLookup = await dbContext.Cosmetics.ToDictionaryAsync(c => c.Code, c => c.Id, cancellationToken);
+            int ResolveCosmeticCode(string code) => cosmeticLookup.TryGetValue(code, out var id) ? id : 0;
+
+            var rewards = rewardsFactory(season.Id, ResolveCosmeticCode);
+            dbContext.SeasonRewards.AddRange(rewards);
+            await dbContext.SaveChangesAsync(cancellationToken);
+            seedResult.SeasonCreated = true;
+            seedResult.SeasonRewardsAdded = rewards.Count;
+        }
+
+        // Create audit log
+        var totalAdded = seedResult.AchievementsAdded + seedResult.CosmeticsAdded + seedResult.ChallengeTemplatesAdded;
+        var auditLog = AdminAuditLog.Create(
+            adminUserId.Value,
+            AdminAction.SeedSampleData,
+            null,
+            $"Seeded sample data: {seedResult.AchievementsAdded} achievements, {seedResult.CosmeticsAdded} cosmetics, {seedResult.ChallengeTemplatesAdded} challenge templates"
+        );
+        await auditRepo.AddAsync(auditLog, cancellationToken);
+
+        return Results.Ok(new SeedDataResponse(
+            AchievementsAdded: seedResult.AchievementsAdded,
+            AchievementsSkipped: seedResult.AchievementsSkipped,
+            CosmeticsAdded: seedResult.CosmeticsAdded,
+            CosmeticsSkipped: seedResult.CosmeticsSkipped,
+            ChallengeTemplatesAdded: seedResult.ChallengeTemplatesAdded,
+            ChallengeTemplatesSkipped: seedResult.ChallengeTemplatesSkipped,
+            SeasonCreated: seedResult.SeasonCreated,
+            SeasonRewardsAdded: seedResult.SeasonRewardsAdded,
+            Message: totalAdded > 0 
+                ? $"Successfully seeded {totalAdded} items" 
+                : "All sample data already exists"
+        ));
+    }
+
+    private class SeedDataResult
+    {
+        public int AchievementsAdded { get; set; }
+        public int AchievementsSkipped { get; set; }
+        public int CosmeticsAdded { get; set; }
+        public int CosmeticsSkipped { get; set; }
+        public int ChallengeTemplatesAdded { get; set; }
+        public int ChallengeTemplatesSkipped { get; set; }
+        public bool SeasonCreated { get; set; }
+        public int SeasonRewardsAdded { get; set; }
+    }
+
+    #endregion
 }
 
 #region Response DTOs for Challenge Activation
@@ -1170,6 +1313,25 @@ public record ChallengeInfo(
 public record ChallengeRotationResponse(
     IReadOnlyList<ChallengeInfo> CreatedChallenges,
     IReadOnlyList<string> SkippedTemplates,
+    string Message
+);
+
+#endregion
+
+#region Response DTOs for Seed Data
+
+/// <summary>
+/// Response for seeding sample gamification data.
+/// </summary>
+public record SeedDataResponse(
+    int AchievementsAdded,
+    int AchievementsSkipped,
+    int CosmeticsAdded,
+    int CosmeticsSkipped,
+    int ChallengeTemplatesAdded,
+    int ChallengeTemplatesSkipped,
+    bool SeasonCreated,
+    int SeasonRewardsAdded,
     string Message
 );
 

@@ -26,5 +26,8 @@ public enum AdminAction
     ViewCosmetics = 30,
     CreateCosmetic = 31,
     UpdateCosmetic = 32,
-    DeleteCosmetic = 33
+    DeleteCosmetic = 33,
+
+    // Seed data actions (40-49)
+    SeedSampleData = 40
 }
