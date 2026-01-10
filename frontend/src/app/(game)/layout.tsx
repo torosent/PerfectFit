@@ -91,6 +91,16 @@ export default function GameLayout({
                   >
                     🏆 Leaderboard
                   </Link>
+                  <Link
+                    href="/profile"
+                    className={`text-sm font-medium transition-colors ${
+                      pathname === '/profile'
+                        ? 'text-white'
+                        : 'text-gray-400 hover:text-white'
+                    }`}
+                  >
+                    👤 Profile
+                  </Link>
                 </nav>
 
                 {/* Auth Controls */}

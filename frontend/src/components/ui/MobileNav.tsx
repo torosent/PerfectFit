@@ -12,6 +12,7 @@ interface NavLink {
 const navLinks: NavLink[] = [
   { href: '/play', label: 'Play' },
   { href: '/leaderboard', label: '🏆 Leaderboard' },
+  { href: '/profile', label: '👤 Profile' },
 ];
 
 export function MobileNav() {
