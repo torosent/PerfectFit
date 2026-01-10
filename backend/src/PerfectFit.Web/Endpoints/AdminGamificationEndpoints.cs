@@ -570,7 +570,8 @@ public static class AdminGamificationEndpoints
                 request.Description,
                 request.Type,
                 request.TargetValue,
-                request.XPReward
+                request.XPReward,
+                request.GoalType
             );
         }
         catch (ArgumentException ex)
@@ -620,7 +621,8 @@ public static class AdminGamificationEndpoints
                 request.Type,
                 request.TargetValue,
                 request.XPReward,
-                request.IsActive
+                request.IsActive,
+                request.GoalType
             );
         }
         catch (ArgumentException ex)
@@ -1157,7 +1159,8 @@ public static class AdminGamificationEndpoints
             Type: template.Type.ToString(),
             TargetValue: template.TargetValue,
             XPReward: template.XPReward,
-            IsActive: template.IsActive
+            IsActive: template.IsActive,
+            GoalType: template.GoalType
         );
     }
 

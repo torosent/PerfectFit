@@ -98,6 +98,7 @@ public record UpdateAchievementRequest(
 /// <param name="TargetValue">The target value to complete the challenge.</param>
 /// <param name="XPReward">The XP reward for completing the challenge.</param>
 /// <param name="IsActive">Whether this template is active and can generate challenges.</param>
+/// <param name="GoalType">The goal type that determines how progress is calculated (optional).</param>
 public record AdminChallengeTemplateDto(
     int Id,
     string Name,
@@ -105,7 +106,8 @@ public record AdminChallengeTemplateDto(
     string Type,
     int TargetValue,
     int XPReward,
-    bool IsActive
+    bool IsActive,
+    ChallengeGoalType? GoalType
 );
 
 /// <summary>
@@ -116,12 +118,14 @@ public record AdminChallengeTemplateDto(
 /// <param name="Type">The challenge type.</param>
 /// <param name="TargetValue">The target value to complete the challenge.</param>
 /// <param name="XPReward">The XP reward for completing the challenge.</param>
+/// <param name="GoalType">The goal type that determines how progress is calculated (optional).</param>
 public record CreateChallengeTemplateRequest(
     string Name,
     string Description,
     ChallengeType Type,
     int TargetValue,
-    int XPReward
+    int XPReward,
+    ChallengeGoalType? GoalType = null
 );
 
 /// <summary>
@@ -133,13 +137,15 @@ public record CreateChallengeTemplateRequest(
 /// <param name="TargetValue">The target value to complete the challenge.</param>
 /// <param name="XPReward">The XP reward for completing the challenge.</param>
 /// <param name="IsActive">Whether this template is active and can generate challenges.</param>
+/// <param name="GoalType">The goal type that determines how progress is calculated (optional).</param>
 public record UpdateChallengeTemplateRequest(
     string Name,
     string Description,
     ChallengeType Type,
     int TargetValue,
     int XPReward,
-    bool IsActive
+    bool IsActive,
+    ChallengeGoalType? GoalType = null
 );
 
 #endregion
