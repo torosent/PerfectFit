@@ -46,4 +46,31 @@ public class Cosmetic
             IsDefault = isDefault
         };
     }
+
+    /// <summary>
+    /// Updates the cosmetic properties.
+    /// </summary>
+    public void Update(
+        string code,
+        string name,
+        string description,
+        CosmeticType type,
+        string assetUrl,
+        string previewUrl,
+        CosmeticRarity rarity,
+        bool isDefault)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(code, nameof(code));
+        ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+        ArgumentException.ThrowIfNullOrWhiteSpace(assetUrl, nameof(assetUrl));
+
+        Code = code;
+        Name = name;
+        Description = description ?? string.Empty;
+        Type = type;
+        AssetUrl = assetUrl;
+        PreviewUrl = previewUrl ?? string.Empty;
+        Rarity = rarity;
+        IsDefault = isDefault;
+    }
 }

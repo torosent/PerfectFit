@@ -299,7 +299,27 @@ public class GamificationRepository : IGamificationRepository
 
     public async Task<bool> IsCosmeticInUseAsync(int cosmeticId, CancellationToken ct = default)
     {
-        return await _context.UserCosmetics.AnyAsync(uc => uc.CosmeticId == cosmeticId, ct);
+        // Check if any user owns this cosmetic
+        var ownedByUser = await _context.UserCosmetics.AnyAsync(uc => uc.CosmeticId == cosmeticId, ct);
+        if (ownedByUser)
+        {
+            return true;
+        }
+
+        // Check if any achievement references this cosmetic via RewardCosmeticCode
+        var cosmetic = await _context.Cosmetics.FindAsync([cosmeticId], ct);
+        if (cosmetic?.Code != null)
+        {
+            var cosmeticCode = cosmetic.Code;
+            var referencedByAchievement = await _context.Achievements.AnyAsync(
+                a => a.RewardCosmeticCode == cosmeticCode, ct);
+            if (referencedByAchievement)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public async Task DeleteCosmeticAsync(int cosmeticId, CancellationToken ct = default)

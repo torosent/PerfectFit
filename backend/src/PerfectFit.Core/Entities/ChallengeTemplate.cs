@@ -57,4 +57,35 @@ public class ChallengeTemplate
     {
         IsActive = true;
     }
+
+    /// <summary>
+    /// Updates the challenge template properties.
+    /// </summary>
+    public void Update(
+        string name,
+        string description,
+        ChallengeType type,
+        int targetValue,
+        int xpReward,
+        bool isActive)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+
+        if (targetValue < 0)
+        {
+            throw new ArgumentException("Target value cannot be negative.", nameof(targetValue));
+        }
+
+        if (xpReward < 0)
+        {
+            throw new ArgumentException("XP reward cannot be negative.", nameof(xpReward));
+        }
+
+        Name = name;
+        Description = description ?? string.Empty;
+        Type = type;
+        TargetValue = targetValue;
+        XPReward = xpReward;
+        IsActive = isActive;
+    }
 }

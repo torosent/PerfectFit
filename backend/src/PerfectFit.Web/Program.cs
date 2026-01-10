@@ -287,6 +287,9 @@ app.MapLeaderboardEndpoints();
 // Map admin endpoints
 app.MapAdminEndpoints();
 
+// Map admin gamification endpoints
+app.MapAdminGamificationEndpoints();
+
 // Map gamification endpoints
 app.MapGamificationEndpoints();
 

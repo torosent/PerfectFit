@@ -402,8 +402,24 @@ public class InMemoryGamificationRepository : IGamificationRepository
 
     public Task<bool> IsCosmeticInUseAsync(int cosmeticId, CancellationToken ct = default)
     {
-        var inUse = _userCosmetics.Values.Any(uc => uc.CosmeticId == cosmeticId);
-        return Task.FromResult(inUse);
+        // Check if any user owns this cosmetic
+        var ownedByUser = _userCosmetics.Values.Any(uc => uc.CosmeticId == cosmeticId);
+        if (ownedByUser)
+        {
+            return Task.FromResult(true);
+        }
+
+        // Check if any achievement references this cosmetic via RewardCosmeticCode
+        if (_cosmetics.TryGetValue(cosmeticId, out var cosmetic) && !string.IsNullOrEmpty(cosmetic.Code))
+        {
+            var referencedByAchievement = _achievements.Values.Any(a => a.RewardCosmeticCode == cosmetic.Code);
+            if (referencedByAchievement)
+            {
+                return Task.FromResult(true);
+            }
+        }
+
+        return Task.FromResult(false);
     }
 
     public Task DeleteCosmeticAsync(int cosmeticId, CancellationToken ct = default)

@@ -55,4 +55,34 @@ public class Achievement
             RewardCosmeticCode = rewardCosmeticCode
         };
     }
+
+    /// <summary>
+    /// Updates the achievement properties.
+    /// </summary>
+    public void Update(
+        string name,
+        string description,
+        AchievementCategory category,
+        string iconUrl,
+        string unlockCondition,
+        RewardType rewardType,
+        int rewardValue,
+        bool isSecret,
+        int displayOrder,
+        string? rewardCosmeticCode)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name, nameof(name));
+        ArgumentException.ThrowIfNullOrWhiteSpace(description, nameof(description));
+
+        Name = name;
+        Description = description;
+        Category = category;
+        IconUrl = iconUrl;
+        UnlockCondition = unlockCondition;
+        RewardType = rewardType;
+        RewardValue = rewardValue;
+        IsSecret = isSecret;
+        DisplayOrder = displayOrder;
+        RewardCosmeticCode = rewardCosmeticCode;
+    }
 }
