@@ -65,3 +65,21 @@ export {
   initializeTimezone,
   GamificationApiError,
 } from './gamification-client';
+
+export {
+  getAdminAchievements,
+  getAdminAchievement,
+  createAdminAchievement,
+  updateAdminAchievement,
+  deleteAdminAchievement,
+  getAdminChallengeTemplates,
+  getAdminChallengeTemplate,
+  createAdminChallengeTemplate,
+  updateAdminChallengeTemplate,
+  deleteAdminChallengeTemplate,
+  getAdminCosmetics,
+  getAdminCosmetic,
+  createAdminCosmetic,
+  updateAdminCosmetic,
+  deleteAdminCosmetic,
+} from './admin-gamification-client';
