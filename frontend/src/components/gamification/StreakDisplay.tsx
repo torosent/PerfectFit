@@ -53,7 +53,6 @@ function StreakDisplayComponent({
   freezeTokens,
   isAtRisk,
   compact = false,
-  resetTime,
 }: StreakDisplayProps) {
   const tier = getStreakTier(currentStreak);
   const glowColor = getGlowColor(tier, isAtRisk);

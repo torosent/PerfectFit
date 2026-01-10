@@ -5,7 +5,7 @@
  * API integration, and achievement handling.
  */
 
-import { act } from '@testing-library/react';
+import { act, renderHook } from '@testing-library/react';
 import type {
   GamificationStatus,
   Challenge,
@@ -18,9 +18,6 @@ import type {
   AchievementUnlock,
   GameEndGamification,
   StreakInfo,
-  ChallengeProgress,
-  SeasonXPGain,
-  GoalProgress,
 } from '@/types/gamification';
 
 // Create mock functions
@@ -858,7 +855,8 @@ describe('Gamification Store', () => {
 
       // Import and test selector
       const { useStreak } = await import('@/lib/stores/gamification-store');
-      expect(useGamificationStore.getState().status?.streak.currentStreak).toBe(7);
+      const { result } = renderHook(() => useStreak());
+      expect(result.current?.currentStreak).toBe(7);
     });
   });
 });

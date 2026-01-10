@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import Link from 'next/link';
 import { motion } from 'motion/react';
 import { UsersTable } from '@/components/admin/UsersTable';
 import { AuditLogTable } from '@/components/admin/AuditLogTable';
@@ -60,12 +61,12 @@ export default function AdminPage() {
             <h1 className="text-2xl font-bold text-white">
               Admin Portal
             </h1>
-            <a
+            <Link
               href="/"
               className="text-gray-400 hover:text-white transition-colors text-sm"
             >
               ← Back to Game
-            </a>
+            </Link>
           </div>
         </div>
       </header>

@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import { motion } from 'motion/react';
+import Image from 'next/image';
 import type { CosmeticInfo, CosmeticRarity } from '@/types/gamification';
 
 export interface AvatarFramePreviewProps {
@@ -84,10 +85,12 @@ function AvatarFramePreviewComponent({
       
       {/* Frame overlay for special frames */}
       {frame?.assetUrl && (
-        <img
+        <Image
           src={frame.assetUrl}
           alt={frame.name}
-          className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+          fill
+          sizes="80px"
+          className="object-cover pointer-events-none"
         />
       )}
       

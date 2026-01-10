@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useSyncExternalStore, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react';
 
 /**
  * Sound types available in the game
@@ -28,6 +28,47 @@ const SoundContext = createContext<SoundContextValue | null>(null);
 
 const SOUND_MUTE_KEY = 'perfectfit-sound-muted';
 const USER_INTERACTED_KEY = 'perfectfit-user-interacted';
+const LOCAL_STORAGE_EVENT = 'perfectfit-local-storage';
+
+function subscribeSoundStorage(callback: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === SOUND_MUTE_KEY || event.key === USER_INTERACTED_KEY) callback();
+  };
+
+  const onLocal = (event: Event) => {
+    const customEvent = event as CustomEvent<{ key?: string }>;
+    if (customEvent.detail?.key === SOUND_MUTE_KEY || customEvent.detail?.key === USER_INTERACTED_KEY) callback();
+  };
+
+  window.addEventListener('storage', onStorage);
+  window.addEventListener(LOCAL_STORAGE_EVENT, onLocal);
+
+  return () => {
+    window.removeEventListener('storage', onStorage);
+    window.removeEventListener(LOCAL_STORAGE_EVENT, onLocal);
+  };
+}
+
+function notifySoundStorageChange(key: string): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(LOCAL_STORAGE_EVENT, { detail: { key } }));
+}
+
+function getMutedSnapshot(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(SOUND_MUTE_KEY);
+}
+
+function getInteractedSnapshot(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(USER_INTERACTED_KEY);
+}
+
+function getSoundServerSnapshot(): string | null {
+  return null;
+}
 
 /**
  * Create an oscillator-based sound effect using Web Audio API
@@ -142,28 +183,19 @@ const soundEffects = {
  * Manages audio context and sound preferences
  */
 export function SoundProvider({ children }: { children: ReactNode }) {
-  const [isMuted, setIsMuted] = useState(true); // Default muted until we check localStorage
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
-  const audioContextRef = useRef<AudioContext | null>(null);
+  const storedMuted = useSyncExternalStore(subscribeSoundStorage, getMutedSnapshot, getSoundServerSnapshot);
+  const isMuted = storedMuted === 'true';
 
-  // Load mute preference and interaction state from localStorage
-  useEffect(() => {
-    const storedMuted = localStorage.getItem(SOUND_MUTE_KEY);
-    const storedInteracted = localStorage.getItem(USER_INTERACTED_KEY);
-    // Default to unmuted if no preference stored
-    setIsMuted(storedMuted === 'true');
-    // Restore interaction state (user has interacted before in this session/browser)
-    if (storedInteracted === 'true') {
-      setHasUserInteracted(true);
-    }
-  }, []);
+  const storedInteracted = useSyncExternalStore(subscribeSoundStorage, getInteractedSnapshot, getSoundServerSnapshot);
+  const hasUserInteracted = storedInteracted === 'true';
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   // Track user interaction for autoplay policy - keep listening, don't use { once: true }
   useEffect(() => {
     const handleInteraction = () => {
       if (!hasUserInteracted) {
-        setHasUserInteracted(true);
         localStorage.setItem(USER_INTERACTED_KEY, 'true');
+        notifySoundStorageChange(USER_INTERACTED_KEY);
       }
       // Always try to resume audio context on interaction
       if (audioContextRef.current?.state === 'suspended') {
@@ -190,35 +222,30 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     webkitAudioContext?: typeof AudioContext;
   };
 
-  const getAudioContextConstructor = (): typeof AudioContext => {
-    const win = window as ExtendedAudioWindow;
-    return win.AudioContext || win.webkitAudioContext!;
-  };
-
   // Initialize audio context lazily
   const getAudioContext = useCallback(() => {
     if (!audioContextRef.current) {
-      audioContextRef.current = new (getAudioContextConstructor())();
+      const win = window as ExtendedAudioWindow;
+      const ctor = win.AudioContext || win.webkitAudioContext!;
+      audioContextRef.current = new ctor();
     }
     return audioContextRef.current;
   }, []);
 
   const toggleMute = useCallback(() => {
-    setIsMuted((prev) => {
-      const newValue = !prev;
-      localStorage.setItem(SOUND_MUTE_KEY, String(newValue));
-      return newValue;
-    });
-  }, []);
+    const newValue = !isMuted;
+    localStorage.setItem(SOUND_MUTE_KEY, String(newValue));
+    notifySoundStorageChange(SOUND_MUTE_KEY);
+  }, [isMuted]);
 
   const setMuted = useCallback((muted: boolean) => {
-    setIsMuted(muted);
     localStorage.setItem(SOUND_MUTE_KEY, String(muted));
+    notifySoundStorageChange(SOUND_MUTE_KEY);
   }, []);
 
   const markUserInteraction = useCallback(() => {
-    setHasUserInteracted(true);
     localStorage.setItem(USER_INTERACTED_KEY, 'true');
+    notifySoundStorageChange(USER_INTERACTED_KEY);
     if (audioContextRef.current?.state === 'suspended') {
       audioContextRef.current.resume().catch(() => {
         // Ignore resume errors

@@ -2,6 +2,7 @@
 
 import { memo, useState, useMemo, useCallback, useId } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import Image from 'next/image';
 import type { Cosmetic, CosmeticType, CosmeticRarity } from '@/types/gamification';
 
 export interface CosmeticSelectorProps {
@@ -186,7 +187,7 @@ function CosmeticCard({
   onEquip: () => void;
   delay?: number;
 }) {
-  const { name, description, rarity, previewUrl, isOwned } = cosmetic;
+  const { name, rarity, previewUrl, isOwned } = cosmetic;
   const rarityBorder = getRarityBorder(rarity);
   const rarityColor = getRarityColor(rarity);
   
@@ -200,12 +201,14 @@ function CosmeticCard({
       } ${isEquipped ? 'ring-2 ring-cyan-400 ring-offset-2 ring-offset-slate-900' : ''}`}
     >
       {/* Preview image */}
-      <div className="aspect-square bg-white/5 flex items-center justify-center p-2">
+      <div className="relative aspect-square bg-white/5 flex items-center justify-center p-2">
         {previewUrl ? (
-          <img
+          <Image
             src={previewUrl}
             alt={name}
-            className={`w-full h-full object-contain ${!isOwned ? 'grayscale' : ''}`}
+            fill
+            sizes="(max-width: 768px) 30vw, 220px"
+            className={`object-contain ${!isOwned ? 'grayscale' : ''}`}
           />
         ) : (
           <span className="text-3xl">✨</span>

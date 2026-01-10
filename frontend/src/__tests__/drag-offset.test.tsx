@@ -19,12 +19,6 @@ jest.mock('@/hooks', () => ({
   })),
 }));
 
-// Store the DragOverlay children renderer so we can trigger drag overlay rendering
-let dragOverlayChildrenRenderer: ((draggedPiece: unknown) => React.ReactNode) | null = null;
-
-// Variable to simulate touch or pointer event
-let simulateTouchEvent = false;
-
 // Mock @dnd-kit/core - pass through children to allow testing the wrapper div
 jest.mock('@dnd-kit/core', () => ({
   DndContext: ({ children, onDragStart }: { children: React.ReactNode; onDragStart?: (event: unknown) => void }) => {
@@ -33,8 +27,6 @@ jest.mock('@dnd-kit/core', () => ({
     return <div data-testid="dnd-context">{children}</div>;
   },
   DragOverlay: ({ children }: { children: React.ReactNode }) => {
-    // Store the children renderer
-    dragOverlayChildrenRenderer = () => children;
     return <div data-testid="drag-overlay">{children}</div>;
   },
   useSensor: jest.fn(),
@@ -95,8 +87,6 @@ describe('Drag Offset for Touch Devices', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     isTouchDeviceValue = false;
-    simulateTouchEvent = false;
-    dragOverlayChildrenRenderer = null;
   });
 
   describe('Touch device offset', () => {

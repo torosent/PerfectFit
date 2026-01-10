@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from 'react';
+import { createContext, useContext, useSyncExternalStore, useEffect, useCallback, useMemo, type ReactNode } from 'react';
 
 /**
  * Theme definitions for the game
@@ -104,28 +104,57 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 const THEME_STORAGE_KEY = 'perfectfit-theme';
+const LOCAL_STORAGE_EVENT = 'perfectfit-local-storage';
+
+function subscribeTheme(callback: () => void): () => void {
+  if (typeof window === 'undefined') return () => {};
+
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === THEME_STORAGE_KEY) callback();
+  };
+
+  const onLocal = (event: Event) => {
+    const customEvent = event as CustomEvent<{ key?: string }>;
+    if (customEvent.detail?.key === THEME_STORAGE_KEY) callback();
+  };
+
+  window.addEventListener('storage', onStorage);
+  window.addEventListener(LOCAL_STORAGE_EVENT, onLocal);
+
+  return () => {
+    window.removeEventListener('storage', onStorage);
+    window.removeEventListener(LOCAL_STORAGE_EVENT, onLocal);
+  };
+}
+
+function getThemeSnapshot(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem(THEME_STORAGE_KEY);
+}
+
+function getThemeServerSnapshot(): string | null {
+  return null;
+}
+
+function notifyThemeChange(): void {
+  if (typeof window === 'undefined') return;
+  window.dispatchEvent(new CustomEvent(LOCAL_STORAGE_EVENT, { detail: { key: THEME_STORAGE_KEY } }));
+}
 
 /**
  * Theme provider component
  * Stores theme preference in localStorage and applies CSS variables
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<ThemeName>('ocean');
-  const [isInitialized, setIsInitialized] = useState(false);
+  const storedTheme = useSyncExternalStore(subscribeTheme, getThemeSnapshot, getThemeServerSnapshot);
 
-  // Load theme from localStorage on mount
-  useEffect(() => {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored && (stored === 'ocean' || stored === 'sunset' || stored === 'forest')) {
-      setThemeState(stored);
-    }
-    setIsInitialized(true);
-  }, []);
+  const theme: ThemeName =
+    storedTheme === 'ocean' || storedTheme === 'sunset' || storedTheme === 'forest'
+      ? storedTheme
+      : 'ocean';
 
   // Apply CSS variables when theme changes
   useEffect(() => {
-    if (!isInitialized) return;
-    
     const colors = themes[theme];
     const root = document.documentElement;
     
@@ -145,11 +174,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     root.style.setProperty('--board-border', colors.boardBorder);
     root.style.setProperty('--danger-border', colors.dangerBorder);
     root.style.setProperty('--danger-glow', colors.dangerGlow);
-  }, [theme, isInitialized]);
+  }, [theme]);
 
   const setTheme = useCallback((newTheme: ThemeName) => {
-    setThemeState(newTheme);
     localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+    notifyThemeChange();
   }, []);
 
   const cycleTheme = useCallback(() => {

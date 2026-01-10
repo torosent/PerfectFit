@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using PerfectFit.Core.Entities;
 using PerfectFit.Core.Enums;
 using PerfectFit.Core.Interfaces;
@@ -1163,7 +1164,7 @@ public static class AdminGamificationEndpoints
     /// </summary>
     private static async Task<IResult> SeedSampleData(
         ClaimsPrincipal user,
-        AppDbContext dbContext,
+        HttpContext httpContext,
         IAdminAuditRepository auditRepo,
         CancellationToken cancellationToken = default)
     {
@@ -1171,6 +1172,15 @@ public static class AdminGamificationEndpoints
         if (adminUserId == null)
         {
             return Results.Unauthorized();
+        }
+
+        var dbContext = httpContext.RequestServices.GetService<AppDbContext>();
+        if (dbContext is null)
+        {
+            return Results.Problem(
+                title: "Database storage is not enabled",
+                detail: "This operation requires database storage. It is not available when UseInMemoryStorage is enabled.",
+                statusCode: StatusCodes.Status501NotImplemented);
         }
 
         var seedResult = new SeedDataResult();
@@ -1323,7 +1333,7 @@ public static class AdminGamificationEndpoints
     /// </summary>
     private static async Task<IResult> ResetAchievements(
         ClaimsPrincipal user,
-        AppDbContext dbContext,
+        HttpContext httpContext,
         IAdminAuditRepository auditRepo,
         CancellationToken cancellationToken = default)
     {
@@ -1331,6 +1341,15 @@ public static class AdminGamificationEndpoints
         if (adminUserId == null)
         {
             return Results.Unauthorized();
+        }
+
+        var dbContext = httpContext.RequestServices.GetService<AppDbContext>();
+        if (dbContext is null)
+        {
+            return Results.Problem(
+                title: "Database storage is not enabled",
+                detail: "This operation requires database storage. It is not available when UseInMemoryStorage is enabled.",
+                statusCode: StatusCodes.Status501NotImplemented);
         }
 
         // Delete user achievements first (foreign key constraint)
@@ -1360,7 +1379,7 @@ public static class AdminGamificationEndpoints
     /// </summary>
     private static async Task<IResult> ResetChallenges(
         ClaimsPrincipal user,
-        AppDbContext dbContext,
+        HttpContext httpContext,
         IAdminAuditRepository auditRepo,
         CancellationToken cancellationToken = default)
     {
@@ -1368,6 +1387,15 @@ public static class AdminGamificationEndpoints
         if (adminUserId == null)
         {
             return Results.Unauthorized();
+        }
+
+        var dbContext = httpContext.RequestServices.GetService<AppDbContext>();
+        if (dbContext is null)
+        {
+            return Results.Problem(
+                title: "Database storage is not enabled",
+                detail: "This operation requires database storage. It is not available when UseInMemoryStorage is enabled.",
+                statusCode: StatusCodes.Status501NotImplemented);
         }
 
         // Delete user challenges first (foreign key constraint)
@@ -1400,7 +1428,7 @@ public static class AdminGamificationEndpoints
     /// </summary>
     private static async Task<IResult> ResetCosmetics(
         ClaimsPrincipal user,
-        AppDbContext dbContext,
+        HttpContext httpContext,
         IAdminAuditRepository auditRepo,
         CancellationToken cancellationToken = default)
     {
@@ -1408,6 +1436,15 @@ public static class AdminGamificationEndpoints
         if (adminUserId == null)
         {
             return Results.Unauthorized();
+        }
+
+        var dbContext = httpContext.RequestServices.GetService<AppDbContext>();
+        if (dbContext is null)
+        {
+            return Results.Problem(
+                title: "Database storage is not enabled",
+                detail: "This operation requires database storage. It is not available when UseInMemoryStorage is enabled.",
+                statusCode: StatusCodes.Status501NotImplemented);
         }
 
         // Delete user cosmetics first (foreign key constraint)

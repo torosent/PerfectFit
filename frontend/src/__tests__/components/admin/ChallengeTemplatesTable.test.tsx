@@ -43,6 +43,7 @@ function createMockChallengeTemplate(overrides: Partial<AdminChallengeTemplate> 
     targetValue: 5,
     xpReward: 50,
     isActive: true,
+    goalType: null,
     ...overrides,
   };
 }
@@ -111,14 +112,15 @@ describe('ChallengeTemplatesTable', () => {
       render(<ChallengeTemplatesTable />);
 
       await waitFor(() => {
-        expect(screen.getByText(/name/i)).toBeInTheDocument();
+        expect(screen.getByRole('columnheader', { name: /^name$/i })).toBeInTheDocument();
       });
 
-      expect(screen.getByText(/description/i)).toBeInTheDocument();
-      expect(screen.getByText(/type/i)).toBeInTheDocument();
-      expect(screen.getByText(/target/i)).toBeInTheDocument();
-      expect(screen.getByText(/xp reward/i)).toBeInTheDocument();
-      expect(screen.getByText(/active/i)).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: /^description$/i })).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: /^type$/i })).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: /^target$/i })).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: /^xp reward$/i })).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: /^goal type$/i })).toBeInTheDocument();
+      expect(screen.getByRole('columnheader', { name: /^active$/i })).toBeInTheDocument();
     });
 
     it('displays type badges', async () => {

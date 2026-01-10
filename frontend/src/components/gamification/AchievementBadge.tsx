@@ -1,7 +1,8 @@
 'use client';
 
-import { memo, useCallback } from 'react';
+import { memo, useCallback, type KeyboardEvent } from 'react';
 import { motion } from 'motion/react';
+import Image from 'next/image';
 import type { Achievement, AchievementCategory } from '@/types/gamification';
 
 export interface AchievementBadgeProps {
@@ -77,6 +78,12 @@ function AchievementBadgeComponent({
     md: 'w-8 h-8',
     lg: 'w-10 h-10',
   };
+
+  const iconPixelSizes: Record<typeof size, number> = {
+    sm: 24,
+    md: 32,
+    lg: 40,
+  };
   
   // Calculate stroke dasharray for progress ring
   const radius = size === 'lg' ? 36 : size === 'md' ? 28 : 20;
@@ -89,7 +96,7 @@ function AchievementBadgeComponent({
   const displayIcon = isSecret && !isUnlocked ? null : iconUrl;
   
   // Handle keyboard interaction for clickable badges
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (onClick && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
       onClick();
@@ -144,9 +151,11 @@ function AchievementBadgeComponent({
         
         {/* Icon */}
         {displayIcon ? (
-          <img
+          <Image
             src={displayIcon}
             alt={displayName}
+            width={iconPixelSizes[size]}
+            height={iconPixelSizes[size]}
             className={`${iconSizes[size]} object-contain ${!isUnlocked ? 'opacity-50' : ''}`}
           />
         ) : (

@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState, useEffect, useRef, useCallback } from 'react';
+import { memo, useEffect, useMemo, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import type { PersonalGoal } from '@/types/gamification';
 
@@ -38,7 +38,15 @@ function getMotivationalMessage(goal: PersonalGoal): string {
   };
   
   const typeMessages = messages[goal.type] || messages.BeatAverage;
-  return typeMessages[Math.floor(Math.random() * typeMessages.length)];
+
+  // Deterministic selection (no Math.random())
+  const source = `${goal.type}:${goal.description}`;
+  let hash = 0;
+  for (let i = 0; i < source.length; i++) {
+    hash = (hash * 31 + source.charCodeAt(i)) | 0;
+  }
+  const index = Math.abs(hash) % typeMessages.length;
+  return typeMessages[index];
 }
 
 /**
@@ -50,8 +58,12 @@ function PersonalGoalPromptComponent({
   onDismiss,
   autoDismissDelay = 5000,
 }: PersonalGoalPromptProps) {
-  const [motivationalMessage, setMotivationalMessage] = useState('');
   const dialogRef = useRef<HTMLDivElement>(null);
+
+  const motivationalMessage = useMemo(() => {
+    if (!goal || !isVisible) return '';
+    return getMotivationalMessage(goal);
+  }, [goal, isVisible]);
   
   // Memoize the escape handler
   const handleEscapeKey = useCallback((e: KeyboardEvent) => {
@@ -59,12 +71,6 @@ function PersonalGoalPromptComponent({
       onDismiss();
     }
   }, [onDismiss]);
-  
-  useEffect(() => {
-    if (goal && isVisible) {
-      setMotivationalMessage(getMotivationalMessage(goal));
-    }
-  }, [goal, isVisible]);
   
   // Global escape key listener when visible
   useEffect(() => {
@@ -115,7 +121,7 @@ function PersonalGoalPromptComponent({
               {/* Content */}
               <div className="flex-1">
                 <p className="text-sm text-yellow-400 font-medium mb-1">
-                  Today's Goal
+                  Today&apos;s Goal
                 </p>
                 <p className="text-white font-medium">
                   {goal.description}

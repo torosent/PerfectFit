@@ -49,15 +49,19 @@ function DraggablePieceComponent({
   });
 
   // Track prefers-reduced-motion on client side
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const mediaQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    return mediaQuery?.matches ?? false;
+  });
   
   useEffect(() => {
     const mediaQuery = window.matchMedia?.('(prefers-reduced-motion: reduce)');
-    setPrefersReducedMotion(mediaQuery?.matches ?? false);
-    
+    if (!mediaQuery?.addEventListener) return;
+
     const handler = (e: MediaQueryListEvent) => setPrefersReducedMotion(e.matches);
-    mediaQuery?.addEventListener?.('change', handler);
-    return () => mediaQuery?.removeEventListener?.('change', handler);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
   }, []);
 
   // Apply transform during drag merged with base styles
@@ -75,12 +79,7 @@ function DraggablePieceComponent({
       }
     : baseStyles;
 
-  // Determine animation state - return variant name
-  const getAnimationState = (): string => {
-    if (isDragging) return 'dragging';
-    if (isSelected) return 'selected';
-    return 'idle';
-  };
+  const variantState: string = isDragging ? 'dragging' : isSelected ? 'selected' : 'idle';
 
   // Should we apply bobbing? Only when idle and not reduced motion
   const shouldBob = !isDragging && !isSelected && !disabled && !prefersReducedMotion;
@@ -112,8 +111,8 @@ function DraggablePieceComponent({
     if (bobbingAnimation) {
       return bobbingAnimation;
     }
-    return getAnimationState();
-  }, [bobbingAnimation, isDragging, isSelected]);
+    return variantState;
+  }, [bobbingAnimation, variantState]);
 
   return (
     <motion.div

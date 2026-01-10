@@ -112,7 +112,7 @@ export function GameBoardPreview() {
     }, 900);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [animationFrames.length]);
 
   const currentFrame = animationFrames[frameIndex];
   const { board, clearing, score } = currentFrame;

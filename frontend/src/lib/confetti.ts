@@ -148,7 +148,6 @@ export function firePerfectClearConfetti(): void {
  * Fire a starburst effect (for perfect clear)
  */
 export function fireStarburst(): void {
-  const count = 8;
   const defaults = {
     origin: { y: 0.5 },
     disableForReducedMotion: true,

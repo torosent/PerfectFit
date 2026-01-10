@@ -2,7 +2,7 @@
 
 import { memo, useCallback, useMemo } from 'react';
 import { motion } from 'motion/react';
-import type { SeasonPassInfo, SeasonReward, RewardType } from '@/types/gamification';
+import type { SeasonPassInfo, RewardType } from '@/types/gamification';
 
 export interface SeasonPassTrackProps {
   /** Season pass data */
@@ -22,18 +22,6 @@ function getRewardIcon(rewardType: RewardType): string {
     case 'StreakFreeze': return '❄️';
     case 'Cosmetic': return '✨';
     default: return '🎁';
-  }
-}
-
-/**
- * Get reward description
- */
-function getRewardDescription(reward: SeasonReward): string {
-  switch (reward.rewardType) {
-    case 'XPBoost': return `+${reward.rewardValue}% XP Boost`;
-    case 'StreakFreeze': return `${reward.rewardValue}x Streak Freeze`;
-    case 'Cosmetic': return 'Cosmetic Reward';
-    default: return 'Reward';
   }
 }
 

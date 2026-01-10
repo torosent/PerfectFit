@@ -22,6 +22,17 @@ export type {
 } from './gamification';
 
 /**
+ * Goal type for challenge progress calculation
+ */
+export type ChallengeGoalType =
+  | 'ScoreTotal'
+  | 'ScoreSingleGame'
+  | 'GameCount'
+  | 'WinStreak'
+  | 'Accuracy'
+  | 'TimeBased';
+
+/**
  * Admin view of an achievement
  */
 export interface AdminAchievement {
@@ -82,6 +93,7 @@ export interface AdminChallengeTemplate {
   targetValue: number;
   xpReward: number;
   isActive: boolean;
+  goalType: ChallengeGoalType | null;
 }
 
 /**
@@ -93,6 +105,7 @@ export interface CreateChallengeTemplateRequest {
   type: ChallengeType;
   targetValue: number;
   xpReward: number;
+  goalType?: ChallengeGoalType | null;
 }
 
 /**
@@ -100,6 +113,7 @@ export interface CreateChallengeTemplateRequest {
  */
 export interface UpdateChallengeTemplateRequest extends CreateChallengeTemplateRequest {
   isActive: boolean;
+  goalType?: ChallengeGoalType | null;
 }
 
 /**

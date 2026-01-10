@@ -4,7 +4,7 @@
  * Tests for the custom React hooks that provide gamification functionality.
  */
 
-import { renderHook, act, waitFor } from '@testing-library/react';
+import { renderHook } from '@testing-library/react';
 import type {
   GamificationStatus,
   Challenge,

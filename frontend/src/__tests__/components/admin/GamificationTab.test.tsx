@@ -120,7 +120,7 @@ describe('GamificationTab', () => {
       render(<GamificationTab />);
 
       // Should show achievements tab as selected
-      const achievementsTab = screen.getByRole('button', { name: /achievements/i });
+      const achievementsTab = screen.getByRole('button', { name: /^achievements$/i });
       expect(achievementsTab).toBeInTheDocument();
 
       // Should show achievements content
@@ -133,8 +133,8 @@ describe('GamificationTab', () => {
       render(<GamificationTab />);
 
       expect(screen.getByRole('button', { name: /^achievements$/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /challenge templates/i })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: /cosmetics/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^challenge templates$/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^cosmetics$/i })).toBeInTheDocument();
     });
 
     it('switches to Challenge Templates sub-tab', async () => {
@@ -146,7 +146,7 @@ describe('GamificationTab', () => {
       });
 
       // Click Challenge Templates tab
-      const templatesTab = screen.getByRole('button', { name: /challenge templates/i });
+      const templatesTab = screen.getByRole('button', { name: /^challenge templates$/i });
       fireEvent.click(templatesTab);
 
       // Should now show challenge templates content
@@ -167,7 +167,7 @@ describe('GamificationTab', () => {
       });
 
       // Click Cosmetics tab
-      const cosmeticsTab = screen.getByRole('button', { name: /cosmetics/i });
+  const cosmeticsTab = screen.getByRole('button', { name: /^cosmetics$/i });
       fireEvent.click(cosmeticsTab);
 
       // Should now show cosmetics content
@@ -188,7 +188,7 @@ describe('GamificationTab', () => {
       });
 
       // Switch to Cosmetics
-      const cosmeticsTab = screen.getByRole('button', { name: /cosmetics/i });
+  const cosmeticsTab = screen.getByRole('button', { name: /^cosmetics$/i });
       fireEvent.click(cosmeticsTab);
 
       await waitFor(() => {
@@ -230,7 +230,7 @@ describe('GamificationTab', () => {
       const { rerender } = render(<GamificationTab refreshTrigger={0} />);
 
       // Switch to Challenge Templates tab
-      const templatesTab = screen.getByRole('button', { name: /challenge templates/i });
+      const templatesTab = screen.getByRole('button', { name: /^challenge templates$/i });
       fireEvent.click(templatesTab);
 
       await waitFor(() => {
@@ -249,7 +249,7 @@ describe('GamificationTab', () => {
       const { rerender } = render(<GamificationTab refreshTrigger={0} />);
 
       // Switch to Cosmetics tab
-      const cosmeticsTab = screen.getByRole('button', { name: /cosmetics/i });
+      const cosmeticsTab = screen.getByRole('button', { name: /^cosmetics$/i });
       fireEvent.click(cosmeticsTab);
 
       await waitFor(() => {
@@ -289,7 +289,7 @@ describe('GamificationTab', () => {
       });
 
       // Switch to Challenge Templates
-      const templatesTab = screen.getByRole('button', { name: /challenge templates/i });
+  const templatesTab = screen.getByRole('button', { name: /^challenge templates$/i });
       fireEvent.click(templatesTab);
 
       await waitFor(() => {
@@ -297,7 +297,7 @@ describe('GamificationTab', () => {
       });
 
       // Switch to Cosmetics
-      const cosmeticsTab = screen.getByRole('button', { name: /cosmetics/i });
+  const cosmeticsTab = screen.getByRole('button', { name: /^cosmetics$/i });
       fireEvent.click(cosmeticsTab);
 
       await waitFor(() => {
@@ -317,7 +317,7 @@ describe('GamificationTab', () => {
       });
 
       // Should still be able to switch tabs
-      const templatesTab = screen.getByRole('button', { name: /challenge templates/i });
+  const templatesTab = screen.getByRole('button', { name: /^challenge templates$/i });
       fireEvent.click(templatesTab);
 
       await waitFor(() => {
@@ -331,7 +331,7 @@ describe('GamificationTab', () => {
       render(<GamificationTab />);
 
       // Switch to Challenge Templates
-      const templatesTab = screen.getByRole('button', { name: /challenge templates/i });
+  const templatesTab = screen.getByRole('button', { name: /^challenge templates$/i });
       fireEvent.click(templatesTab);
 
       await waitFor(() => {
@@ -345,7 +345,7 @@ describe('GamificationTab', () => {
       render(<GamificationTab />);
 
       // Switch to Cosmetics
-      const cosmeticsTab = screen.getByRole('button', { name: /cosmetics/i });
+  const cosmeticsTab = screen.getByRole('button', { name: /^cosmetics$/i });
       fireEvent.click(cosmeticsTab);
 
       await waitFor(() => {
@@ -358,7 +358,7 @@ describe('GamificationTab', () => {
     it('sub-tab buttons are keyboard accessible', async () => {
       render(<GamificationTab />);
 
-      const templatesTab = screen.getByRole('button', { name: /challenge templates/i });
+      const templatesTab = screen.getByRole('button', { name: /^challenge templates$/i });
       
       // Buttons should be focusable
       templatesTab.focus();

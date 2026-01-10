@@ -164,7 +164,10 @@ function DroppableBoardComponent({
   const [isShaking, setIsShaking] = useState(false);
 
   // Track reduced motion preference
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(() => {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  });
 
   useEffect(() => {
     if (typeof window === 'undefined' || !window.matchMedia) {
@@ -172,9 +175,6 @@ function DroppableBoardComponent({
     }
 
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-    // Set initial value
-    setPrefersReducedMotion(mediaQuery.matches);
 
     const handleChange = (event: MediaQueryListEvent) => {
       setPrefersReducedMotion(event.matches);
@@ -189,9 +189,13 @@ function DroppableBoardComponent({
   // Trigger shake when intensity changes and is > 0
   useEffect(() => {
     if (shakeIntensity > 0 && !prefersReducedMotion) {
-      setIsShaking(true);
-      const timer = setTimeout(() => setIsShaking(false), 300);
-      return () => clearTimeout(timer);
+      // Avoid setState synchronously within effect body.
+      const startTimer = setTimeout(() => setIsShaking(true), 0);
+      const endTimer = setTimeout(() => setIsShaking(false), 300);
+      return () => {
+        clearTimeout(startTimer);
+        clearTimeout(endTimer);
+      };
     }
   }, [shakeIntensity, prefersReducedMotion]);
 

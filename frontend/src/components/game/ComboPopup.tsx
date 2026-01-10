@@ -4,6 +4,14 @@ import { memo, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { comboVariants } from '@/lib/animations';
 
+function pseudoRandom01(seed: number): number {
+  // Deterministic pseudo-random in [0, 1). Keeps render pure (no Math.random()).
+  let t = seed + 0x6d2b79f5;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
 export interface ComboPopupProps {
   /** Current combo value */
   combo: number;
@@ -182,8 +190,8 @@ function ComboPopupComponent({ combo, triggerKey }: ComboPopupProps) {
                       top: '50%',
                     }}
                     animate={{
-                      x: [0, (Math.random() - 0.5) * 100],
-                      y: [0, -50 - Math.random() * 50],
+                      x: [0, (pseudoRandom01(displayCombo * 100 + i * 2 + 1) - 0.5) * 100],
+                      y: [0, -50 - pseudoRandom01(displayCombo * 100 + i * 2 + 2) * 50],
                       opacity: [1, 0],
                       scale: [1, 0.3],
                     }}

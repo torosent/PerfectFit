@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, type KeyboardEvent } from 'react';
 import {
   getAdminChallengeTemplates,
   createAdminChallengeTemplate,
@@ -17,6 +17,7 @@ import type {
   CreateChallengeTemplateRequest,
   UpdateChallengeTemplateRequest,
   ChallengeType,
+  ChallengeGoalType,
   PaginatedResponse,
 } from '@/types';
 
@@ -26,6 +27,15 @@ export interface ChallengeTemplatesTableProps {
 
 const CHALLENGE_TYPES: ChallengeType[] = ['Daily', 'Weekly'];
 
+const GOAL_TYPES: { value: ChallengeGoalType; label: string }[] = [
+  { value: 'ScoreTotal', label: 'Score Total' },
+  { value: 'ScoreSingleGame', label: 'Single Game Score' },
+  { value: 'GameCount', label: 'Game Count' },
+  { value: 'WinStreak', label: 'Win Streak' },
+  { value: 'Accuracy', label: 'Accuracy' },
+  { value: 'TimeBased', label: 'Time Based' },
+];
+
 interface EditValues {
   name: string;
   description: string;
@@ -33,6 +43,7 @@ interface EditValues {
   targetValue: number;
   xpReward: number;
   isActive: boolean;
+  goalType: ChallengeGoalType | null;
 }
 
 const defaultEditValues: EditValues = {
@@ -42,6 +53,7 @@ const defaultEditValues: EditValues = {
   targetValue: 1,
   xpReward: 10,
   isActive: true,
+  goalType: null,
 };
 
 /**
@@ -69,6 +81,9 @@ function TableSkeleton() {
           </td>
           <td className="py-3 px-4">
             <div className="h-4 w-16 rounded animate-pulse" style={{ backgroundColor: 'rgba(20, 184, 166, 0.15)' }} />
+          </td>
+          <td className="py-3 px-4">
+            <div className="h-4 w-24 rounded animate-pulse" style={{ backgroundColor: 'rgba(20, 184, 166, 0.15)' }} />
           </td>
           <td className="py-3 px-4">
             <div className="h-4 w-16 rounded animate-pulse" style={{ backgroundColor: 'rgba(20, 184, 166, 0.15)' }} />
@@ -140,6 +155,7 @@ export function ChallengeTemplatesTable({ refreshTrigger }: ChallengeTemplatesTa
       targetValue: item.targetValue,
       xpReward: item.xpReward,
       isActive: item.isActive,
+      goalType: item.goalType,
     });
   };
 
@@ -161,6 +177,7 @@ export function ChallengeTemplatesTable({ refreshTrigger }: ChallengeTemplatesTa
         targetValue: editValues.targetValue,
         xpReward: editValues.xpReward,
         isActive: editValues.isActive,
+        goalType: editValues.goalType,
       };
 
       await updateAdminChallengeTemplate(id, request, token);
@@ -186,6 +203,7 @@ export function ChallengeTemplatesTable({ refreshTrigger }: ChallengeTemplatesTa
         type: newValues.type,
         targetValue: newValues.targetValue,
         xpReward: newValues.xpReward,
+        goalType: newValues.goalType,
       };
 
       await createAdminChallengeTemplate(request, token);
@@ -235,6 +253,7 @@ export function ChallengeTemplatesTable({ refreshTrigger }: ChallengeTemplatesTa
         targetValue: item.targetValue,
         xpReward: item.xpReward,
         isActive: !item.isActive,
+        goalType: item.goalType,
       };
 
       await updateAdminChallengeTemplate(item.id, request, token);
@@ -290,7 +309,7 @@ export function ChallengeTemplatesTable({ refreshTrigger }: ChallengeTemplatesTa
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent, id: number) => {
+  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement | HTMLSelectElement>, id: number) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSave(id);
@@ -376,6 +395,7 @@ export function ChallengeTemplatesTable({ refreshTrigger }: ChallengeTemplatesTa
               <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Type</th>
               <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Target</th>
               <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">XP Reward</th>
+              <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Goal Type</th>
               <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Active</th>
               <th className="py-3 px-4 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider">Actions</th>
             </tr>
@@ -434,6 +454,18 @@ export function ChallengeTemplatesTable({ refreshTrigger }: ChallengeTemplatesTa
                   />
                 </td>
                 <td className="py-3 px-4">
+                  <select
+                    value={newValues.goalType ?? ''}
+                    onChange={(e) => setNewValues({ ...newValues, goalType: e.target.value ? e.target.value as ChallengeGoalType : null })}
+                    className="px-2 py-1 rounded bg-white/10 text-white text-sm border border-white/20 focus:border-teal-400 focus:outline-none"
+                  >
+                    <option value="" className="bg-gray-800">Auto</option>
+                    {GOAL_TYPES.map((gt) => (
+                      <option key={gt.value} value={gt.value} className="bg-gray-800">{gt.label}</option>
+                    ))}
+                  </select>
+                </td>
+                <td className="py-3 px-4">
                   <span className="text-gray-500 text-sm">Auto</span>
                 </td>
                 <td className="py-3 px-4">
@@ -461,7 +493,7 @@ export function ChallengeTemplatesTable({ refreshTrigger }: ChallengeTemplatesTa
               <TableSkeleton />
             ) : !templates || templates.items.length === 0 ? (
               <tr>
-                <td colSpan={8} className="py-12 text-center text-gray-500">
+                <td colSpan={9} className="py-12 text-center text-gray-500">
                   No challenge templates found.
                 </td>
               </tr>
@@ -584,6 +616,34 @@ export function ChallengeTemplatesTable({ refreshTrigger }: ChallengeTemplatesTa
                         className="cursor-pointer text-teal-400 text-sm font-medium hover:bg-white/5 px-1 rounded"
                       >
                         {item.xpReward} XP
+                      </span>
+                    )}
+                  </td>
+
+                  {/* Goal Type */}
+                  <td className="py-3 px-4">
+                    {editingRow === item.id ? (
+                      <select
+                        value={editValues.goalType ?? ''}
+                        onChange={(e) => setEditValues({ ...editValues, goalType: e.target.value ? e.target.value as ChallengeGoalType : null })}
+                        onKeyDown={(e) => handleKeyDown(e, item.id)}
+                        className="px-2 py-1 rounded bg-white/10 text-white text-sm border border-white/20 focus:border-teal-400 focus:outline-none"
+                      >
+                        <option value="" className="bg-gray-800">Auto</option>
+                        {GOAL_TYPES.map((gt) => (
+                          <option key={gt.value} value={gt.value} className="bg-gray-800">{gt.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <span
+                        onClick={() => startEditing(item)}
+                        className="cursor-pointer text-xs px-2 py-1 rounded-full font-medium hover:bg-white/5"
+                        style={{
+                          background: item.goalType ? 'rgba(20, 184, 166, 0.2)' : 'rgba(156, 163, 175, 0.2)',
+                          color: item.goalType ? '#14b8a6' : '#9ca3af',
+                        }}
+                      >
+                        {item.goalType ? (GOAL_TYPES.find(gt => gt.value === item.goalType)?.label ?? item.goalType) : 'Auto'}
                       </span>
                     )}
                   </td>

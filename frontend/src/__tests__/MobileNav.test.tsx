@@ -111,7 +111,7 @@ describe('MobileNav', () => {
 
   describe('Click Outside', () => {
     it('closes menu when clicking outside', async () => {
-      const { container } = render(
+      render(
         <div>
           <MobileNav />
           <div data-testid="outside">Outside element</div>

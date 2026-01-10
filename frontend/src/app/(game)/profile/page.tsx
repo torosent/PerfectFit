@@ -2,6 +2,7 @@
 
 import { memo, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import Image from 'next/image';
 import { useAuthStore, useIsAuthenticated } from '@/lib/stores/auth-store';
 import { useStreaks } from '@/hooks/useStreaks';
 import { useChallenges } from '@/hooks/useChallenges';
@@ -69,12 +70,14 @@ const CosmeticCard = memo(function CosmeticCard({
       )}
 
       {/* Preview */}
-      <div className="aspect-square rounded-lg bg-white/5 mb-3 flex items-center justify-center overflow-hidden">
+      <div className="relative aspect-square rounded-lg bg-white/5 mb-3 flex items-center justify-center overflow-hidden">
         {cosmetic.previewUrl ? (
-          <img
+          <Image
             src={cosmetic.previewUrl}
             alt={cosmetic.name}
-            className="w-full h-full object-cover"
+            fill
+            sizes="(max-width: 768px) 30vw, 160px"
+            className="object-cover"
           />
         ) : (
           <span className="text-4xl">
@@ -142,12 +145,11 @@ function ProfilePageContent() {
     freezeTokens,
     isAtRisk,
     resetTime,
-    isLoading: streakLoading,
   } = useStreaks();
 
   const { challenges, isLoading: challengesLoading } = useChallenges();
   const { achievements, isLoading: achievementsLoading } = useAchievements();
-  const { seasonPass, claimReward, isLoading: seasonLoading } = useSeasonPass();
+  const { seasonPass, claimReward } = useSeasonPass();
   const { cosmetics, byType, equipCosmetic, isLoading: cosmeticsLoading } = useCosmetics();
   const { activeGoals } = usePersonalGoals();
 
@@ -164,7 +166,6 @@ function ProfilePageContent() {
   );
 
   // Stats calculations
-  const totalAchievements = achievements.length;
   const unlockedAchievements = achievements.filter((a) => a.isUnlocked).length;
   const completedChallenges = challenges.filter((c) => c.isCompleted).length;
   const ownedCosmetics = cosmetics.filter((c) => c.isOwned).length;

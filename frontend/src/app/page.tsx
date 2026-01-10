@@ -68,34 +68,6 @@ function HowToPlayStep({
   );
 }
 
-// Testimonial component
-function Testimonial({ 
-  quote, 
-  author, 
-  role 
-}: { 
-  quote: string; 
-  author: string; 
-  role: string;
-}) {
-  return (
-    <div 
-      className="rounded-2xl p-6 transition-all duration-300 hover:shadow-lg"
-      style={{ background: theme.bgCard, border: `1px solid ${theme.borderLight}` }}
-    >
-      <div className="text-2xl mb-4" style={{ color: '#fbbf24' }}>&ldquo;</div>
-      <p className="italic mb-4" style={{ color: '#e2e8f0' }}>{quote}</p>
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full" style={{ background: theme.primaryGradient }} />
-        <div>
-          <div className="font-semibold" style={{ color: theme.textPrimary }}>{author}</div>
-          <div className="text-sm" style={{ color: theme.textSecondary }}>{role}</div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
 // Tutorial tip component
 function TutorialTip({ 
   icon, 

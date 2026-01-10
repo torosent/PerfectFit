@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import React from 'react';
 
 // Mock @dnd-kit/core
@@ -25,7 +25,7 @@ jest.mock('@dnd-kit/core', () => ({
 // Mock motion/react to avoid animation issues in tests
 jest.mock('motion/react', () => ({
   motion: {
-    div: ({ children, whileTap, whileHover, initial, animate, exit, transition, layout, layoutId, ...props }: any) => (
+    div: ({ children, ...props }: { children?: React.ReactNode } & Record<string, unknown>) => (
       <div {...props}>{children}</div>
     ),
   },

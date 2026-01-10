@@ -15,7 +15,7 @@ import type { Piece, Grid, ClearingCell, Position } from '@/types';
 import { useGameStore } from '@/lib/stores/game-store';
 import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
 import { PieceDisplay } from '@/components/game/PieceDisplay';
-import { useTouchDevice, useHaptics } from '@/hooks';
+import { useHaptics } from '@/hooks';
 
 // Touch offset constants - how many pixels to lift the dragged piece above the finger
 // This offset is applied to BOTH the visual overlay AND the placement calculation
@@ -83,14 +83,10 @@ export function DndProvider({ children }: DndProviderProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [isTouchDragging, setIsTouchDragging] = useState(false);
   
-  // Detect if we're on a touch device to apply drag offset
-  const isTouchDevice = useTouchDevice();
-  
   // Haptic feedback for touch interactions
   const haptics = useHaptics();
   
   const { 
-    gameState, 
     placePiece, 
     setHoverPosition, 
     setDraggedPieceIndex,

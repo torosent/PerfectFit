@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useState, useCallback, useEffect, useRef, useId } from 'react';
+import { memo, useState, useCallback, useEffect, useRef, useId, type KeyboardEvent } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useStreaks } from '@/hooks/useStreaks';
 
@@ -19,7 +19,7 @@ function StreakFreezeButtonComponent({
   compact = false,
   onFreezeUsed,
 }: StreakFreezeButtonProps) {
-  const { freezeTokens, isAtRisk, useFreeze, isLoading } = useStreaks();
+  const { freezeTokens, isAtRisk, useFreeze: consumeFreeze, isLoading } = useStreaks();
   const [showConfirm, setShowConfirm] = useState(false);
   const [isUsing, setIsUsing] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -31,7 +31,7 @@ function StreakFreezeButtonComponent({
     
     setIsUsing(true);
     try {
-      await useFreeze();
+      await consumeFreeze();
       setShowConfirm(false);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
@@ -151,7 +151,7 @@ function ConfirmModal({
   }, []);
   
   // Handle Escape key to close modal
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Escape') {
       e.preventDefault();
       onCancel();

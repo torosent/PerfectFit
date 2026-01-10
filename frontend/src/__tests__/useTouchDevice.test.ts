@@ -16,8 +16,7 @@ describe('useTouchDevice hook', () => {
       });
     } else {
       // Delete the property to simulate no touch support
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (window as any).ontouchstart;
+      delete (window as Record<string, unknown>).ontouchstart;
     }
     
     Object.defineProperty(navigator, 'maxTouchPoints', {
@@ -32,8 +31,7 @@ describe('useTouchDevice hook', () => {
     if (originalOntouchstart) {
       Object.defineProperty(window, 'ontouchstart', originalOntouchstart);
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (window as any).ontouchstart;
+      delete (window as Record<string, unknown>).ontouchstart;
     }
     
     if (originalMaxTouchPoints) {

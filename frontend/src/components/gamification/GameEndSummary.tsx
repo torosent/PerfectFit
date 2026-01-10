@@ -1,12 +1,10 @@
 'use client';
 
-import { memo, useMemo, useCallback, useEffect, useRef, useId } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { memo, useMemo, useCallback, useEffect, useRef, useId, type KeyboardEvent } from 'react';
+import { motion } from 'motion/react';
+import Image from 'next/image';
 import type {
   GameEndGamification,
-  ChallengeProgress,
-  AchievementUnlock,
-  GoalProgress,
 } from '@/types/gamification';
 
 export interface GameEndSummaryProps {
@@ -66,7 +64,7 @@ function GameEndSummaryComponent({
   }, [isOpen]);
   
   // Handle Escape key to close modal
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === 'Escape') {
       e.preventDefault();
       onContinue();
@@ -214,9 +212,11 @@ function GameEndSummaryComponent({
                   className="flex items-center gap-3 p-2 rounded-lg bg-yellow-500/10"
                 >
                   <div className="w-8 h-8 rounded-full bg-yellow-500/20 flex items-center justify-center">
-                    <img
+                    <Image
                       src={achievement.iconUrl}
                       alt=""
+                      width={20}
+                      height={20}
                       className="w-5 h-5 object-contain"
                     />
                   </div>

@@ -4,6 +4,14 @@ import { memo, useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { pointsPopupVariants } from '@/lib/animations';
 
+function pseudoRandom01(seed: number): number {
+  // Deterministic pseudo-random in [0, 1). Keeps render pure (no Math.random()).
+  let t = seed + 0x6d2b79f5;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
 export interface PointsPopupProps {
   /** Points to display */
   points: number;
@@ -163,8 +171,8 @@ function PointsPopupComponent({
                     initial={{ scale: 0, x: 0, y: 0 }}
                     animate={{
                       scale: [0, 1, 0],
-                      x: [0, (Math.random() - 0.5) * 80],
-                      y: [0, (Math.random() - 0.5) * 80],
+                      x: [0, (pseudoRandom01(displayPoints + i * 2 + 1) - 0.5) * 80],
+                      y: [0, (pseudoRandom01(displayPoints + i * 2 + 2) - 0.5) * 80],
                       opacity: [1, 1, 0],
                     }}
                     transition={{
