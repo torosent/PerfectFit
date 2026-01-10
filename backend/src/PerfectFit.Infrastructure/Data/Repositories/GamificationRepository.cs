@@ -56,6 +56,44 @@ public class GamificationRepository : IGamificationRepository
         await _context.SaveChangesAsync(ct);
     }
 
+    public async Task<(IReadOnlyList<Achievement> Items, int TotalCount)> GetAchievementsPagedAsync(int page, int pageSize, CancellationToken ct = default)
+    {
+        var query = _context.Achievements.OrderBy(a => a.DisplayOrder).ThenBy(a => a.Name);
+        var totalCount = await query.CountAsync(ct);
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+        return (items, totalCount);
+    }
+
+    public async Task AddAchievementAsync(Achievement achievement, CancellationToken ct = default)
+    {
+        _context.Achievements.Add(achievement);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task UpdateAchievementAsync(Achievement achievement, CancellationToken ct = default)
+    {
+        _context.Achievements.Update(achievement);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task<bool> IsAchievementInUseAsync(int achievementId, CancellationToken ct = default)
+    {
+        return await _context.UserAchievements.AnyAsync(ua => ua.AchievementId == achievementId, ct);
+    }
+
+    public async Task DeleteAchievementAsync(int achievementId, CancellationToken ct = default)
+    {
+        var achievement = await _context.Achievements.FindAsync([achievementId], ct);
+        if (achievement != null)
+        {
+            _context.Achievements.Remove(achievement);
+            await _context.SaveChangesAsync(ct);
+        }
+    }
+
     #endregion
 
     #region Challenge Methods
@@ -236,6 +274,44 @@ public class GamificationRepository : IGamificationRepository
         }
     }
 
+    public async Task<(IReadOnlyList<Cosmetic> Items, int TotalCount)> GetCosmeticsPagedAsync(int page, int pageSize, CancellationToken ct = default)
+    {
+        var query = _context.Cosmetics.OrderBy(c => c.Type).ThenBy(c => c.Name);
+        var totalCount = await query.CountAsync(ct);
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+        return (items, totalCount);
+    }
+
+    public async Task AddCosmeticAsync(Cosmetic cosmetic, CancellationToken ct = default)
+    {
+        _context.Cosmetics.Add(cosmetic);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task UpdateCosmeticAsync(Cosmetic cosmetic, CancellationToken ct = default)
+    {
+        _context.Cosmetics.Update(cosmetic);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task<bool> IsCosmeticInUseAsync(int cosmeticId, CancellationToken ct = default)
+    {
+        return await _context.UserCosmetics.AnyAsync(uc => uc.CosmeticId == cosmeticId, ct);
+    }
+
+    public async Task DeleteCosmeticAsync(int cosmeticId, CancellationToken ct = default)
+    {
+        var cosmetic = await _context.Cosmetics.FindAsync([cosmeticId], ct);
+        if (cosmetic != null)
+        {
+            _context.Cosmetics.Remove(cosmetic);
+            await _context.SaveChangesAsync(ct);
+        }
+    }
+
     #endregion
 
     #region Personal Goal Methods
@@ -321,6 +397,43 @@ public class GamificationRepository : IGamificationRepository
     {
         _context.ChallengeTemplates.Add(template);
         await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task<(IReadOnlyList<ChallengeTemplate> Items, int TotalCount)> GetChallengeTemplatesPagedAsync(int page, int pageSize, CancellationToken ct = default)
+    {
+        var query = _context.ChallengeTemplates.OrderBy(t => t.Type).ThenBy(t => t.Name);
+        var totalCount = await query.CountAsync(ct);
+        var items = await query
+            .Skip((page - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+        return (items, totalCount);
+    }
+
+    public async Task<ChallengeTemplate?> GetChallengeTemplateByIdAsync(int templateId, CancellationToken ct = default)
+    {
+        return await _context.ChallengeTemplates.FindAsync([templateId], ct);
+    }
+
+    public async Task UpdateChallengeTemplateAsync(ChallengeTemplate template, CancellationToken ct = default)
+    {
+        _context.ChallengeTemplates.Update(template);
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task<bool> IsChallengeTemplateInUseAsync(int templateId, CancellationToken ct = default)
+    {
+        return await _context.Challenges.AnyAsync(c => c.ChallengeTemplateId == templateId, ct);
+    }
+
+    public async Task DeleteChallengeTemplateAsync(int templateId, CancellationToken ct = default)
+    {
+        var template = await _context.ChallengeTemplates.FindAsync([templateId], ct);
+        if (template != null)
+        {
+            _context.ChallengeTemplates.Remove(template);
+            await _context.SaveChangesAsync(ct);
+        }
     }
 
     #endregion

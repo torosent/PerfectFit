@@ -75,6 +75,40 @@ public class InMemoryGamificationRepository : IGamificationRepository
         return Task.CompletedTask;
     }
 
+    public Task<(IReadOnlyList<Achievement> Items, int TotalCount)> GetAchievementsPagedAsync(int page, int pageSize, CancellationToken ct = default)
+    {
+        var query = _achievements.Values.OrderBy(a => a.DisplayOrder).ThenBy(a => a.Name).ToList();
+        var totalCount = query.Count;
+        var items = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        return Task.FromResult<(IReadOnlyList<Achievement> Items, int TotalCount)>((items, totalCount));
+    }
+
+    public Task AddAchievementAsync(Achievement achievement, CancellationToken ct = default)
+    {
+        var id = Interlocked.Increment(ref _nextAchievementId);
+        SetProperty(achievement, "Id", id);
+        _achievements[id] = achievement;
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateAchievementAsync(Achievement achievement, CancellationToken ct = default)
+    {
+        _achievements[achievement.Id] = achievement;
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> IsAchievementInUseAsync(int achievementId, CancellationToken ct = default)
+    {
+        var inUse = _userAchievements.Values.Any(ua => ua.AchievementId == achievementId);
+        return Task.FromResult(inUse);
+    }
+
+    public Task DeleteAchievementAsync(int achievementId, CancellationToken ct = default)
+    {
+        _achievements.TryRemove(achievementId, out _);
+        return Task.CompletedTask;
+    }
+
     #endregion
 
     #region Challenge Methods
@@ -155,6 +189,38 @@ public class InMemoryGamificationRepository : IGamificationRepository
         var id = Interlocked.Increment(ref _nextChallengeTemplateId);
         SetProperty(template, "Id", id);
         _challengeTemplates[id] = template;
+        return Task.CompletedTask;
+    }
+
+    public Task<(IReadOnlyList<ChallengeTemplate> Items, int TotalCount)> GetChallengeTemplatesPagedAsync(int page, int pageSize, CancellationToken ct = default)
+    {
+        var query = _challengeTemplates.Values.OrderBy(t => t.Type).ThenBy(t => t.Name).ToList();
+        var totalCount = query.Count;
+        var items = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        return Task.FromResult<(IReadOnlyList<ChallengeTemplate> Items, int TotalCount)>((items, totalCount));
+    }
+
+    public Task<ChallengeTemplate?> GetChallengeTemplateByIdAsync(int templateId, CancellationToken ct = default)
+    {
+        _challengeTemplates.TryGetValue(templateId, out var template);
+        return Task.FromResult(template);
+    }
+
+    public Task UpdateChallengeTemplateAsync(ChallengeTemplate template, CancellationToken ct = default)
+    {
+        _challengeTemplates[template.Id] = template;
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> IsChallengeTemplateInUseAsync(int templateId, CancellationToken ct = default)
+    {
+        var inUse = _challenges.Values.Any(c => c.ChallengeTemplateId == templateId);
+        return Task.FromResult(inUse);
+    }
+
+    public Task DeleteChallengeTemplateAsync(int templateId, CancellationToken ct = default)
+    {
+        _challengeTemplates.TryRemove(templateId, out _);
         return Task.CompletedTask;
     }
 
@@ -310,6 +376,40 @@ public class InMemoryGamificationRepository : IGamificationRepository
         SetProperty(userCosmetic, "Id", id);
         _userCosmetics[id] = userCosmetic;
         return Task.FromResult(true);
+    }
+
+    public Task<(IReadOnlyList<Cosmetic> Items, int TotalCount)> GetCosmeticsPagedAsync(int page, int pageSize, CancellationToken ct = default)
+    {
+        var query = _cosmetics.Values.OrderBy(c => c.Type).ThenBy(c => c.Name).ToList();
+        var totalCount = query.Count;
+        var items = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
+        return Task.FromResult<(IReadOnlyList<Cosmetic> Items, int TotalCount)>((items, totalCount));
+    }
+
+    public Task AddCosmeticAsync(Cosmetic cosmetic, CancellationToken ct = default)
+    {
+        var id = Interlocked.Increment(ref _nextCosmeticId);
+        SetProperty(cosmetic, "Id", id);
+        _cosmetics[id] = cosmetic;
+        return Task.CompletedTask;
+    }
+
+    public Task UpdateCosmeticAsync(Cosmetic cosmetic, CancellationToken ct = default)
+    {
+        _cosmetics[cosmetic.Id] = cosmetic;
+        return Task.CompletedTask;
+    }
+
+    public Task<bool> IsCosmeticInUseAsync(int cosmeticId, CancellationToken ct = default)
+    {
+        var inUse = _userCosmetics.Values.Any(uc => uc.CosmeticId == cosmeticId);
+        return Task.FromResult(inUse);
+    }
+
+    public Task DeleteCosmeticAsync(int cosmeticId, CancellationToken ct = default)
+    {
+        _cosmetics.TryRemove(cosmeticId, out _);
+        return Task.CompletedTask;
     }
 
     #endregion

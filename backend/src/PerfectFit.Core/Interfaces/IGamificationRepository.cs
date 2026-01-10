@@ -15,6 +15,13 @@ public interface IGamificationRepository
     Task<UserAchievement?> GetUserAchievementAsync(int userId, int achievementId, CancellationToken ct = default);
     Task AddUserAchievementAsync(UserAchievement userAchievement, CancellationToken ct = default);
     Task UpdateUserAchievementAsync(UserAchievement userAchievement, CancellationToken ct = default);
+    
+    // Achievement admin methods
+    Task<(IReadOnlyList<Achievement> Items, int TotalCount)> GetAchievementsPagedAsync(int page, int pageSize, CancellationToken ct = default);
+    Task AddAchievementAsync(Achievement achievement, CancellationToken ct = default);
+    Task UpdateAchievementAsync(Achievement achievement, CancellationToken ct = default);
+    Task<bool> IsAchievementInUseAsync(int achievementId, CancellationToken ct = default);
+    Task DeleteAchievementAsync(int achievementId, CancellationToken ct = default);
 
     // Challenge methods
     Task<IReadOnlyList<Challenge>> GetActiveChallengesAsync(ChallengeType? type = null, CancellationToken ct = default);
@@ -29,6 +36,13 @@ public interface IGamificationRepository
     // Challenge template methods
     Task<IReadOnlyList<ChallengeTemplate>> GetChallengeTemplatesAsync(ChallengeType? type = null, CancellationToken ct = default);
     Task AddChallengeTemplateAsync(ChallengeTemplate template, CancellationToken ct = default);
+    
+    // Challenge template admin methods
+    Task<(IReadOnlyList<ChallengeTemplate> Items, int TotalCount)> GetChallengeTemplatesPagedAsync(int page, int pageSize, CancellationToken ct = default);
+    Task<ChallengeTemplate?> GetChallengeTemplateByIdAsync(int templateId, CancellationToken ct = default);
+    Task UpdateChallengeTemplateAsync(ChallengeTemplate template, CancellationToken ct = default);
+    Task<bool> IsChallengeTemplateInUseAsync(int templateId, CancellationToken ct = default);
+    Task DeleteChallengeTemplateAsync(int templateId, CancellationToken ct = default);
 
     // Season methods
     Task<Season?> GetCurrentSeasonAsync(CancellationToken ct = default);
@@ -63,6 +77,13 @@ public interface IGamificationRepository
     /// </summary>
     /// <returns>True if the cosmetic was granted or already owned; false on other errors.</returns>
     Task<bool> TryAddUserCosmeticAsync(UserCosmetic userCosmetic, CancellationToken ct = default);
+    
+    // Cosmetic admin methods
+    Task<(IReadOnlyList<Cosmetic> Items, int TotalCount)> GetCosmeticsPagedAsync(int page, int pageSize, CancellationToken ct = default);
+    Task AddCosmeticAsync(Cosmetic cosmetic, CancellationToken ct = default);
+    Task UpdateCosmeticAsync(Cosmetic cosmetic, CancellationToken ct = default);
+    Task<bool> IsCosmeticInUseAsync(int cosmeticId, CancellationToken ct = default);
+    Task DeleteCosmeticAsync(int cosmeticId, CancellationToken ct = default);
 
     // Personal goal methods
     Task<IReadOnlyList<PersonalGoal>> GetActiveGoalsAsync(int userId, CancellationToken ct = default);
