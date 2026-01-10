@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './index';
+import { API_BASE_URL } from './constants';
 
 /**
  * Custom error class for leaderboard API errors

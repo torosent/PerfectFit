@@ -1,4 +1,4 @@
-import { API_BASE_URL } from './index';
+import { API_BASE_URL } from './constants';
 import type { GameState, PlacePieceRequest, PlacePieceResponse, GameEndResponse } from '@/types';
 
 /**

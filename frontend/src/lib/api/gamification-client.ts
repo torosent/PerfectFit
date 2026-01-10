@@ -5,7 +5,7 @@
  * challenges, achievements, season pass, cosmetics, and personal goals.
  */
 
-import { API_BASE_URL } from './index';
+import { API_BASE_URL } from './constants';
 import type {
   GamificationStatus,
   Challenge,

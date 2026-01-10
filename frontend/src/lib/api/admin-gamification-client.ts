@@ -14,7 +14,7 @@ import type {
   UpdateCosmeticRequest,
   PaginatedResponse,
 } from '@/types';
-import { API_BASE_URL } from './index';
+import { API_BASE_URL } from './constants';
 import { AdminApiError } from './admin-client';
 
 const GAMIFICATION_BASE = `${API_BASE_URL}/api/admin/gamification`;

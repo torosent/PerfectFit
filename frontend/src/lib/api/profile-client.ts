@@ -1,5 +1,5 @@
 import type { UpdateProfileRequest, UpdateProfileResponse } from '@/types';
-import { API_BASE_URL } from './index';
+import { API_BASE_URL } from './constants';
 
 /**
  * Update the current user's profile (username and/or avatar)

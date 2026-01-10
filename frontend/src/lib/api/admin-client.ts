@@ -4,7 +4,7 @@ import type {
   AuditLog,
   BulkDeleteResponse,
 } from '@/types';
-import { API_BASE_URL } from './index';
+import { API_BASE_URL } from './constants';
 
 /**
  * Custom error class for Admin API errors
