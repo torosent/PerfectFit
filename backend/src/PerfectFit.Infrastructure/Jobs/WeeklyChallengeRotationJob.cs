@@ -129,15 +129,7 @@ public class WeeklyChallengeRotationJob : BackgroundService
                     var startDate = GetThisWeekMonday(now);
                     var endDate = startDate.AddDays(7); // End next Monday
 
-                    var challenge = Challenge.Create(
-                        template.Name,
-                        template.Description,
-                        ChallengeType.Weekly,
-                        template.TargetValue,
-                        template.XPReward,
-                        startDate,
-                        endDate,
-                        template.Id); // Set templateId for multi-instance deduplication
+                    var challenge = Challenge.CreateFromTemplate(template, startDate, endDate);
 
                     try
                     {

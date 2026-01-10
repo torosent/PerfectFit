@@ -109,15 +109,7 @@ public class DailyChallengeRotationJob : BackgroundService
                     var startDate = now.Date; // Start at midnight UTC today
                     var endDate = startDate.AddDays(1); // End at midnight UTC tomorrow
 
-                    var challenge = Challenge.Create(
-                        template.Name,
-                        template.Description,
-                        ChallengeType.Daily,
-                        template.TargetValue,
-                        template.XPReward,
-                        startDate,
-                        endDate,
-                        template.Id); // Set templateId for multi-instance deduplication
+                    var challenge = Challenge.CreateFromTemplate(template, startDate, endDate);
 
                     try
                     {

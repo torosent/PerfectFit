@@ -742,16 +742,7 @@ public static class AdminGamificationEndpoints
         }
 
         // Create the challenge
-        var challenge = Challenge.Create(
-            template.Name,
-            template.Description,
-            template.Type,
-            template.TargetValue,
-            template.XPReward,
-            startDate,
-            endDate,
-            template.Id
-        );
+        var challenge = Challenge.CreateFromTemplate(template, startDate, endDate);
 
         await repo.AddChallengeAsync(challenge, cancellationToken);
 
@@ -769,6 +760,7 @@ public static class AdminGamificationEndpoints
             TemplateId: template.Id,
             Name: challenge.Name,
             Type: challenge.Type.ToString(),
+            GoalType: challenge.GoalType,
             StartDate: challenge.StartDate,
             EndDate: challenge.EndDate,
             Message: $"Challenge '{challenge.Name}' activated successfully"
@@ -814,16 +806,7 @@ public static class AdminGamificationEndpoints
             var startDate = now.Date;
             var endDate = startDate.AddDays(1);
 
-            var challenge = Challenge.Create(
-                template.Name,
-                template.Description,
-                ChallengeType.Daily,
-                template.TargetValue,
-                template.XPReward,
-                startDate,
-                endDate,
-                template.Id
-            );
+            var challenge = Challenge.CreateFromTemplate(template, startDate, endDate);
 
             await repo.AddChallengeAsync(challenge, cancellationToken);
             createdChallenges.Add(new ChallengeInfo(challenge.Id, template.Name, "Daily"));
@@ -841,16 +824,7 @@ public static class AdminGamificationEndpoints
             var startDate = now.Date;
             var endDate = startDate.AddDays(7);
 
-            var challenge = Challenge.Create(
-                template.Name,
-                template.Description,
-                ChallengeType.Weekly,
-                template.TargetValue,
-                template.XPReward,
-                startDate,
-                endDate,
-                template.Id
-            );
+            var challenge = Challenge.CreateFromTemplate(template, startDate, endDate);
 
             await repo.AddChallengeAsync(challenge, cancellationToken);
             createdChallenges.Add(new ChallengeInfo(challenge.Id, template.Name, "Weekly"));
@@ -1292,16 +1266,7 @@ public static class AdminGamificationEndpoints
                     ? (now.Date, now.Date.AddDays(1).AddSeconds(-1))
                     : (now.Date.AddDays(-(int)now.DayOfWeek), now.Date.AddDays(7 - (int)now.DayOfWeek).AddSeconds(-1));
 
-                var challenge = Challenge.Create(
-                    name: template.Name,
-                    description: template.Description,
-                    type: template.Type,
-                    targetValue: template.TargetValue,
-                    xpReward: template.XPReward,
-                    startDate: startDate,
-                    endDate: endDate,
-                    templateId: template.Id
-                );
+                var challenge = Challenge.CreateFromTemplate(template, startDate, endDate);
 
                 challengesToCreate.Add(challenge);
             }
@@ -1480,6 +1445,7 @@ public record ActivateChallengeResponse(
     int TemplateId,
     string Name,
     string Type,
+    ChallengeGoalType? GoalType,
     DateTime StartDate,
     DateTime EndDate,
     string Message

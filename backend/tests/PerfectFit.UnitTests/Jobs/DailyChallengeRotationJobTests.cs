@@ -181,12 +181,86 @@ public class DailyChallengeRotationJobTests
             It.IsAny<CancellationToken>()), Times.Once);
     }
 
+    [Fact]
+    public async Task ExecuteAsync_CopiesGoalTypeFromTemplate()
+    {
+        // Arrange - Template with specific GoalType
+        var template = CreateTemplate(1, "Win Games", ChallengeType.Daily, 3, 50, ChallengeGoalType.GameCount);
+        Challenge? createdChallenge = null;
+
+        _repositoryMock.Setup(r => r.GetActiveChallengesAsync(ChallengeType.Daily, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Challenge>());
+        _repositoryMock.Setup(r => r.GetChallengeTemplatesAsync(ChallengeType.Daily, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ChallengeTemplate> { template });
+        _repositoryMock.Setup(r => r.AddChallengeAsync(It.IsAny<Challenge>(), It.IsAny<CancellationToken>()))
+            .Callback<Challenge, CancellationToken>((c, _) => createdChallenge = c)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _job.ExecuteRotationAsync(CancellationToken.None);
+
+        // Assert
+        createdChallenge.Should().NotBeNull();
+        createdChallenge!.GoalType.Should().Be(ChallengeGoalType.GameCount);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_CopiesNullGoalTypeFromTemplate()
+    {
+        // Arrange - Template with null GoalType
+        var template = CreateTemplate(1, "Generic Challenge", ChallengeType.Daily, 5, 50, goalType: null);
+        Challenge? createdChallenge = null;
+
+        _repositoryMock.Setup(r => r.GetActiveChallengesAsync(ChallengeType.Daily, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Challenge>());
+        _repositoryMock.Setup(r => r.GetChallengeTemplatesAsync(ChallengeType.Daily, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ChallengeTemplate> { template });
+        _repositoryMock.Setup(r => r.AddChallengeAsync(It.IsAny<Challenge>(), It.IsAny<CancellationToken>()))
+            .Callback<Challenge, CancellationToken>((c, _) => createdChallenge = c)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _job.ExecuteRotationAsync(CancellationToken.None);
+
+        // Assert
+        createdChallenge.Should().NotBeNull();
+        createdChallenge!.GoalType.Should().BeNull();
+    }
+
+    [Theory]
+    [InlineData(ChallengeGoalType.ScoreTotal)]
+    [InlineData(ChallengeGoalType.ScoreSingleGame)]
+    [InlineData(ChallengeGoalType.WinStreak)]
+    [InlineData(ChallengeGoalType.Accuracy)]
+    [InlineData(ChallengeGoalType.TimeBased)]
+    public async Task ExecuteAsync_CopiesAllGoalTypesCorrectly(ChallengeGoalType goalType)
+    {
+        // Arrange
+        var template = CreateTemplate(1, "Parameterized Test", ChallengeType.Daily, 5, 50, goalType);
+        Challenge? createdChallenge = null;
+
+        _repositoryMock.Setup(r => r.GetActiveChallengesAsync(ChallengeType.Daily, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<Challenge>());
+        _repositoryMock.Setup(r => r.GetChallengeTemplatesAsync(ChallengeType.Daily, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new List<ChallengeTemplate> { template });
+        _repositoryMock.Setup(r => r.AddChallengeAsync(It.IsAny<Challenge>(), It.IsAny<CancellationToken>()))
+            .Callback<Challenge, CancellationToken>((c, _) => createdChallenge = c)
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _job.ExecuteRotationAsync(CancellationToken.None);
+
+        // Assert
+        createdChallenge.Should().NotBeNull();
+        createdChallenge!.GoalType.Should().Be(goalType);
+    }
+
     #region Helper Methods
 
     private static Challenge CreateChallenge(int id, string name, ChallengeType type,
-        DateTime startDate, DateTime endDate, bool isActive = true)
+        DateTime startDate, DateTime endDate, bool isActive = true, ChallengeGoalType? goalType = null)
     {
-        var challenge = Challenge.Create(name, $"{name} description", type, 10, 50, startDate, endDate);
+        var challenge = Challenge.Create(name, $"{name} description", type, 10, 50, startDate, endDate, goalType: goalType);
         SetProperty(challenge, "Id", id);
         if (!isActive)
         {
@@ -196,9 +270,9 @@ public class DailyChallengeRotationJobTests
     }
 
     private static ChallengeTemplate CreateTemplate(int id, string name, ChallengeType type,
-        int targetValue, int xpReward)
+        int targetValue, int xpReward, ChallengeGoalType? goalType = null)
     {
-        var template = ChallengeTemplate.Create(name, $"{name} description", type, targetValue, xpReward);
+        var template = ChallengeTemplate.Create(name, $"{name} description", type, targetValue, xpReward, goalType);
         SetProperty(template, "Id", id);
         return template;
     }

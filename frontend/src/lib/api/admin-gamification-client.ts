@@ -270,6 +270,7 @@ export interface ActivateChallengeResponse {
   templateId: number;
   name: string;
   type: string;
+  goalType: string | null;
   startDate: string;
   endDate: string;
   message: string;
