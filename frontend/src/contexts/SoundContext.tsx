@@ -27,6 +27,7 @@ interface SoundContextValue {
 const SoundContext = createContext<SoundContextValue | null>(null);
 
 const SOUND_MUTE_KEY = 'perfectfit-sound-muted';
+const USER_INTERACTED_KEY = 'perfectfit-user-interacted';
 
 /**
  * Create an oscillator-based sound effect using Web Audio API
@@ -145,33 +146,44 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const audioContextRef = useRef<AudioContext | null>(null);
 
-  // Load mute preference from localStorage
+  // Load mute preference and interaction state from localStorage
   useEffect(() => {
-    const stored = localStorage.getItem(SOUND_MUTE_KEY);
+    const storedMuted = localStorage.getItem(SOUND_MUTE_KEY);
+    const storedInteracted = localStorage.getItem(USER_INTERACTED_KEY);
     // Default to unmuted if no preference stored
-    setIsMuted(stored === 'true');
+    setIsMuted(storedMuted === 'true');
+    // Restore interaction state (user has interacted before in this session/browser)
+    if (storedInteracted === 'true') {
+      setHasUserInteracted(true);
+    }
   }, []);
 
-  // Track user interaction for autoplay policy
+  // Track user interaction for autoplay policy - keep listening, don't use { once: true }
   useEffect(() => {
     const handleInteraction = () => {
-      setHasUserInteracted(true);
-      // Resume audio context if it was suspended
+      if (!hasUserInteracted) {
+        setHasUserInteracted(true);
+        localStorage.setItem(USER_INTERACTED_KEY, 'true');
+      }
+      // Always try to resume audio context on interaction
       if (audioContextRef.current?.state === 'suspended') {
-        audioContextRef.current.resume();
+        audioContextRef.current.resume().catch(() => {
+          // Ignore resume errors
+        });
       }
     };
 
-    window.addEventListener('click', handleInteraction, { once: true });
-    window.addEventListener('touchstart', handleInteraction, { once: true });
-    window.addEventListener('keydown', handleInteraction, { once: true });
+    // Listen continuously to handle cases where AudioContext gets suspended
+    window.addEventListener('click', handleInteraction);
+    window.addEventListener('touchstart', handleInteraction);
+    window.addEventListener('keydown', handleInteraction);
 
     return () => {
       window.removeEventListener('click', handleInteraction);
       window.removeEventListener('touchstart', handleInteraction);
       window.removeEventListener('keydown', handleInteraction);
     };
-  }, []);
+  }, [hasUserInteracted]);
 
   type ExtendedAudioWindow = Window & typeof globalThis & {
     AudioContext: typeof AudioContext;
@@ -206,58 +218,82 @@ export function SoundProvider({ children }: { children: ReactNode }) {
 
   const markUserInteraction = useCallback(() => {
     setHasUserInteracted(true);
+    localStorage.setItem(USER_INTERACTED_KEY, 'true');
     if (audioContextRef.current?.state === 'suspended') {
-      audioContextRef.current.resume();
+      audioContextRef.current.resume().catch(() => {
+        // Ignore resume errors
+      });
     }
   }, []);
 
   const playSound = useCallback((type: SoundType) => {
-    if (isMuted || !hasUserInteracted) return;
+    if (isMuted) return;
     
     try {
       const ctx = getAudioContext();
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
       
-      switch (type) {
-        case 'place':
-          soundEffects.place(ctx);
-          break;
-        case 'lineClear':
-          soundEffects.lineClear(ctx);
-          break;
-        case 'combo':
-          soundEffects.combo(ctx, 1);
-          break;
-        case 'gameOver':
-          soundEffects.gameOver(ctx);
-          break;
-        case 'perfectClear':
-          soundEffects.perfectClear(ctx);
-          break;
-        case 'highScore':
-          soundEffects.highScore(ctx);
-          break;
+      // Ensure audio context is running before playing
+      const attemptPlay = () => {
+        switch (type) {
+          case 'place':
+            soundEffects.place(ctx);
+            break;
+          case 'lineClear':
+            soundEffects.lineClear(ctx);
+            break;
+          case 'combo':
+            soundEffects.combo(ctx, 1);
+            break;
+          case 'gameOver':
+            soundEffects.gameOver(ctx);
+            break;
+          case 'perfectClear':
+            soundEffects.perfectClear(ctx);
+            break;
+          case 'highScore':
+            soundEffects.highScore(ctx);
+            break;
+        }
+      };
+      
+      if (ctx.state === 'suspended') {
+        // Resume and then play
+        ctx.resume().then(() => {
+          attemptPlay();
+        }).catch(() => {
+          // Ignore errors - browser may block audio
+        });
+      } else {
+        attemptPlay();
       }
     } catch (error) {
       console.warn('Failed to play sound:', error);
     }
-  }, [isMuted, hasUserInteracted, getAudioContext]);
+  }, [isMuted, getAudioContext]);
 
   const playComboSound = useCallback((comboCount: number) => {
-    if (isMuted || !hasUserInteracted) return;
+    if (isMuted) return;
     
     try {
       const ctx = getAudioContext();
+      
+      const attemptPlay = () => {
+        soundEffects.combo(ctx, comboCount);
+      };
+      
       if (ctx.state === 'suspended') {
-        ctx.resume();
+        ctx.resume().then(() => {
+          attemptPlay();
+        }).catch(() => {
+          // Ignore errors
+        });
+      } else {
+        attemptPlay();
       }
-      soundEffects.combo(ctx, comboCount);
     } catch (error) {
       console.warn('Failed to play combo sound:', error);
     }
-  }, [isMuted, hasUserInteracted, getAudioContext]);
+  }, [isMuted, getAudioContext]);
 
   const value = useMemo(() => ({
     isMuted,
