@@ -95,7 +95,6 @@ function GameOverModalComponent({
   // Gamification helpers
   const hasAchievements = gamification?.newAchievements && gamification.newAchievements.length > 0;
   const hasChallengeProgress = gamification?.challengeUpdates && gamification.challengeUpdates.length > 0;
-  const hasGoalProgress = gamification?.goalUpdates && gamification.goalUpdates.some(g => g.justCompleted);
   const streak = gamification?.streak;
   const seasonProgress = gamification?.seasonProgress;
 

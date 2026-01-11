@@ -365,6 +365,15 @@ export const useGameStore = create<GameStore>((set, get) => ({
       // Process gamification data if returned
       if (response.gamification) {
         useGamificationStore.getState().processGameEndGamification(response.gamification);
+
+        const authState = useAuthStore.getState();
+        if (authState.user) {
+          authState.setUser({
+            ...authState.user,
+            gamesPlayed: response.gamification.gamesPlayed,
+            highScore: response.gamification.highScore,
+          });
+        }
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to end game';

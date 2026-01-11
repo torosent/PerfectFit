@@ -536,6 +536,45 @@ describe('Gamification Store', () => {
       expect(useGamificationStore.getState().status?.streak).toEqual(updatedStreak);
     });
 
+    it('creates status when missing using game end result', () => {
+      act(() => {
+        useGamificationStore.setState({
+          status: null,
+          challenges: [],
+          achievements: [],
+          seasonPass: null,
+          equippedCosmetics: null,
+          personalGoals: [],
+        });
+      });
+
+      const gameEndResult: GameEndGamification = {
+        streak: createMockStreakInfo({ currentStreak: 3, longestStreak: 4, freezeTokens: 0 }),
+        challengeUpdates: [],
+        newAchievements: [],
+        seasonProgress: {
+          xpEarned: 50,
+          totalXP: 150,
+          newTier: 1,
+          tierUp: false,
+          newRewardsCount: 0,
+        },
+        goalUpdates: [],
+        gamesPlayed: 2,
+        highScore: 1234,
+      } as any;
+
+      act(() => {
+        useGamificationStore.getState().processGameEndGamification(gameEndResult);
+      });
+
+      const status = useGamificationStore.getState().status;
+      expect(status).not.toBeNull();
+      expect(status?.streak.currentStreak).toBe(3);
+      expect(status?.streak.longestStreak).toBe(4);
+      expect(status?.equippedCosmetics).not.toBeNull();
+    });
+
     it('updates challenge progress from challengeUpdates', () => {
       // Set up initial challenges
       const initialChallenges: Challenge[] = [

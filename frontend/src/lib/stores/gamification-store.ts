@@ -94,6 +94,12 @@ const initialState: GamificationState = {
   showAchievementModal: false,
 };
 
+const fallbackEquipped: EquippedCosmetics = {
+  boardTheme: null,
+  avatarFrame: null,
+  badge: null,
+};
+
 /**
  * Get authentication token from auth store
  */
@@ -328,20 +334,41 @@ export const useGamificationStore = create<GamificationStore>()(
        * Updates state and queues achievements for display
        */
       processGameEndGamification: (result: GameEndGamification) => {
+        const authState = useAuthStore.getState();
+        if (authState.user) {
+          authState.setUser({
+            ...authState.user,
+            gamesPlayed: result.gamesPlayed,
+            highScore: result.highScore,
+          });
+        }
+
         set((state) => {
+          const defaultStatus = state.status ?? {
+            streak: result.streak,
+            activeChallenges: state.challenges,
+            recentAchievements: state.achievements,
+            seasonPass: state.seasonPass,
+            equippedCosmetics: state.equippedCosmetics ?? fallbackEquipped,
+            activeGoals: state.personalGoals,
+          };
+
+          const mergedStreak = defaultStatus.streak
+            ? {
+                ...defaultStatus.streak,
+                currentStreak: result.streak.currentStreak,
+                longestStreak: result.streak.longestStreak,
+                freezeTokens: result.streak.freezeTokens ?? defaultStatus.streak.freezeTokens,
+                isAtRisk: result.streak.isAtRisk ?? defaultStatus.streak.isAtRisk,
+                resetTime: result.streak.resetTime ?? defaultStatus.streak.resetTime,
+              }
+            : result.streak;
+
           // Update streak - merge to preserve fields that may be null from API
-          const newStatus = state.status ? {
-            ...state.status,
-            streak: state.status.streak ? {
-              ...state.status.streak,
-              currentStreak: result.streak.currentStreak,
-              longestStreak: result.streak.longestStreak,
-              // Preserve existing values if result has nullish values
-              freezeTokens: result.streak.freezeTokens ?? state.status.streak.freezeTokens,
-              isAtRisk: result.streak.isAtRisk ?? state.status.streak.isAtRisk,
-              resetTime: result.streak.resetTime ?? state.status.streak.resetTime,
-            } : result.streak,
-          } : null;
+          const newStatus = {
+            ...defaultStatus,
+            streak: mergedStreak,
+          };
 
           // Update challenges with progress
           const updatedChallenges = state.challenges.map(challenge => {
