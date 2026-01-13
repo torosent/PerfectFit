@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.1" />
     <ProjectReference Include="..\PerfectFit.Core\PerfectFit.Core.csproj" />
   </ItemGroup>
 
