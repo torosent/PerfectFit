@@ -4,12 +4,25 @@
  * Hook for accessing streak data and using streak freeze tokens.
  */
 
+import { useEffect } from 'react';
 import { useGamificationStore } from '@/lib/stores/gamification-store';
+import { useIsAuthenticated, useIsAuthInitialized } from '@/lib/stores/auth-store';
 
 export function useStreaks() {
   const streak = useGamificationStore((s) => s.status?.streak);
   const useFreeze = useGamificationStore((s) => s.useStreakFreeze);
   const isLoading = useGamificationStore((s) => s.isLoading);
+  const fetchGamificationStatus = useGamificationStore((s) => s.fetchGamificationStatus);
+  const isAuthenticated = useIsAuthenticated();
+  const isAuthInitialized = useIsAuthInitialized();
+
+  useEffect(() => {
+    if (!isAuthInitialized || !isAuthenticated) {
+      return;
+    }
+
+    fetchGamificationStatus();
+  }, [isAuthInitialized, isAuthenticated, fetchGamificationStatus]);
 
   return {
     currentStreak: streak?.currentStreak ?? 0,

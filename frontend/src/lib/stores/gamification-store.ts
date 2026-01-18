@@ -344,6 +344,9 @@ export const useGamificationStore = create<GamificationStore>()(
         }
 
         set((state) => {
+          const newAchievementIds = new Set(result.newAchievements.map((a) => a.achievementId));
+          const unlockedAt = new Date().toISOString();
+
           const defaultStatus = state.status ?? {
             streak: result.streak,
             activeChallenges: state.challenges,
@@ -364,15 +367,13 @@ export const useGamificationStore = create<GamificationStore>()(
               }
             : result.streak;
 
-          // Update streak - merge to preserve fields that may be null from API
-          const newStatus = {
-            ...defaultStatus,
-            streak: mergedStreak,
-          };
-
           // Update challenges with progress
-          const updatedChallenges = state.challenges.map(challenge => {
-            const update = result.challengeUpdates.find(u => u.challengeId === challenge.id);
+          const baseChallenges = state.challenges.length > 0
+            ? state.challenges
+            : defaultStatus.activeChallenges;
+
+          const updatedChallenges = baseChallenges.map((challenge) => {
+            const update = result.challengeUpdates.find((u) => u.challengeId === challenge.id);
             if (update) {
               return {
                 ...challenge,
@@ -383,6 +384,26 @@ export const useGamificationStore = create<GamificationStore>()(
             return challenge;
           });
 
+          // Update achievements with unlocks
+          const updatedAchievements = state.achievements.map((achievement) =>
+            newAchievementIds.has(achievement.id)
+              ? {
+                  ...achievement,
+                  isUnlocked: true,
+                  progress: 100,
+                  unlockedAt: achievement.unlockedAt ?? unlockedAt,
+                }
+              : achievement
+          );
+
+          const newlyUnlockedAchievements = updatedAchievements.filter((a) => newAchievementIds.has(a.id));
+          const recentAchievements = newlyUnlockedAchievements.length > 0
+            ? [
+                ...newlyUnlockedAchievements,
+                ...defaultStatus.recentAchievements.filter((a) => !newAchievementIds.has(a.id)),
+              ]
+            : defaultStatus.recentAchievements;
+
           // Update season pass XP
           const updatedSeasonPass = state.seasonPass ? {
             ...state.seasonPass,
@@ -391,8 +412,12 @@ export const useGamificationStore = create<GamificationStore>()(
           } : null;
 
           // Update personal goals
-          const updatedGoals = state.personalGoals.map(goal => {
-            const update = result.goalUpdates.find(u => u.goalId === goal.id);
+          const baseGoals = state.personalGoals.length > 0
+            ? state.personalGoals
+            : defaultStatus.activeGoals;
+
+          const updatedGoals = baseGoals.map((goal) => {
+            const update = result.goalUpdates.find((u) => u.goalId === goal.id);
             if (update) {
               return {
                 ...goal,
@@ -403,9 +428,20 @@ export const useGamificationStore = create<GamificationStore>()(
             return goal;
           });
 
+          // Update status - merge to preserve fields that may be null from API
+          const newStatus = {
+            ...defaultStatus,
+            streak: mergedStreak,
+            activeChallenges: updatedChallenges,
+            recentAchievements,
+            seasonPass: updatedSeasonPass ?? defaultStatus.seasonPass,
+            activeGoals: updatedGoals,
+          };
+
           return {
             status: newStatus,
             challenges: updatedChallenges,
+            achievements: updatedAchievements,
             seasonPass: updatedSeasonPass,
             personalGoals: updatedGoals,
             newAchievements: [...state.newAchievements, ...result.newAchievements],
