@@ -14,7 +14,7 @@ import {
   useIsNewHighScore,
   useLastGamification,
 } from '@/lib/stores/game-store';
-import { useIsAuthenticated } from '@/lib/stores/auth-store';
+import { useIsAuthenticated, useIsAuthInitialized } from '@/lib/stores/auth-store';
 import { canPlacePiece, getPieceCells } from '@/lib/game-logic/pieces';
 import { DroppableBoard, type HighlightedCell } from '@/components/game/DroppableBoard';
 import { PieceSelector } from '@/components/game/PieceSelector';
@@ -114,6 +114,7 @@ export default function PlayPage() {
   const lastLinesCleared = useLastLinesCleared();
   const isNewHighScore = useIsNewHighScore();
   const lastGamification = useLastGamification();
+  const isAuthInitialized = useIsAuthInitialized();
 
   const [hoveredCell, setHoveredCell] = useState<{ row: number; col: number } | null>(null);
   
@@ -141,10 +142,14 @@ export default function PlayPage() {
   // Sound effects
   const sounds = useSoundEffects();
 
-  // Start a new game on mount
+  // Start a new game after auth initialization
   useEffect(() => {
+    if (!isAuthInitialized) {
+      return;
+    }
+
     startNewGame();
-  }, [startNewGame]);
+  }, [isAuthInitialized, startNewGame]);
 
   // Handle sound effects and confetti for line clears
   useEffect(() => {

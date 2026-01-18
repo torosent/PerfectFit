@@ -59,6 +59,20 @@ public class GameSession
         };
     }
 
+    /// <summary>
+    /// Assigns a user to this game session if it was created without one.
+    /// </summary>
+    /// <param name="userId">The user ID to assign.</param>
+    public void AssignUser(int userId)
+    {
+        if (UserId.HasValue && UserId.Value != userId)
+        {
+            throw new InvalidOperationException("Game session already belongs to a different user.");
+        }
+
+        UserId = userId;
+    }
+
     public void UpdateBoard(string boardState, string currentPieces, string pieceBagState)
     {
         EnsureGameIsActive();

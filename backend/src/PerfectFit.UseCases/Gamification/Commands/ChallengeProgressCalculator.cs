@@ -64,8 +64,8 @@ public static class ChallengeProgressCalculator
         // Must check BEFORE "points" since these also contain "points"
         if (descLower.Contains("single game") || descLower.Contains("in a game") || descLower.Contains("in one"))
         {
-            // Progress is whether the threshold was met (1 = met, 0 = not met)
-            return gameSession.Score >= challenge.TargetValue ? 1 : 0;
+            // Progress is whether the threshold was met (complete challenge if met)
+            return gameSession.Score >= challenge.TargetValue ? challenge.TargetValue : 0;
         }
 
         // Streak challenges: "X in a row", "consecutive"

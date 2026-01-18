@@ -51,6 +51,12 @@ public class EndGameCommandHandler : IRequestHandler<EndGameCommand, EndGameResu
             return new EndGameResult(Found: false, Response: null);
         }
 
+        // Attach user if session was created without one (e.g., auth initialized after game start)
+        if (request.UserId.HasValue && !session.UserId.HasValue)
+        {
+            session.AssignUser(request.UserId.Value);
+        }
+
         // End the game (idempotent - won't throw if already ended)
         session.EndGame();
         await _gameSessionRepository.UpdateAsync(session, cancellationToken);
