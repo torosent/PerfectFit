@@ -19,7 +19,7 @@ jest.mock('@/lib/api/profile-client', () => ({
 
 // Mock the auth store
 const mockUser = {
-  id: 'user-123',
+  id: 123,
   displayName: 'testuser',
   email: 'test@example.com',
   provider: 'google' as const,

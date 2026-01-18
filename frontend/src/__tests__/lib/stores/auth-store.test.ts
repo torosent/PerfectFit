@@ -54,7 +54,7 @@ describe('Auth Store - Local Auth Methods', () => {
   describe('localLogin', () => {
     it('calls API and stores token on success', async () => {
       const mockUser = {
-        id: 'user-123',
+        id: 123,
         displayName: 'Test User',
         email: 'test@example.com',
         provider: 'local' as const,
@@ -133,7 +133,7 @@ describe('Auth Store - Local Auth Methods', () => {
         success: true,
         token: 'token',
         user: {
-          id: 'user-123',
+          id: 123,
           displayName: 'Test User',
           email: 'test@example.com',
           provider: 'local',

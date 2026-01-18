@@ -60,7 +60,7 @@ export interface PlacePieceResponse {
 
 export interface LeaderboardEntry {
   rank: number;
-  userId?: string;
+  userId?: number;
   displayName: string;
   score: number;
   achievedAt: string;
@@ -70,7 +70,7 @@ export interface LeaderboardEntry {
 }
 
 export interface UserProfile {
-  id: string;
+  id: number;
   displayName: string;
   email?: string;
   provider: 'google' | 'facebook' | 'microsoft' | 'guest' | 'local';

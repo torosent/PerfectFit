@@ -198,7 +198,7 @@ function LeaderboardTableComponent({
           ) : (
             processedEntries.map((entry, index) => (
               <motion.tr
-                key={`${entry.userId}-${entry.rank}`}
+                key={`${entry.userId ?? entry.displayName}-${entry.rank}`}
                 custom={index}
                 variants={rowVariants}
                 initial="hidden"

@@ -24,7 +24,6 @@ jest.mock('motion/react', () => {
 describe('PersonalGoalPrompt', () => {
   const mockGoal: PersonalGoal = {
     id: 1,
-    userId: 'user-123',
     type: 'BeatAverage',
     targetValue: 100,
     currentValue: 50,

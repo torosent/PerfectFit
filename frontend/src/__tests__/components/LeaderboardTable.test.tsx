@@ -13,7 +13,7 @@ describe('LeaderboardTable Avatar Display', () => {
   const mockEntries: LeaderboardEntry[] = [
     {
       rank: 1,
-      userId: 'user-1',
+      userId: 1,
       displayName: 'Player One',
       score: 10000,
       linesCleared: 50,
@@ -23,7 +23,7 @@ describe('LeaderboardTable Avatar Display', () => {
     },
     {
       rank: 2,
-      userId: 'user-2',
+      userId: 2,
       displayName: 'Player Two',
       score: 9000,
       linesCleared: 45,
@@ -33,7 +33,7 @@ describe('LeaderboardTable Avatar Display', () => {
     },
     {
       rank: 3,
-      userId: 'user-3',
+      userId: 3,
       displayName: 'Player Three',
       score: 8000,
       linesCleared: 40,
@@ -75,7 +75,7 @@ describe('LeaderboardTable Avatar Display', () => {
       const entriesWithSingleName: LeaderboardEntry[] = [
         {
           rank: 1,
-          userId: 'user-1',
+          userId: 1,
           displayName: 'Anonymous',
           score: 10000,
           linesCleared: 50,

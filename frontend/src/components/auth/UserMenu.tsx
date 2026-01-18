@@ -18,7 +18,7 @@ function getInitials(displayName: string): string {
 /**
  * Get background color based on user id (consistent per user)
  */
-function getAvatarColor(userId: string): string {
+function getAvatarColor(userId: string | number): string {
   const colors = [
     'bg-teal-500',
     'bg-cyan-500',
@@ -32,8 +32,9 @@ function getAvatarColor(userId: string): string {
   
   // Simple hash based on user id
   let hash = 0;
-  for (let i = 0; i < userId.length; i++) {
-    hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+  const idString = String(userId);
+  for (let i = 0; i < idString.length; i++) {
+    hash = ((hash << 5) - hash) + idString.charCodeAt(i);
     hash = hash & hash;
   }
   

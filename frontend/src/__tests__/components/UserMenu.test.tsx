@@ -22,7 +22,7 @@ jest.mock('@/components/profile', () => ({
 }));
 
 const mockUser: UserProfile = {
-  id: 'user-123',
+  id: 123,
   displayName: 'John Doe',
   email: 'john@example.com',
   provider: 'google',

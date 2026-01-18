@@ -27,7 +27,7 @@ describe('Game Store - endCurrentGame', () => {
     act(() => {
       useAuthStore.setState({
         user: {
-          id: 'user-1',
+          id: 1,
           displayName: 'Test User',
           provider: 'local',
           highScore: 100,

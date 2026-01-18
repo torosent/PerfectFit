@@ -19,7 +19,7 @@ export class LeaderboardError extends Error {
  */
 export interface LeaderboardEntry {
   rank: number;
-  userId: string;
+  userId?: number;
   displayName: string;
   score: number;
   linesCleared: number;
