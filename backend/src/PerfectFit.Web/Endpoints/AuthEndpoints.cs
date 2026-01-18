@@ -2,6 +2,8 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.MicrosoftAccount;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using PerfectFit.Core.Enums;
 using PerfectFit.Core.Interfaces;
 using PerfectFit.Infrastructure.Identity;
@@ -46,6 +48,7 @@ public static class AuthEndpoints
 
         // POST /api/auth/guest - Create guest session
         group.MapPost("/guest", CreateGuestSession)
+            .RequireRateLimiting("GuestRateLimit")
             .WithName("CreateGuestSession")
             .WithDescription("Creates a guest user session");
 
@@ -83,6 +86,8 @@ public static class AuthEndpoints
     private static IResult InitiateOAuth(
         string provider,
         HttpContext httpContext,
+        IConfiguration configuration,
+        string? redirect = null,
         string? returnUrl = null)
     {
         var authProvider = ParseProvider(provider);
@@ -102,7 +107,8 @@ public static class AuthEndpoints
 
         // Set the return URL (frontend callback URL)
         var callbackUrl = $"/api/auth/callback/{provider.ToLowerInvariant()}";
-        var frontendReturnUrl = returnUrl ?? httpContext.Request.Headers["Referer"].ToString() ?? "http://localhost:3000";
+        var requestedRedirectUrl = redirect ?? returnUrl;
+        var frontendReturnUrl = ResolveRedirectUrl(requestedRedirectUrl, configuration);
 
         var properties = new AuthenticationProperties
         {
@@ -114,7 +120,7 @@ public static class AuthEndpoints
             }
         };
 
-        return Results.Challenge(properties, [scheme]);
+        return Results.Challenge(properties, new[] { scheme });
     }
 
     private static async Task<IResult> HandleOAuthCallback(
@@ -162,20 +168,41 @@ public static class AuthEndpoints
 
         var result = await mediator.Send(command);
 
-        // Get the frontend base URL from authentication properties or default
-        var frontendBaseUrl = authenticateResult.Properties?.Items["returnUrl"]?.TrimEnd('/') ?? "https://localhost:3000";
-        
-        // Always redirect to the frontend callback page with the token
-        var redirectUrl = $"{frontendBaseUrl}/callback?token={result.Token}";
+        var frontendReturnUrl = authenticateResult.Properties?.Items["returnUrl"]
+            ?? ResolveRedirectUrl(null, httpContext.RequestServices.GetRequiredService<IConfiguration>());
+
+        var redirectUrl = BuildCallbackRedirectUrl(frontendReturnUrl, result.Token);
 
         return Results.Redirect(redirectUrl);
     }
 
     private static async Task<IResult> RefreshToken(
-        RefreshTokenRequestDto request,
+        RefreshTokenRequestDto? request,
+        HttpContext httpContext,
         IMediator mediator)
     {
-        var command = new RefreshTokenCommand(request.Token);
+        var token = request?.Token;
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            var authorization = httpContext.Request.Headers["Authorization"].ToString();
+            if (!string.IsNullOrWhiteSpace(authorization) && authorization.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
+            {
+                token = authorization.Substring("Bearer ".Length).Trim();
+            }
+        }
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            token = httpContext.Request.Cookies["pf_auth"];
+        }
+
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return Results.BadRequest(new { error = "Refresh token is required." });
+        }
+
+        var command = new RefreshTokenCommand(token);
         var result = await mediator.Send(command);
 
         if (result is null)
@@ -325,6 +352,49 @@ public static class AuthEndpoints
             "guest" => AuthProvider.Guest,
             _ => null
         };
+    }
+
+    private static string ResolveRedirectUrl(string? requestedRedirectUrl, IConfiguration configuration)
+    {
+        var allowedOrigins = configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? Array.Empty<string>();
+        var defaultFrontendUrl = configuration["Email:FrontendUrl"] ?? allowedOrigins.FirstOrDefault() ?? "http://localhost:3000";
+        var defaultCallbackUrl = defaultFrontendUrl.TrimEnd('/') + "/callback";
+
+        if (string.IsNullOrWhiteSpace(requestedRedirectUrl))
+        {
+            return defaultCallbackUrl;
+        }
+
+        if (!Uri.TryCreate(requestedRedirectUrl, UriKind.Absolute, out var redirectUri))
+        {
+            return defaultCallbackUrl;
+        }
+
+        var redirectOrigin = GetOrigin(redirectUri);
+        var isAllowed = allowedOrigins.Any(origin => string.Equals(origin.TrimEnd('/'), redirectOrigin, StringComparison.OrdinalIgnoreCase));
+
+        return isAllowed ? redirectUri.ToString() : defaultCallbackUrl;
+    }
+
+    private static string BuildCallbackRedirectUrl(string callbackUrl, string token)
+    {
+        if (!Uri.TryCreate(callbackUrl, UriKind.Absolute, out var callbackUri))
+        {
+            return callbackUrl;
+        }
+
+        var builder = new UriBuilder(callbackUri)
+        {
+            Fragment = "token=" + Uri.EscapeDataString(token)
+        };
+
+        return builder.Uri.ToString();
+    }
+
+    private static string GetOrigin(Uri uri)
+    {
+        var port = uri.IsDefaultPort ? string.Empty : ":" + uri.Port;
+        return uri.Scheme + "://" + uri.Host + port;
     }
 
     private static async Task<IResult> Register(

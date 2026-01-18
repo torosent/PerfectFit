@@ -50,7 +50,10 @@ public static class LeaderboardEndpoints
         int? count = null,
         CancellationToken cancellationToken = default)
     {
-        var query = new GetTopScoresQuery(count ?? 100);
+        var limit = count ?? 100;
+        limit = Math.Clamp(limit, 1, 100);
+
+        var query = new GetTopScoresQuery(limit);
         var results = await mediator.Send(query, cancellationToken);
 
         var dtos = results.Select(r => new LeaderboardEntryDto(

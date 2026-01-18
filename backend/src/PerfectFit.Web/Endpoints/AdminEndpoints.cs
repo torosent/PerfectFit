@@ -78,6 +78,9 @@ public static class AdminEndpoints
             return Results.Unauthorized();
         }
 
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
+
         // Get paginated users
         var users = await userRepository.GetAllAsync(page, pageSize, cancellationToken);
         var totalCount = await userRepository.GetCountAsync(cancellationToken);
@@ -216,6 +219,9 @@ public static class AdminEndpoints
         {
             return Results.Unauthorized();
         }
+
+        page = Math.Max(1, page);
+        pageSize = Math.Clamp(pageSize, 1, 100);
 
         var logs = await auditRepository.GetAllAsync(page, pageSize, cancellationToken);
         var totalCount = await auditRepository.GetCountAsync(cancellationToken);

@@ -71,10 +71,16 @@ public class JwtService : IJwtService
 
     public ClaimsPrincipal? ValidateToken(string token)
     {
+        return ValidateToken(token, true);
+    }
+
+    public ClaimsPrincipal? ValidateToken(string token, bool validateLifetime)
+    {
         try
         {
             var tokenHandler = new JwtSecurityTokenHandler();
-            var principal = tokenHandler.ValidateToken(token, _validationParameters, out var validatedToken);
+            var validationParameters = GetValidationParameters(validateLifetime);
+            var principal = tokenHandler.ValidateToken(token, validationParameters, out var validatedToken);
 
             if (validatedToken is JwtSecurityToken jwtToken &&
                 jwtToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
@@ -88,5 +94,20 @@ public class JwtService : IJwtService
         {
             return null;
         }
+    }
+
+    private TokenValidationParameters GetValidationParameters(bool validateLifetime)
+    {
+        return new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = _validationParameters.ValidateIssuerSigningKey,
+            IssuerSigningKey = _validationParameters.IssuerSigningKey,
+            ValidateIssuer = _validationParameters.ValidateIssuer,
+            ValidIssuer = _validationParameters.ValidIssuer,
+            ValidateAudience = _validationParameters.ValidateAudience,
+            ValidAudience = _validationParameters.ValidAudience,
+            ValidateLifetime = validateLifetime,
+            ClockSkew = _validationParameters.ClockSkew
+        };
     }
 }

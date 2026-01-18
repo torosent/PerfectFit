@@ -66,6 +66,10 @@ builder.Services.AddMediatR(cfg =>
 
 // Configure JWT Authentication
 var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName).Get<JwtSettings>()!;
+if (string.IsNullOrWhiteSpace(jwtSettings.Secret) || jwtSettings.Secret.Length < 32)
+{
+    throw new InvalidOperationException("Jwt:Secret must be configured with at least 32 characters.");
+}
 var key = Encoding.UTF8.GetBytes(jwtSettings.Secret);
 
 var authBuilder = builder.Services.AddAuthentication(options =>
@@ -214,6 +218,18 @@ builder.Services.AddRateLimiter(options =>
                 QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
                 QueueLimit = 0
             }));
+
+    // Rate limiting for guest session creation: 10 requests per minute per IP
+    options.AddPolicy("GuestRateLimit", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.Connection.RemoteIpAddress?.ToString() ?? "anonymous",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 10,
+                Window = TimeSpan.FromMinutes(1),
+                QueueProcessingOrder = QueueProcessingOrder.OldestFirst,
+                QueueLimit = 0
+            }));
 });
 
 var app = builder.Build();
@@ -223,9 +239,13 @@ var forwardedHeadersOptions = new ForwardedHeadersOptions
 {
     ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
 };
-// Clear known networks/proxies to trust headers from any proxy (required for Cloudflare)
-forwardedHeadersOptions.KnownIPNetworks.Clear();
-forwardedHeadersOptions.KnownProxies.Clear();
+var trustAllProxies = builder.Configuration.GetValue<bool>("ForwardedHeaders:TrustAllProxies");
+if (trustAllProxies)
+{
+    // Clear known networks/proxies to trust headers from any proxy
+    forwardedHeadersOptions.KnownIPNetworks.Clear();
+    forwardedHeadersOptions.KnownProxies.Clear();
+}
 app.UseForwardedHeaders(forwardedHeadersOptions);
 
 // Configure the HTTP request pipeline.

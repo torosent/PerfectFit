@@ -31,7 +31,7 @@ public class RefreshTokenCommandHandler : IRequestHandler<RefreshTokenCommand, R
     public async Task<RefreshTokenResult?> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
         // Validate the existing token (even if expired, we want to check the signature)
-        var principal = _jwtService.ValidateToken(request.Token);
+        var principal = _jwtService.ValidateToken(request.Token, false);
 
         if (principal is null)
         {

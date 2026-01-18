@@ -248,7 +248,7 @@ export const useAuthStore = create<AuthStore>()(
     }),
     {
       name: 'perfectfit-auth',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => sessionStorage),
       // Only persist these fields
       partialize: (state) => ({
         token: state.token,

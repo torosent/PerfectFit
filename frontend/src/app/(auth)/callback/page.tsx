@@ -20,7 +20,14 @@ function CallbackContent() {
   useEffect(() => {
     async function handleCallback() {
       // Get token from URL
-      const token = searchParams.get('token');
+      let token = searchParams.get('token');
+      if (!token && typeof window !== 'undefined') {
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ''));
+        token = hashParams.get('token');
+        if (token) {
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
+        }
+      }
       const error = searchParams.get('error');
       const errorDescription = searchParams.get('error_description');
 

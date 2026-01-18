@@ -17,4 +17,9 @@ public interface IJwtService
     /// Validates a JWT token and returns the claims principal if valid.
     /// </summary>
     ClaimsPrincipal? ValidateToken(string token);
+
+    /// <summary>
+    /// Validates a JWT token and returns the claims principal if valid.
+    /// </summary>
+    ClaimsPrincipal? ValidateToken(string token, bool validateLifetime);
 }

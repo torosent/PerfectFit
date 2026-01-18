@@ -92,9 +92,10 @@ export async function refreshToken(token: string): Promise<{ token: string }> {
   const response = await fetch(`${API_BASE_URL}/api/auth/refresh`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
+      Authorization: `Bearer ${token}`,
     },
+    body: JSON.stringify({ token }),
   });
 
   if (!response.ok) {
@@ -187,7 +188,7 @@ export async function register(
   if (!response.ok) {
     return {
       success: false,
-      error: data.error || data.message || 'Registration failed',
+      error: data.errorMessage || data.error || data.message || 'Registration failed',
     };
   }
 
@@ -220,7 +221,7 @@ export async function login(
   if (!response.ok) {
     return {
       success: false,
-      error: data.error || data.message || 'Login failed',
+      error: data.errorMessage || data.error || data.message || 'Login failed',
       lockoutEnd: data.lockoutEnd,
     };
   }
@@ -255,7 +256,7 @@ export async function verifyEmail(
   if (!response.ok) {
     return {
       success: false,
-      error: data.error || data.message || 'Email verification failed',
+      error: data.errorMessage || data.error || data.message || 'Email verification failed',
     };
   }
 
