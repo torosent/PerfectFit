@@ -23,7 +23,7 @@ public static class ChallengeProgressCalculator
             return challenge.GoalType.Value switch
             {
                 ChallengeGoalType.ScoreTotal => gameSession.Score,
-                ChallengeGoalType.ScoreSingleGame => gameSession.Score >= challenge.TargetValue ? 1 : 0,
+                ChallengeGoalType.ScoreSingleGame => gameSession.Score >= challenge.TargetValue ? challenge.TargetValue : 0,
                 ChallengeGoalType.GameCount => 1,
                 ChallengeGoalType.WinStreak => 1, // Streak tracking handled elsewhere
                 ChallengeGoalType.Accuracy => 1, // Accuracy tracking handled elsewhere

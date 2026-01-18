@@ -19,6 +19,12 @@ public class ProcessGameEndGamificationCommandHandler : IRequestHandler<ProcessG
 {
     private const int BaseXPPerGame = 10;
     private const int XPPerScore100 = 1;
+    private const int FastGameSecondsThreshold = 60;
+    private const double SpeedDemonAccuracyThreshold = 90;
+    private const double HighAccuracyThreshold = 95;
+    private const double PerfectAccuracyThreshold = 100;
+    private const int NightStartHour = 0;
+    private const int NightEndHourExclusive = 4;
 
     private readonly IUserRepository _userRepository;
     private readonly IGameSessionRepository _gameSessionRepository;
@@ -68,15 +74,19 @@ public class ProcessGameEndGamificationCommandHandler : IRequestHandler<ProcessG
 
         // Update user stats (games played, high score)
         user.IncrementGamesPlayed();
-
         user.UpdateHighScore(gameSession.Score);
-        await _userRepository.UpdateAsync(user, cancellationToken);
 
         // 1. Update streak
         var gameEndTime = gameSession.EndedAt.HasValue 
             ? new DateTimeOffset(gameSession.EndedAt.Value, TimeSpan.Zero) 
             : DateTimeOffset.UtcNow;
         var streakResult = await _streakService.UpdateStreakAsync(user, gameEndTime, cancellationToken);
+
+        // Update game-based achievement counters (wins, accuracy, speed, night play)
+        UpdateGameBasedAchievementStats(user, gameSession, gameEndTime);
+
+        // Persist user updates after streak and game stats
+        await _userRepository.UpdateAsync(user, cancellationToken);
 
         // 2. Update challenge progress
         var challengeUpdates = await ProcessChallengesAsync(user, gameSession, cancellationToken);
@@ -175,5 +185,78 @@ public class ProcessGameEndGamificationCommandHandler : IRequestHandler<ProcessG
             Core.Enums.GoalType.NewPersonalBest => Math.Max(goal.CurrentValue, gameSession.Score),
             _ => goal.CurrentValue
         };
+    }
+
+    private static void UpdateGameBasedAchievementStats(User user, GameSession gameSession, DateTimeOffset gameEndTime)
+    {
+        // In PerfectFit, every completed game counts as a win
+        user.RecordWin();
+
+        var accuracy = CalculateAccuracy(gameSession);
+
+        if (accuracy >= PerfectAccuracyThreshold)
+        {
+            user.RecordPerfectGame();
+        }
+
+        if (accuracy >= HighAccuracyThreshold)
+        {
+            user.RecordHighAccuracyGame();
+        }
+
+        if (IsFastGame(gameSession) && accuracy >= SpeedDemonAccuracyThreshold)
+        {
+            user.RecordFastGame();
+        }
+
+        if (IsNightGame(gameEndTime, user.Timezone))
+        {
+            user.RecordNightGame();
+        }
+    }
+
+    private static double CalculateAccuracy(GameSession gameSession)
+    {
+        if (gameSession.MoveCount <= 0)
+        {
+            return 0;
+        }
+
+        return (gameSession.LinesCleared * 100.0) / gameSession.MoveCount;
+    }
+
+    private static bool IsFastGame(GameSession gameSession)
+    {
+        if (!gameSession.EndedAt.HasValue || gameSession.StartedAt == default)
+        {
+            return false;
+        }
+
+        var durationSeconds = (gameSession.EndedAt.Value - gameSession.StartedAt).TotalSeconds;
+        return durationSeconds <= FastGameSecondsThreshold;
+    }
+
+    private static bool IsNightGame(DateTimeOffset gameEndTime, string? timezone)
+    {
+        var localTime = gameEndTime;
+
+        if (!string.IsNullOrWhiteSpace(timezone))
+        {
+            try
+            {
+                var tz = TimeZoneInfo.FindSystemTimeZoneById(timezone);
+                localTime = TimeZoneInfo.ConvertTime(gameEndTime, tz);
+            }
+            catch (TimeZoneNotFoundException)
+            {
+                // Fallback to UTC if timezone is invalid
+            }
+            catch (InvalidTimeZoneException)
+            {
+                // Fallback to UTC if timezone is invalid
+            }
+        }
+
+        return localTime.Hour >= NightStartHour && localTime.Hour < NightEndHourExclusive;
     }
 }
