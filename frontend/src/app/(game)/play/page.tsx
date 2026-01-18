@@ -93,6 +93,7 @@ export default function PlayPage() {
     selectPiece,
     clearError,
     setHoverPosition,
+    endCurrentGame,
     submitScoreToLeaderboard,
     clearSubmitResult,
     setClearingCells,
@@ -127,6 +128,9 @@ export default function PlayPage() {
   
   // Track previous combo for sound effects
   const prevComboRef = useRef(0);
+
+  // Track if end-game processing has been triggered
+  const endGameTriggeredRef = useRef(false);
   
   // Track if high score confetti has been fired
   const highScoreConfettiFiredRef = useRef(false);
@@ -314,6 +318,21 @@ export default function PlayPage() {
   }, [error, clearError]);
 
   const isGameOver = gameState?.status === 'Ended';
+
+  // Trigger backend end-game processing once per game
+  useEffect(() => {
+    if (!isGameOver) {
+      endGameTriggeredRef.current = false;
+      return;
+    }
+
+    if (endGameTriggeredRef.current) {
+      return;
+    }
+
+    endGameTriggeredRef.current = true;
+    endCurrentGame();
+  }, [isGameOver, endCurrentGame]);
 
   // Trigger haptic feedback and sound when game ends
   useEffect(() => {
